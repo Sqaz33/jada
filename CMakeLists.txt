@@ -11,13 +11,16 @@ flex_target(
     scanner src/lexer.l 
     ${CMAKE_BINARY_DIR}/lexer.cc)
 
+
+add_library(Scanner STATIC ${FLEX_scanner_OUTPUTS})
+target_include_directories(Scanner INTERFACE 
+                            ${CMAKE_BINARY_DIR})
+
 file(GLOB SRC "src/*.cpp")
 
-add_executable(${PROJECT_NAME} 
-               ${SRC} 
-               ${FLEX_scanner_OUTPUTS})
-
-target_include_directories(${PROJECT_NAME} 
-                           PRIVATE ${CMAKE_BINARY_DIR})
-
+add_executable(${PROJECT_NAME}  ${SRC})
+target_link_libraries(${PROJECT_NAME} PRIVATE Scanner)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
+
+
+add_subdirectory(test_src)

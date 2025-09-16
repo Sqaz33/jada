@@ -2,3 +2,4 @@ build/
 *.ali
 *.o
 main
+.vscode/

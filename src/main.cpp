@@ -5,7 +5,6 @@
 
 int yyFlexLexer::yywrap() { return 1; }
 
-
 int main(int argc, char** argv) try {
     if (argc != 2) {
         std::cout << "usage ./jada file.adb" << std::endl;
