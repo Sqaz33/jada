@@ -23,4 +23,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Scanner)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
 
 
-add_subdirectory(test_src)
+add_subdirectory(test_utility)
