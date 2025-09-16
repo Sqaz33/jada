@@ -2,6 +2,7 @@
 
 %{
 //TODO: спросить про esc посл.
+//TODO: сделать лог. операции + тесты к ним. Сделать тест для комментов.
 #include <iostream>
 %}
 
@@ -9,6 +10,7 @@ WS            [ \t\n\r\v]+
 SCOLONE       ";"
 COLON         ":"
 EQ            "="
+ASG           ":="
 LPAR          "("
 RPAR          ")"
 DOT           "."
@@ -75,6 +77,10 @@ MUL           "*"
 LESS          "<"
 MORE          ">"
 
+OR            or
+NOT           not
+AND           and
+
 NEWLINE       New_Line
 PUTLINE       Put_Line
 IMAGE         Image
@@ -93,6 +99,7 @@ IMAGE         Image
 {SCOLONE}       { std::cout << "SCOLONE ;" << std::endl; }
 {COLON}         { std::cout << "COLON :" << std::endl; }
 {EQ}            { std::cout << "EQ =" << std::endl; }
+{ASG}           { std::cout << "ASG :=" << std::endl; }
 {LPAR}          { std::cout << "LPAR (" << std::endl; }
 {RPAR}          { std::cout << "RPAR )" << std::endl; }
 {DOT}           { std::cout << "DOT ." << std::endl; }
@@ -148,6 +155,10 @@ IMAGE         Image
 {MUL}           { std::cout << "MUL *" << std::endl; }
 {LESS}          { std::cout << "LESS <" << std::endl; }
 {MORE}          { std::cout << "MORE >" << std::endl; }
+
+{OR}            { std::cout << "OR " << std::endl; }
+{NOT}           { std::cout << "NOT " << std::endl; }
+{AND}           { std::cout << "AND " << std::endl; }
 
 {NEWLINE}       { std::cout << "NEWLINE " << yytext << std::endl; }
 {PUTLINE}       { std::cout << "PUTLINE " << yytext << std::endl; }
