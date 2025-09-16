@@ -1,0 +1,1 @@
+X : Character := '\n';

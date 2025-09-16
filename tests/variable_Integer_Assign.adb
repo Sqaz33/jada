@@ -1,0 +1,1 @@
+Int_var : Integer := 42;

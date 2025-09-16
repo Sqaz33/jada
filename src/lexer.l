@@ -58,7 +58,9 @@ BINARY        2#[01](_?[01])*#
 OCT           8#[0-7](_?[0-7])*#
 HEX           16#{HEXDIGIT}(_?{HEXDIGIT})*#
 FLOAT         {INTEGER}\.{INTEGER}([Ee][+-]?{INTEGER})?
- 
+FALSE         False
+TRUE          True
+
 CHAR          \'([^\'\n]|\\.)\'
 STRING        \"([^\"\n]|\"\")*\"
 
@@ -133,6 +135,8 @@ IMAGE         Image
 {FLOAT}         { std::cout << "FLOAT " << yytext << std::endl; }
 {CHAR}          { std::cout << "CHAR " << yytext << std::endl; }
 {STRING}        { std::cout << "STRING " << yytext << std::endl; }
+{FALSE}         { std::cout << "FALSE " << yytext << std::endl; }
+{TRUE}          { std::cout << "TRUE " << yytext << std::endl; }
 
 {PLUS}          { std::cout << "PLUS +" << std::endl; }
 {MINUS}         { std::cout << "MINUS -" << std::endl; }

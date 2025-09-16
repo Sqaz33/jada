@@ -1,0 +1,2 @@
+N : String := "Hello
+World";

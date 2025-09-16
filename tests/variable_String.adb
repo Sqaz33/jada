@@ -1,0 +1,1 @@
+Str_var : String(1..5);

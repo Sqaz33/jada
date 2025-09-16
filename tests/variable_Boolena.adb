@@ -1,0 +1,1 @@
+Bool_var : Boolean;
