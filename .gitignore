@@ -1,0 +1,5 @@
+build/
+*.ali
+*.o
+main.adb
+main
