@@ -45,7 +45,8 @@ BODY          body
 TYPE          type
 TAGGED        tagged
 RECORD        record
-OVERRIDING    overrinding
+OVERRIDING    overriding
+NEW           new     
 
 INTEGERTY     Integer
 STRINGTY      String
@@ -60,6 +61,7 @@ HEX           16#{HEXDIGIT}(_?{HEXDIGIT})*#
 FLOAT         {INTEGER}\.{INTEGER}([Ee][+-]?{INTEGER})?
 FALSE         False
 TRUE          True
+NULL          null
 
 CHAR          \'([^\'\n]|\\.)\'
 STRING        \"([^\"\n]|\"\")*\"
@@ -121,6 +123,7 @@ IMAGE         Image
 {TAGGED}        { std::cout << "TAGGED " << yytext << std::endl; }
 {RECORD}        { std::cout << "RECORD " << yytext << std::endl; }
 {OVERRIDING}    { std::cout << "OVERRIDING " << yytext << std::endl; }
+{NEW}           { std::cout << "NEW " << yytext << std::endl; }
 
 {INTEGERTY}     { std::cout << "INTEGERTY " << yytext << std::endl; }
 {STRINGTY}      { std::cout << "STRINGTY " << yytext << std::endl; }
@@ -137,6 +140,7 @@ IMAGE         Image
 {STRING}        { std::cout << "STRING " << yytext << std::endl; }
 {FALSE}         { std::cout << "FALSE " << yytext << std::endl; }
 {TRUE}          { std::cout << "TRUE " << yytext << std::endl; }
+{NULL}          { std::cout << "NULL " << yytext << std::endl; }
 
 {PLUS}          { std::cout << "PLUS +" << std::endl; }
 {MINUS}         { std::cout << "MINUS -" << std::endl; }

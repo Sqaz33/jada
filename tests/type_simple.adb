@@ -1,0 +1,1 @@
+type My_Integer is new Integer;
