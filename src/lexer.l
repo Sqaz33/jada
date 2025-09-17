@@ -10,6 +10,7 @@ WS            [ \t\n\r\v]+
 SCOLONE       ";"
 COLON         ":"
 EQ            "="
+NEQ           "/="
 ASG           ":="
 LPAR          "("
 RPAR          ")"
@@ -99,6 +100,7 @@ IMAGE         Image
 {SCOLONE}       { std::cout << "SCOLONE ;" << std::endl; }
 {COLON}         { std::cout << "COLON :" << std::endl; }
 {EQ}            { std::cout << "EQ =" << std::endl; }
+{NEQ}           { std::cout << "NEQ /=" << std::endl; }
 {ASG}           { std::cout << "ASG :=" << std::endl; }
 {LPAR}          { std::cout << "LPAR (" << std::endl; }
 {RPAR}          { std::cout << "RPAR )" << std::endl; }
@@ -156,9 +158,9 @@ IMAGE         Image
 {LESS}          { std::cout << "LESS <" << std::endl; }
 {MORE}          { std::cout << "MORE >" << std::endl; }
 
-{OR}            { std::cout << "OR " << std::endl; }
-{NOT}           { std::cout << "NOT " << std::endl; }
-{AND}           { std::cout << "AND " << std::endl; }
+{OR}            { std::cout << "OR " << yytext << std::endl; }
+{NOT}           { std::cout << "NOT " << yytext << std::endl; }
+{AND}           { std::cout << "AND " << yytext << std::endl; }
 
 {NEWLINE}       { std::cout << "NEWLINE " << yytext << std::endl; }
 {PUTLINE}       { std::cout << "PUTLINE " << yytext << std::endl; }

@@ -1,0 +1,1 @@
+Value >= 100 and not (Flag = 0)

@@ -1,0 +1,1 @@
+(X < 10 and (Y > 5 or Z = 0)) or not Ready

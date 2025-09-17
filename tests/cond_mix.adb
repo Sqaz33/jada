@@ -1,0 +1,1 @@
+(A > 0 and B < 100) or (C /= 10 and not D = 1)
