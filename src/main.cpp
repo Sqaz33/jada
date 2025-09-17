@@ -1,4 +1,5 @@
 #include <iostream>
+#include <exception>
 #include <fstream>
 
 #include "FlexLexer.h"
@@ -20,6 +21,10 @@ int main(int argc, char** argv) try {
     while (lexer.yylex());
 
     return 0;
+
+} catch (const std::exception& e) {
+    std::cerr << e.what() << '\n';
+    return 1;
 } catch (...) {
     std::cerr << "Unknown error\n";
     return 1;
