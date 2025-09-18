@@ -66,8 +66,13 @@ FALSE         False
 TRUE          True
 NULL          null
 
-CHAR          \'([^\'\n]|\\.)\'
+CHAR          \'([^\'\n])\'
 STRING        \"([^\"\n]|\"\")*\"
+
+BAD_CHAR_EMPTY        \'\'
+BAD_CHAR_LONG         \'([^\']{2,})\'
+BAD_CHAR_UNTERM       \'([^\']+)
+
 
 %x COMMENT
 
@@ -170,5 +175,8 @@ IMAGE         Image
 
 .               { std::cout << "ERROR " << yytext << std::endl; }
 
+{BAD_CHAR_EMPTY}       { std::cout << "BAD_CHAR_EMPTY " << yytext << std::endl; }
+{BAD_CHAR_LONG}        { std::cout << "BAD_CHAR_LONG " << yytext << std::endl; }
+{BAD_CHAR_UNTERM}      { std::cout << "BAD_CHAR_UNTERM " << yytext << std::endl; }
 
 %%
