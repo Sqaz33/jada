@@ -18,6 +18,11 @@ target_include_directories(Scanner INTERFACE
 
 file(GLOB SRC "src/*.cpp")
 
+add_library(Utility STATIC "src/string_utility.cpp")
+target_include_directories(Utility INTERFACE src)
+
+target_include_directories(Scanner PRIVATE src)
+
 add_executable(${PROJECT_NAME}  ${SRC})
 target_link_libraries(${PROJECT_NAME} PRIVATE Scanner)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
