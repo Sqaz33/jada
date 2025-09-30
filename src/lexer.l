@@ -1,13 +1,13 @@
 %option c++
 
 %{
-// TODO: сделать первод строки "" и инта в финальный вид
-#include <iostream>
-#include "string_utility.hpp"
+    #include <iostream>
+    #include "string_utility.hpp"
+    #include "grammar.tab.hh"
 %}
 
 WS            [ \t\n\r\v]+
-SCOLONE       ";"
+SC            ";"
 COLON         ":"
 EQ            "="
 NEQ           "/="
@@ -102,7 +102,7 @@ IMAGE         Image
 
 {WS}            /* игнорируем пробелы и переводы строк */
 
-{SCOLONE}             { std::cout << "SCOLONE ;" << std::endl; }
+{SC}                  { std::cout << "SC ;" << std::endl; }
 {COLON}               { std::cout << "COLON :" << std::endl; }
 {EQ}                  { std::cout << "EQ =" << std::endl; }
 {NEQ}                 { std::cout << "NEQ /=" << std::endl; }
