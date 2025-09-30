@@ -1,6 +1,7 @@
 #include <iostream>
 #include <exception>
 #include <fstream>
+#include <string_view>
 
 #include "FlexLexer.h"
 
@@ -11,6 +12,18 @@ int main(int argc, char** argv) try {
         std::cout << "usage ./jada file.adb" << std::endl;
         return 1;
     }
+    
+    std::string_view sv(argv[1]);
+    if (!sv.ends_with(".adb")) {
+        if (sv.ends_with(".ads")) {
+            std::cout << "ads file format" 
+                         "is not available yet" 
+                      << std::endl;
+            return 1;
+        }
+        std::cout << "usage ./jada file.adb" << std::endl;
+        return 1;
+    } 
 
     std::ifstream ifs(argv[1]);
     if (!ifs.is_open()) {
