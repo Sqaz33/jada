@@ -70,11 +70,11 @@ CHAR          \'([^\'\n])\'
 STRING        \"([^\"\n]|\"\")*\"
 
 BAD_CHAR_EMPTY     \'\'
-BAD_CHAR_LONG      \'([^\']{2,})\'
-BAD_CHAR_UNTERM    \'([^\']+)
+BAD_CHAR_LONG      \'([^\'\n]{2,})\'
+BAD_CHAR_UNTERM    \'([^\'\n]+)
 BAD_STRING_NO_CLOSE_DOUBLE_QUOTE \"([^\"\n]|\"\")*\n?
-BAD_STRING_LINE_FEED \"([^\"]|\"\")*\"
-BAD_CHAR_LINE_FEED   \'([^\'])\'
+BAD_STRING_LINE_FEED \"([^\"]|\"\")*\n+([^\"]|\"\")*\"
+BAD_CHAR_LINE_FEED   \'([^\'])*\n+([^\'])*\'
 
 
 %x COMMENT
@@ -216,12 +216,11 @@ IMAGE         Image
 {IMAGE}               { std::cout << "IMAGE " << yytext << std::endl; }
       
 {NAME}                { std::cout << "NAME " << yytext << std::endl; }
-      
 
+{BAD_CHAR_LINE_FEED}  { std::cout << "Bad char with LF: "<< yytext << std::endl; }
 {BAD_CHAR_EMPTY}      { std::cout << "Empty char: " << yytext << std::endl; }
 {BAD_CHAR_LONG}       { std::cout << "Bad char long: " << yytext << std::endl; }
 {BAD_CHAR_UNTERM}     { std::cout << "Bad char unterm: " << yytext << std::endl; }
-{BAD_CHAR_LINE_FEED}  { std::cout << "Bad char with LF: "<< yytext << std::endl; }
 {BAD_STRING_LINE_FEED} { std::cout << "Bad string with LF: " << yytext << std::endl; }
 {BAD_STRING_NO_CLOSE_DOUBLE_QUOTE} {
                         std::cout   
