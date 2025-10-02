@@ -8,9 +8,6 @@
 %%code requires 
 { #include <iostream> }
 
-%code 
-{ #include "symtab.hpp" }
-
 
 %token <std::string> NAME
 %token <int> INTEGER

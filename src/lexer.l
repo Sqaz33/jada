@@ -3,7 +3,7 @@
 %{
     #include <iostream>
     #include "string_utility.hpp"
-    #include "grammar.tab.hh"
+    // #include "grammar.tab.hh"
 %}
 
 WS            [ \t\n\r\v]+
@@ -73,6 +73,9 @@ BAD_CHAR_EMPTY     \'\'
 BAD_CHAR_LONG      \'([^\']{2,})\'
 BAD_CHAR_UNTERM    \'([^\']+)
 BAD_STRING_NO_CLOSE_DOUBLE_QUOTE \"([^\"\n]|\"\")*\n?
+BAD_STRING_LINE_FEED \"([^\"]|\"\")*\"
+BAD_CHAR_LINE_FEED   \'([^\'])\'
+
 
 %x COMMENT
 
@@ -178,7 +181,12 @@ IMAGE         Image
                         int res = std::stoi(text, nullptr, 16);
                         std::cout << "HEX " << res << std::endl; 
                       }
-{FLOAT}               { std::cout << "FLOAT " << yytext << std::endl; }
+{FLOAT}               { 
+                        std::string text(yytext);
+                        utility::replaceAll(text, "_", "");
+                        float res = std::stof(text);
+                        std::cout << "FLOAT " << res << std::endl; 
+                      }
 {CHAR}                { std::cout << "CHAR " << yytext[1] << std::endl; }
 {STRING}              { 
                         std::string_view sv(yytext);
@@ -213,6 +221,8 @@ IMAGE         Image
 {BAD_CHAR_EMPTY}      { std::cout << "Empty char: " << yytext << std::endl; }
 {BAD_CHAR_LONG}       { std::cout << "Bad char long: " << yytext << std::endl; }
 {BAD_CHAR_UNTERM}     { std::cout << "Bad char unterm: " << yytext << std::endl; }
+{BAD_CHAR_LINE_FEED}  { std::cout << "Bad char with LF: "<< yytext << std::endl; }
+{BAD_STRING_LINE_FEED} { std::cout << "Bad string with LF: " << yytext << std::endl; }
 {BAD_STRING_NO_CLOSE_DOUBLE_QUOTE} {
                         std::cout   
                           << "Bad string: no close double quote: "
