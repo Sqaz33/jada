@@ -20,6 +20,7 @@ APOSTR        "'"
 NAME          [a-zA-Z_][a-zA-Z0-9_]*
 DIGIT         [0-9]
 HEXDIGIT      [0-9A-Fa-f]
+COMMA         ","
 
 IF            if
 THEN          then
@@ -69,12 +70,12 @@ NULL          null
 CHAR          \'([^\'\n])\'
 STRING        \"([^\"\n]|\"\")*\"
 
+ATTRIBUTE_CALL    {NAME}\s*\'\s*{NAME}
 BAD_CHAR_EMPTY     \'\'
 BAD_CHAR_LONG      \'([^\'\n]{2,})\'
 BAD_CHAR_UNTERM    \'([^\'\n]+)
 BAD_STRING_NO_CLOSE_DOUBLE_QUOTE \"([^\"\n]|\"\")*\n?
-BAD_STRING_LINE_FEED \"([^\"]|\"\")*\n+([^\"]|\"\")*\"
-BAD_CHAR_LINE_FEED   \'([^\'])*\n+([^\'])*\'
+BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 
 
 %x COMMENT
@@ -115,6 +116,7 @@ IMAGE         Image
 {DOT}                 { std::cout << "DOT ." << std::endl; }
 {AMPER}               { std::cout << "AMPER &" << std::endl; }
 {APOSTR}              { std::cout << "APOSTR '" << std::endl; }
+{COMMA}               { std::cout << "COMMA ," << std::endl; }
       
 {WHILE}               { std::cout << "WHILE " << yytext << std::endl; }
 {ELSE}                { std::cout << "ELSE " << yytext << std::endl; }
@@ -216,8 +218,9 @@ IMAGE         Image
 {IMAGE}               { std::cout << "IMAGE " << yytext << std::endl; }
       
 {NAME}                { std::cout << "NAME " << yytext << std::endl; }
+{ATTRIBUTE_CALL}      { std::cout << "ATTRIBUTE_CALL: "<< yytext << std::endl; }
 
-{BAD_CHAR_LINE_FEED}  { std::cout << "Bad char with LF: "<< yytext << std::endl; }
+
 {BAD_CHAR_EMPTY}      { std::cout << "Empty char: " << yytext << std::endl; }
 {BAD_CHAR_LONG}       { std::cout << "Bad char long: " << yytext << std::endl; }
 {BAD_CHAR_UNTERM}     { std::cout << "Bad char unterm: " << yytext << std::endl; }
@@ -228,6 +231,7 @@ IMAGE         Image
                           << yytext
                           << std::endl;
                       }
+
 
 .                     { std::cout << "UNKNOWN " << yytext << std::endl; }
 
