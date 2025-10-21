@@ -21,7 +21,62 @@ end Foo;
 
 Как упоминалось ранее, Ада проводит четкое синтаксическое разделение между  объявлениями, которые вводят имена для сущностей, которые будут использоваться в  программе, и операторами, выполняющими обработку. Области в программе, в которых  могут появляться объявления, называются зонами описания.  Влюбойподпрограммеучасток кода между is и begin является зоной описания. Там могут быть переменные, константы, типы, внутренние подпрограммы и другие сущности.
 
-
 # Подпрограммы
 
 Функции или Процедуры
+
+# Записи (Record)
+
+```ada
+ type Date is record-- The following declarations are-- components of the record
+   Day : Integer range 1 .. 31;
+   Month : Months; -- You can add custom constraints-- on fields
+   Year : Integer range 1 .. 3000;
+ end record;
+```
+
+Для записи
+
+### Извлечение компоненты
+
+`D.Month`
+
+### Агрегаты
+
+Агрегат - это список значений, разделенных запятыми и заключенных в круглыес кобки. Он  разрешен в любом контексте, где ожидается значение записи.
+
+Инициализация: `Ada_Birthday :Date:=(10,December, 1815);`
+
+## Cовмещение
+
+Перегрузка по возвращаемому значению.
+
+# Ссылки
+
+```ada
+type Date_Acc is access Date; -- reference
+D : Date_Acc := null;
+D := new Integer; -- allocation
+D.all = 1; -- dereferencing
+```
+
+# Инкапсуляция
+
+```ada
+package Encapsulate is
+  -- видимый раздел
+  procedure Hello;
+  private
+  procedure Hello2;-- Not visible from external units
+end Encapsulate;
+```
+
+```ada
+with Encapsulate;
+ 
+procedure Main is
+begin
+   Encapsulate.Hello;
+   Encapsulate.Hello2;  -- Invalid: Hello2isnotvisible
+end Main;
+```
