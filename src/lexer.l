@@ -14,6 +14,20 @@
 
   using namespace yy::parser;
   using helper::yylval;
+
+  void handleLexicalError(std::string msg, std::string err = "") {
+      std::stringstream ss;
+      ss << helper::moduleFileNames.back();
+         << ':' << helper::lineNo 
+         << ':' << helper::columnNo 
+         << ':';
+      ss << " lexical error: "
+      ss << std::move(msg);
+      ss << ": "
+      ss << std::move(err)
+      helper::errs.push_back(ss.str());
+      helper::hasErr = true;
+  }
 %}
 
 NAME          [a-zA-Z_][a-zA-Z0-9_]*
@@ -192,77 +206,15 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         
                       }
 
-{BAD_CHAR_EMPTY}      { 
-                        std::stringstream ss;
-                        ss << helper::curModule;
-                        ss << ':' << helper::lineNo 
-                           << ':' << helper::columnNo 
-                           << ":";
-                        ss << " lexical error:"
-                        ss << " Empty char";
-                        helper::errs.push_back(ss.str());
-                        helper::hasErr = true;
-                       }
-{BAD_CHAR_LONG}       { 
-                        std::stringstream ss;
-                        ss << helper::curModule;
-                        ss << ':' << helper::lineNo 
-                           << ':' << helper::columnNo 
-                           << ":";
-                        ss << " lexical error:"
-                        ss << " Bad char long: " 
-                        ss.write(yytext, yylen); 
-                        helper::errs.push_back(ss.str());
-                        helper::hasErr = true;
-                      }
-{BAD_CHAR_UNTERM}     { 
-                        std::stringstream ss;
-                        ss << helper::curModule;
-                        ss << ':' << helper::lineNo 
-                           << ':' << helper::columnNo 
-                           << ":";
-                        ss << " lexical error:"
-                        ss << " Bad char unterm: " 
-                        ss.write(yytext, yylen); 
-                        helper::errs.push_back(ss.str());
-                        helper::hasErr = true;
-                      }
-{BAD_STRING_LINE_FEED} { 
-                          std::stringstream ss;
-                          ss << helper::curModule;
-                          ss << ':' << helper::lineNo 
-                             << ':' << helper::columnNo 
-                             << ":";
-                          ss << " lexical error:"
-                          ss << " Bad string with LF: " 
-                          ss.write(yytext, yylen); 
-                          helper::errs.push_back(ss.str());
-                          helper::hasErr = true;
-                        }
-{BAD_STRING_NO_CLOSE_DOUBLE_QUOTE} {
-                                    std::stringstream ss;
-                                    ss << helper::curModule;
-                                    ss << ':' << helper::lineNo 
-                                      << ':' << helper::columnNo 
-                                      << ":";
-                                    ss << " lexical error:"
-                                    ss << " Bad string: no close double quote: " 
-                                    ss.write(yytext, yylen); 
-                                    helper::errs.push_back(ss.str());
-                                    helper::hasErr = true;
-                                  }
+{BAD_CHAR_EMPTY}      { handleLexicalError("Empty char") }
+{BAD_CHAR_LONG}       { handleLexicalError("Bad char long", std::string(yytext, yylen)); }
+{BAD_CHAR_UNTERM}     { handleLexicalError("Bad char unterm", std::string(yytext, yylen)); }
+{BAD_STRING_LINE_FEED} { handleLexicalError("Bad string with LF", std::string(yytext, yylen)); }
+{BAD_STRING_NO_CLOSE_DOUBLE_QUOTE} { handleLexicalError(
+                                      "Bad string no close double quote",
+                                       std::string(yytext, yylen));
+                                   }
 
-.                     { 
-                        std::stringstream ss;
-                        ss << helper::curModule;
-                        ss << ':' << helper::lineNo 
-                          << ':' << helper::columnNo 
-                          << ":";
-                        ss << " lexical error:"
-                        ss << " Unknown input program text: " 
-                        ss.write(yytext, yylen); 
-                        helper::errs.push_back(ss.str());
-                        helper::hasErr = true;
-                      }
+.                     { handleLexicalError("Unknown input text", std::string(yytext, yylen)); }
 
 %%
