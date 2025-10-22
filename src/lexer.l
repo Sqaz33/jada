@@ -1,9 +1,19 @@
 %option c++
 
 %{
-    #include <iostream>
-    #include "string_utility.hpp"
-    // #include "grammar.tab.hh"
+  #iclude <string>    
+  #include <string_view>
+  #include <regex>
+  #include <sstream>
+
+  #include "string_utility.hpp"
+  #include "parser.hpp"
+
+  #define YY_USER_ACTION helper::lineNo = yylineno; \
+      helper::columnNo += yyleng;
+
+  using namespace yy::parser;
+  using helper::yylval;
 %}
 
 NAME          [a-zA-Z_][a-zA-Z0-9_]*
@@ -34,142 +44,225 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 
 "--"                  { BEGIN(COMMENT); }   /* вошли в состояние COMMENT */
  
-<COMMENT>.*           { 
-                        std::cout << "COMMENT " << yytext << std::endl; 
-                        BEGIN(INITIAL); 
-                      }
+<COMMENT>.*           { BEGIN(INITIAL); }
 
-[ \t\n\r\v]+          /* игнорируем пробелы и переводы строк */
+[ \t\r\v]+            /* игнорируем пробелы и переводы строк */
+"\n"                  { helper::columnNo = 1; }
 
-";"                   { std::cout << "SC ;" << std::endl; }
-":"                   { std::cout << "COLON :" << std::endl; }
-"="                   { std::cout << "EQ =" << std::endl; }
-"/="                  { std::cout << "NEQ /=" << std::endl; }
-":="                  { std::cout << "ASG :=" << std::endl; }
-"("                   { std::cout << "LPAR (" << std::endl; }
-")"                   { std::cout << "RPAR )" << std::endl; }
-"."                   { std::cout << "DOT ." << std::endl; }
-"&"                   { std::cout << "AMPER &" << std::endl; }
-"'"                   { std::cout << "APOSTR '" << std::endl; }
-","                   { std::cout << "COMMA ," << std::endl; }
+";"                   { return token_type::SC; }
+":"                   { return token_type::COLON; }
+"="                   { return token_type::EQ; }
+"/="                  { return token_type::NEQ; }
+":="                  { return token_type::ASG; }
+"("                   { return token_type::LPAR; }
+")"                   { return token_type::RPAR;}
+"."                   { return token_type::DOT; }
+"&"                   { return token_type::AMPER; }
+"'"                   { return token_type::APOSTRl; }
+","                   { return token_type::COMMA; }
 
-"if"                  { std::cout << "IF " << yytext << std::endl; }
-"then"                { std::cout << "THEN " << yytext << std::endl; }
-"else"                { std::cout << "ELSE " << yytext << std::endl; }
-"elsif"               { std::cout << "ELSIF " << yytext << std::endl; }
+"if"                  { return token_type::IF; }
+"then"                { return token_type::THEN; }
+"else"                { return token_type::ELSE; }
+"elsif"               { return token_type::ELSIF; }
 
-"for"                 { std::cout << "FOR " << yytext << std::endl; }
-"loop"                { std::cout << "LOOP " << yytext << std::endl; }
-"in"                   { std::cout << "IN " << yytext << std::endl; }
-"exit"                 { std::cout << "EXIT " << yytext << std::endl; }
-"when"                 { std::cout << "WHEN " << yytext << std::endl; }
-"while"                { std::cout << "WHILE " << yytext << std::endl; }
+"for"                 { return token_type::FOOR; }
+"loop"                { return token_type::LOOP; }
+"in"                  { return token_type::IN; }
+"exit"                { return token_type::EXIT; }
+"when"                { return token_type::WHEN; }
+"while"               { return token_type::WHILE; }
 
-"with"                 { std::cout << "WITH " << yytext << std::endl; }
-"use"                  { std::cout << "USE " << yytext << std::endl; }
+"with"                { return token_type::WHITH; }
+"use"                 { return token_type::USE; }
 
-"procedure"            { std::cout << "PROCEDURE " << yytext << std::endl; }
-"function"             { std::cout << "FUNCTION " << yytext << std::endl; }
-"begin"                { std::cout << "BEGIN " << yytext << std::endl; }
-"is"                   { std::cout << "IS " << yytext << std::endl; }
-"end"                  { std::cout << "END " << yytext << std::endl; }
-"return"               { std::cout << "RETURN " << yytext << std::endl; }
+"procedure"           { return token_type::PROCEDURE; }
+"function"            { return token_type::FUNCTION; }
+"begin"               { return token_type::BEGIN; }
+"is"                  { return token_type::IS; }
+"end"                 { return token_type::END; }
+"return"              { return token_type::RETURN; }
 
-"package"              { std::cout << "PACKAGE " << yytext << std::endl; }
-"body"                 { std::cout << "BODY " << yytext << std::endl; }
-"type"                 { std::cout << "TYPE " << yytext << std::endl; }
-"tagged"               { std::cout << "TAGGED " << yytext << std::endl; }
-"record"               { std::cout << "RECORD " << yytext << std::endl; }
-"overriding"           { std::cout << "OVERRIDING " << yytext << std::endl; }
-"new"                  { std::cout << "NEW " << yytext << std::endl; }
+"package"             { return token_type::PACKAGE; } 
+"body"                { return token_type::BODY; } 
+"type"                { return token_type::TYPE; } 
+"tagged"              { return token_type::TAGGED; } 
+"record"              { return token_type::RECORD; } 
+"overriding"          { return token_type::OVERRIDING; } 
+"new"                 { return token_type::NEW; } 
 
-"Integer"              { std::cout << "INTEGERTY " << yytext << std::endl; }
-"String"               { std::cout << "STRINGTY " << yytext << std::endl; }
-"Character"            { std::cout << "CHARACTERTY " << yytext << std::endl; }
-"Float"                { std::cout << "FLOATTY " << yytext << std::endl; }
-"Boolean"              { std::cout << "BOOLTY " << yytext << std::endl; }
+"Integer"             { return token_type::INTEGERTY; } 
+"String"              { return token_type::STRINGTY; } 
+"Character"           { return token_type::CHARACTERTY; }
+"Float"               { return token_type::FLOATTY; } 
+"Boolean"             { return token_type::BOOLTY; } 
       
 {INTEGER}             { 
-                        std::string text(yytext);
+                        std::string text(yytext, yylen);
                         utility::replaceAll(text, "_", "");
                         int res = std::stoi(text);
-                        std::cout << "INTEGER " << res << std::endl; 
+                        yylval->emplace<int>(res)
+                        return token_type::INTEGER;
                       }
 {BINARY}              { 
-                        std::string_view sv(yytext);
+                        std::string_view sv(yytext, yylen);
                         sv.remove_prefix(2);
                         sv.remove_suffix(1);
                         std::string text(sv.begin(), sv.end());
                         utility::replaceAll(text, "_", "");
                         int res = std::stoi(text, nullptr, 2);
-                        std::cout << "BINARY " << res << std::endl; 
+                        yylval->emplace<int>(res)
+                        return token_type::INTEGER;
                       }
 {OCT}                 { 
-                        std::string_view sv(yytext);
+                        std::string_view sv(yytext, yylen);
                         sv.remove_prefix(2);
                         sv.remove_suffix(1);
                         std::string text(sv.begin(), sv.end());
                         utility::replaceAll(text, "_", "");
                         int res = std::stoi(text, nullptr, 8);
-                        std::cout << "OCT " << res << std::endl; 
+                        yylval->emplace<int>(res)
+                        return token_type::INTEGER;
                       }
 {HEX}                 { 
-                        std::string_view sv(yytext);
+                        std::string_view sv(yytext, yylen);
                         sv.remove_prefix(3);
                         sv.remove_suffix(1);
                         std::string text(sv.begin(), sv.end());
                         utility::replaceAll(text, "_", "");
                         int res = std::stoi(text, nullptr, 16);
-                        std::cout << "HEX " << res << std::endl; 
+                        yylval->emplace<int>(res)
+                        return token_type::INTEGER;
                       }
 {FLOAT}               { 
-                        std::string text(yytext);
+                        std::string text(yytext, yylen);
                         utility::replaceAll(text, "_", "");
                         float res = std::stof(text);
-                        std::cout << "FLOAT " << res << std::endl; 
+                        yylval->emplace<float>(res)
+                        return token_type::FLOAT;
                       }
-{CHAR}                { std::cout << "CHAR " << yytext[1] << std::endl; }
+{CHAR}                { 
+                        yylval->emplace<char>(yytext[1])
+                        return token_type::CHAR;
+                      }
 {STRING}              { 
-                        std::string_view sv(yytext);
+                        std::string_view sv(yytext, yylen);
                         sv.remove_prefix(1);
                         sv.remove_suffix(1);
                         std::string res(sv.begin(), sv.end());
                         utility::replaceAll(res, "\"\"", "\"");
-                        std::cout << "STRING " << res << std::endl; 
+                        yylval->emplace<char>(res);
+                        return token_type::STRING;
                       }
                       
-"False"                { std::cout << "FALSE " << yytext << std::endl; }
-"True"                 { std::cout << "TRUE " << yytext << std::endl; }
-"null"                 { std::cout << "NULL " << yytext << std::endl; }
+"False"               { return token_type::FALSE; }
+"True"                { return token_type::TRUE; }
+"null"                { return token_type::NULL; }
 
-"+"                    { std::cout << "PLUS +" << std::endl; }
-"-"                    { std::cout << "MINUS -" << std::endl; }
-"/"                    { std::cout << "DIV /" << std::endl; }
-"*"                    { std::cout << "MUL *" << std::endl; }
-"<"                    { std::cout << "LESS <" << std::endl; }
-">"                    { std::cout << "MORE >" << std::endl; }
+"+"                   { return token_type::PLUS;} 
+"-"                   { return token_type::MINUS;} 
+"/"                   { return token_type::DIV;} 
+"*"                   { return token_type::MUL;} 
+"<"                   { return token_type::MORE;} 
+">"                   { return token_type::LESS;} 
 
-"or"                   { std::cout << "OR " << yytext << std::endl; }
-"not"                  { std::cout << "NOT " << yytext << std::endl; }
-"and"                  { std::cout << "AND " << yytext << std::endl; }
+"or"                  { return token_type::OR; } 
+"not"                 { return token_type::NOT; } 
+"and"                 { return token_type::AND; } 
 
-"New_Line"             { std::cout << "NEWLINE " << yytext << std::endl; }
-"Put_Line"             { std::cout << "PUTLINE " << yytext << std::endl; }
       
-{NAME}                { std::cout << "NAME " << yytext << std::endl; }
-{ATTRIBUTE_CALL}      { std::cout << "ATTRIBUTE_CALL: "<< yytext << std::endl; }
-
-{BAD_CHAR_EMPTY}      { std::cout << "Empty char: " << yytext << std::endl; }
-{BAD_CHAR_LONG}       { std::cout << "Bad char long: " << yytext << std::endl; }
-{BAD_CHAR_UNTERM}     { std::cout << "Bad char unterm: " << yytext << std::endl; }
-{BAD_STRING_LINE_FEED} { std::cout << "Bad string with LF: " << yytext << std::endl; }
-{BAD_STRING_NO_CLOSE_DOUBLE_QUOTE} {
-                        std::cout   
-                          << "Bad string: no close double quote: "
-                          << yytext
-                          << std::endl;
+{NAME}                { 
+                        std::string text(yytext, yylen);
+                        yylval->emplace<std::string>(std::move(text));
+                        return token_type::NAME;
+                      }
+{ATTRIBUTE_CALL}      { 
+                        std::string text(yytext, yyleng);
+                        std::regex re(R"(([a-zA-Z_][a-zA-Z0-9_]*)\s*'\s*([a-zA-Z_][a-zA-Z0-9_]*))");
+                        std::smatch match;
+                        std::regex_match(text, match, re);
+                        std::pair<std::string, std::string> res{
+                          match[1]; 
+                          match[2];
+                        };
+                        yylval->
+                          emplace<std::pair<std::string, std::string>>(
+                            std::move(res));
+                        return token_type::ATTRIBUTE_CALL;
+                        
                       }
 
-.                     { std::cout << "UNKNOWN " << yytext << std::endl; }
+{BAD_CHAR_EMPTY}      { 
+                        std::stringstream ss;
+                        ss << helper::curModule;
+                        ss << ':' << helper::lineNo 
+                           << ':' << helper::columnNo 
+                           << ":";
+                        ss << " lexical error:"
+                        ss << " Empty char";
+                        helper::errs.push_back(ss.str());
+                        helper::hasErr = true;
+                       }
+{BAD_CHAR_LONG}       { 
+                        std::stringstream ss;
+                        ss << helper::curModule;
+                        ss << ':' << helper::lineNo 
+                           << ':' << helper::columnNo 
+                           << ":";
+                        ss << " lexical error:"
+                        ss << " Bad char long: " 
+                        ss.write(yytext, yylen); 
+                        helper::errs.push_back(ss.str());
+                        helper::hasErr = true;
+                      }
+{BAD_CHAR_UNTERM}     { 
+                        std::stringstream ss;
+                        ss << helper::curModule;
+                        ss << ':' << helper::lineNo 
+                           << ':' << helper::columnNo 
+                           << ":";
+                        ss << " lexical error:"
+                        ss << " Bad char unterm: " 
+                        ss.write(yytext, yylen); 
+                        helper::errs.push_back(ss.str());
+                        helper::hasErr = true;
+                      }
+{BAD_STRING_LINE_FEED} { 
+                          std::stringstream ss;
+                          ss << helper::curModule;
+                          ss << ':' << helper::lineNo 
+                             << ':' << helper::columnNo 
+                             << ":";
+                          ss << " lexical error:"
+                          ss << " Bad string with LF: " 
+                          ss.write(yytext, yylen); 
+                          helper::errs.push_back(ss.str());
+                          helper::hasErr = true;
+                        }
+{BAD_STRING_NO_CLOSE_DOUBLE_QUOTE} {
+                                    std::stringstream ss;
+                                    ss << helper::curModule;
+                                    ss << ':' << helper::lineNo 
+                                      << ':' << helper::columnNo 
+                                      << ":";
+                                    ss << " lexical error:"
+                                    ss << " Bad string: no close double quote: " 
+                                    ss.write(yytext, yylen); 
+                                    helper::errs.push_back(ss.str());
+                                    helper::hasErr = true;
+                                  }
+
+.                     { 
+                        std::stringstream ss;
+                        ss << helper::curModule;
+                        ss << ':' << helper::lineNo 
+                          << ':' << helper::columnNo 
+                          << ":";
+                        ss << " lexical error:"
+                        ss << " Unknown input program text: " 
+                        ss.write(yytext, yylen); 
+                        helper::errs.push_back(ss.str());
+                        helper::hasErr = true;
+                      }
 
 %%
