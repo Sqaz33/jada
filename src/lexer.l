@@ -6,66 +6,15 @@
     // #include "grammar.tab.hh"
 %}
 
-WS            [ \t\n\r\v]+
-SC            ";"
-COLON         ":"
-EQ            "="
-NEQ           "/="
-ASG           ":="
-LPAR          "("
-RPAR          ")"
-DOT           "."
-AMPER         "&"
-APOSTR        "'"
 NAME          [a-zA-Z_][a-zA-Z0-9_]*
 DIGIT         [0-9]
 HEXDIGIT      [0-9A-Fa-f]
-COMMA         ","
-
-IF            if
-THEN          then
-ELSE          else
-ELSIF         elsif
-
-FOR           for
-LOOP          loop
-IN            in
-EXIT          exit
-WHEN          when
-WHILE         while
-
-WITH          with
-USE           use
-
-PROCEDURE     procedure
-FUNCTION      function
-BEGIN         begin
-IS            is
-END           end
-RETURN        return
-
-PACKAGE       package
-BODY          body
-TYPE          type
-TAGGED        tagged
-RECORD        record
-OVERRIDING    overriding
-NEW           new     
-
-INTEGERTY     Integer
-STRINGTY      String
-CHARACTERTY   Character
-FLOATTY       Float
-BOOLTY        Boolean
-
 INTEGER       {DIGIT}(_?{DIGIT})*
 BINARY        2#[01](_?[01])*#
 OCT           8#[0-7](_?[0-7])*#
 HEX           16#{HEXDIGIT}(_?{HEXDIGIT})*#
 FLOAT         {INTEGER}\.{INTEGER}([Ee][+-]?{INTEGER})?
-FALSE         False
-TRUE          True
-NULL          null
+
 
 CHAR          \'([^\'\n])\'
 STRING        \"([^\"\n]|\"\")*\"
@@ -80,20 +29,6 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 
 %x COMMENT
 
-PLUS          "+"
-MINUS         "-"
-DIV           "/"
-MUL           "*"
-LESS          "<"
-MORE          ">"
-
-OR            or
-NOT           not
-AND           and
-
-NEWLINE       New_Line
-PUTLINE       Put_Line
-IMAGE         Image
 
 %%
 
@@ -104,51 +39,55 @@ IMAGE         Image
                         BEGIN(INITIAL); 
                       }
 
-{WS}            /* игнорируем пробелы и переводы строк */
+[ \t\n\r\v]+          /* игнорируем пробелы и переводы строк */
 
-{SC}                  { std::cout << "SC ;" << std::endl; }
-{COLON}               { std::cout << "COLON :" << std::endl; }
-{EQ}                  { std::cout << "EQ =" << std::endl; }
-{NEQ}                 { std::cout << "NEQ /=" << std::endl; }
-{ASG}                 { std::cout << "ASG :=" << std::endl; }
-{LPAR}                { std::cout << "LPAR (" << std::endl; }
-{RPAR}                { std::cout << "RPAR )" << std::endl; }
-{DOT}                 { std::cout << "DOT ." << std::endl; }
-{AMPER}               { std::cout << "AMPER &" << std::endl; }
-{APOSTR}              { std::cout << "APOSTR '" << std::endl; }
-{COMMA}               { std::cout << "COMMA ," << std::endl; }
-      
-{WHILE}               { std::cout << "WHILE " << yytext << std::endl; }
-{ELSE}                { std::cout << "ELSE " << yytext << std::endl; }
-{IF}                  { std::cout << "IF " << yytext << std::endl; }
-{THEN}                { std::cout << "THEN " << yytext << std::endl; }
-{ELSIF}               { std::cout << "ELSIF " << yytext << std::endl; }
-{FOR}                 { std::cout << "FOR " << yytext << std::endl; }
-{LOOP}                { std::cout << "LOOP " << yytext << std::endl; }
-{IN}                  { std::cout << "IN " << yytext << std::endl; }
-{EXIT}                { std::cout << "EXIT " << yytext << std::endl; }
-{WHEN}                { std::cout << "WHEN " << yytext << std::endl; }
-{WITH}                { std::cout << "WITH " << yytext << std::endl; }
-{USE}                 { std::cout << "USE " << yytext << std::endl; }
-{PROCEDURE}           { std::cout << "PROCEDURE " << yytext << std::endl; }
-{FUNCTION}            { std::cout << "FUNCTION " << yytext <<   std::endl; }
-{BEGIN}               { std::cout << "BEGIN " << yytext << std::endl; }
-{IS}                  { std::cout << "IS " << yytext << std::endl; }
-{END}                 { std::cout << "END " << yytext << std::endl; }
-{RETURN}              { std::cout << "RETURN " << yytext << std::endl; }
-{PACKAGE}             { std::cout << "PACKAGE " << yytext << std::endl; }
-{BODY}                { std::cout << "BODY " << yytext << std::endl; }
-{TYPE}                { std::cout << "TYPE " << yytext << std::endl; }
-{TAGGED}              { std::cout << "TAGGED " << yytext << std::endl; }
-{RECORD}              { std::cout << "RECORD " << yytext << std::endl; }
-{OVERRIDING}          { std::cout << "OVERRIDING " << yytext << std::endl; }
-{NEW}                 { std::cout << "NEW " << yytext << std::endl; }
-       
-{INTEGERTY}           { std::cout << "INTEGERTY " << yytext << std::endl; }
-{STRINGTY}            { std::cout << "STRINGTY " << yytext << std::endl; }
-{CHARACTERTY}         { std::cout << "CHARACTERTY " << yytext << std::endl; }
-{FLOATTY}             { std::cout << "FLOATTY " << yytext << std::endl; }
-{BOOLTY}              { std::cout << "BOOLTY " << yytext << std::endl; }
+";"                   { std::cout << "SC ;" << std::endl; }
+":"                   { std::cout << "COLON :" << std::endl; }
+"="                   { std::cout << "EQ =" << std::endl; }
+"/="                  { std::cout << "NEQ /=" << std::endl; }
+":="                  { std::cout << "ASG :=" << std::endl; }
+"("                   { std::cout << "LPAR (" << std::endl; }
+")"                   { std::cout << "RPAR )" << std::endl; }
+"."                   { std::cout << "DOT ." << std::endl; }
+"&"                   { std::cout << "AMPER &" << std::endl; }
+"'"                   { std::cout << "APOSTR '" << std::endl; }
+","                   { std::cout << "COMMA ," << std::endl; }
+
+"if"                  { std::cout << "IF " << yytext << std::endl; }
+"then"                { std::cout << "THEN " << yytext << std::endl; }
+"else"                { std::cout << "ELSE " << yytext << std::endl; }
+"elsif"               { std::cout << "ELSIF " << yytext << std::endl; }
+
+"for"                 { std::cout << "FOR " << yytext << std::endl; }
+"loop"                { std::cout << "LOOP " << yytext << std::endl; }
+"in"                   { std::cout << "IN " << yytext << std::endl; }
+"exit"                 { std::cout << "EXIT " << yytext << std::endl; }
+"when"                 { std::cout << "WHEN " << yytext << std::endl; }
+"while"                { std::cout << "WHILE " << yytext << std::endl; }
+
+"with"                 { std::cout << "WITH " << yytext << std::endl; }
+"use"                  { std::cout << "USE " << yytext << std::endl; }
+
+"procedure"            { std::cout << "PROCEDURE " << yytext << std::endl; }
+"function"             { std::cout << "FUNCTION " << yytext << std::endl; }
+"begin"                { std::cout << "BEGIN " << yytext << std::endl; }
+"is"                   { std::cout << "IS " << yytext << std::endl; }
+"end"                  { std::cout << "END " << yytext << std::endl; }
+"return"               { std::cout << "RETURN " << yytext << std::endl; }
+
+"package"              { std::cout << "PACKAGE " << yytext << std::endl; }
+"body"                 { std::cout << "BODY " << yytext << std::endl; }
+"type"                 { std::cout << "TYPE " << yytext << std::endl; }
+"tagged"               { std::cout << "TAGGED " << yytext << std::endl; }
+"record"               { std::cout << "RECORD " << yytext << std::endl; }
+"overriding"           { std::cout << "OVERRIDING " << yytext << std::endl; }
+"new"                  { std::cout << "NEW " << yytext << std::endl; }
+
+"Integer"              { std::cout << "INTEGERTY " << yytext << std::endl; }
+"String"               { std::cout << "STRINGTY " << yytext << std::endl; }
+"Character"            { std::cout << "CHARACTERTY " << yytext << std::endl; }
+"Float"                { std::cout << "FLOATTY " << yytext << std::endl; }
+"Boolean"              { std::cout << "BOOLTY " << yytext << std::endl; }
       
 {INTEGER}             { 
                         std::string text(yytext);
@@ -198,28 +137,27 @@ IMAGE         Image
                         utility::replaceAll(res, "\"\"", "\"");
                         std::cout << "STRING " << res << std::endl; 
                       }
-{FALSE}               { std::cout << "FALSE " << yytext << std::endl; }
-{TRUE}                { std::cout << "TRUE " << yytext << std::endl; }
-{NULL}                { std::cout << "NULL " << yytext << std::endl; }
-      
-{PLUS}                { std::cout << "PLUS +" << std::endl; }
-{MINUS}               { std::cout << "MINUS -" << std::endl; }
-{DIV}                 { std::cout << "DIV /" << std::endl; }
-{MUL}                 { std::cout << "MUL *" << std::endl; }
-{LESS}                { std::cout << "LESS <" << std::endl; }
-{MORE}                { std::cout << "MORE >" << std::endl; }
-      
-{OR}                  { std::cout << "OR " << yytext << std::endl; }
-{NOT}                 { std::cout << "NOT " << yytext << std::endl; }
-{AND}                 { std::cout << "AND " << yytext << std::endl; }
-      
-{NEWLINE}             { std::cout << "NEWLINE " << yytext << std::endl; }
-{PUTLINE}             { std::cout << "PUTLINE " << yytext << std::endl; }
-{IMAGE}               { std::cout << "IMAGE " << yytext << std::endl; }
+                      
+"False"                { std::cout << "FALSE " << yytext << std::endl; }
+"True"                 { std::cout << "TRUE " << yytext << std::endl; }
+"null"                 { std::cout << "NULL " << yytext << std::endl; }
+
+"+"                    { std::cout << "PLUS +" << std::endl; }
+"-"                    { std::cout << "MINUS -" << std::endl; }
+"/"                    { std::cout << "DIV /" << std::endl; }
+"*"                    { std::cout << "MUL *" << std::endl; }
+"<"                    { std::cout << "LESS <" << std::endl; }
+">"                    { std::cout << "MORE >" << std::endl; }
+
+"or"                   { std::cout << "OR " << yytext << std::endl; }
+"not"                  { std::cout << "NOT " << yytext << std::endl; }
+"and"                  { std::cout << "AND " << yytext << std::endl; }
+
+"New_Line"             { std::cout << "NEWLINE " << yytext << std::endl; }
+"Put_Line"             { std::cout << "PUTLINE " << yytext << std::endl; }
       
 {NAME}                { std::cout << "NAME " << yytext << std::endl; }
 {ATTRIBUTE_CALL}      { std::cout << "ATTRIBUTE_CALL: "<< yytext << std::endl; }
-
 
 {BAD_CHAR_EMPTY}      { std::cout << "Empty char: " << yytext << std::endl; }
 {BAD_CHAR_LONG}       { std::cout << "Bad char long: " << yytext << std::endl; }
@@ -231,7 +169,6 @@ IMAGE         Image
                           << yytext
                           << std::endl;
                       }
-
 
 .                     { std::cout << "UNKNOWN " << yytext << std::endl; }
 
