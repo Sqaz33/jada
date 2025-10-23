@@ -20,16 +20,7 @@ bison_target(parser
 )
 add_flex_bison_dependency(scanner parser)
 
-add_library(Scanner STATIC ${FLEX_scanner_OUTPUTS})
-target_include_directories(Scanner INTERFACE 
-                            ${CMAKE_BINARY_DIR})
-
 file(GLOB SRC "src/*.cpp")
-
-add_library(Utility STATIC "src/string_utility.cpp")
-target_include_directories(Utility INTERFACE src)
-
-target_include_directories(Scanner PRIVATE src)
 
 add_executable(${PROJECT_NAME}  
                ${SRC}
@@ -42,5 +33,3 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-
-add_subdirectory(lexer_test_utility)

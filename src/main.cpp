@@ -2,8 +2,25 @@
 #include <exception>
 #include <fstream>
 #include <string_view>
+#include <unordered_map>                   // TODO: delete then
 
-#include "FlexLexer.h"
+#include <FlexLexer.h>
+
+#include "helper.hpp"
+#include "parser.hpp"
+
+namespace helper {
+    yy::parser::semantic_type* yylval = nullptr;
+    std::vector<std::string> moduleFileNames;
+    std::vector<std::string> errs;
+    bool hasErr = false;
+    int lineNo = 0;
+    int columnNo = 0;
+}
+
+namespace dummy {
+    std::unordered_map<std::string, int> vars; // TODO: delete then
+}
 
 int yyFlexLexer::yywrap() { return 1; }
 
@@ -30,10 +47,11 @@ int main(int argc, char** argv) try {
         std::cout << "Can`t open file\n";
         return 1; 
     }
-    yyFlexLexer lexer(&ifs);
-    while (lexer.yylex());
 
-    return 0;
+    yyFlexLexer lexer(&ifs);
+    yy::parser p(&lexer);
+    // p.set_debug_level(1); 
+    return !p.parse();
 
 } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
