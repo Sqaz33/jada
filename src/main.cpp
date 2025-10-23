@@ -18,10 +18,6 @@ namespace helper {
     int columnNo = 0;
 }
 
-namespace dummy {
-    std::unordered_map<std::string, int> vars; // TODO: delete then
-}
-
 int yyFlexLexer::yywrap() { return 1; }
 
 int main(int argc, char** argv) try {
@@ -50,7 +46,7 @@ int main(int argc, char** argv) try {
 
     yyFlexLexer lexer(&ifs);
     yy::parser p(&lexer);
-    // p.set_debug_level(1); 
+    p.set_debug_level(1); 
     return !p.parse();
 
 } catch (const std::exception& e) {

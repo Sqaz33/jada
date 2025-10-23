@@ -65,6 +65,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 
 ";"                   { return yy::parser::token_type::SC; }
 ":"                   { return yy::parser::token_type::COLON; }
+".."                   { return yy::parser::token_type::DOT_DOT; }
 "="                   { return yy::parser::token_type::EQ; }
 "/="                  { return yy::parser::token_type::NEQ; }
 ":="                  { return yy::parser::token_type::ASG; }
@@ -93,6 +94,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 "procedure"           { return yy::parser::token_type::PROCEDURE; }
 "function"            { return yy::parser::token_type::FUNCTION; }
 "begin"               { return yy::parser::token_type::BEGIN_KW; }
+"private"             { return yy::parser::token_type::PRIVATE; }
 "is"                  { return yy::parser::token_type::IS; }
 "end"                 { return yy::parser::token_type::END; }
 "return"              { return yy::parser::token_type::RETURN; }
@@ -178,7 +180,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 "/"                   { return yy::parser::token_type::DIV;} 
 "*"                   { return yy::parser::token_type::MUL;} 
 "<"                   { return yy::parser::token_type::MORE;} 
-">"                   { return yy::parser::token_type::LESS;} 
+">"                   { return yy::parser::token_type::LESS;}
 
 "or"                  { return yy::parser::token_type::OR; } 
 "not"                 { return yy::parser::token_type::NOT; } 

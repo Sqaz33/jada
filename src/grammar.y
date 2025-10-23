@@ -10,12 +10,6 @@
 {
   #include <string>
   #include <utility>
-  #include <iostream>                        // TODO delete then
-  #include <unordered_map>                   // TODO: delete then
-  
-  namespace dummy {
-    extern std::unordered_map<std::string, int> vars; // TODO: delete then
-  }
 
   class FlexLexer; 
 }
@@ -30,7 +24,8 @@
 }
 
 %token SC            
-%token COLON         
+%token COLON
+%token DOT_DOT         
 %token EQ            
 %token NEQ           
 %right ASG           
@@ -60,6 +55,7 @@
 %token PROCEDURE     
 %token FUNCTION      
 %token BEGIN_KW         
+%token PRIVATE         
 %token IS            
 %token END           
 %token RETURN        
@@ -103,67 +99,115 @@
 
 %nonassoc UMINUS
 
-%nterm <int> stm            
+%nterm stm            
 %nterm assign
-%nterm <int> expr
-%nterm <int*> lval
-
+%nterm expr
+%nterm lval
+%nterm decl
+%nterm decl_area
+%nterm param_list
 
 
 %start program
 
 %%
 
-program: decl_area
+program: decl_area 
 
-decl_area:        decl_area var_decl
-                | decl_area proc_decl
-             /* | decl_area func_decl */ 
-             /* | decl_area pack_decl */
-             /* | decl_area type_decl */
-             /* | decl_area import_decl */
-                | %empty
+decl_area:        decl
+                | decl_area decl
 
-var_decl:         NAME COLON INTEGERTY /* NAME */ ASG INTEGER /* literal or expr */ SC { 
-                                                                                          std::cout << "Var decl:" << $1 << ' ' << $5 << '\n';
-                                                                                          dummy::vars[$1] = $5; 
-                                                                                        }
-                | NAME COLON INTEGERTY SC                                               {
-                                                                                          std::cout << "Var decl:" << $1 << '\n';
-                                                                                          dummy::vars[$1] = 0; 
-                                                                                        }
+decl:             var_decl
+                | proc_decl  
+                | func_decl  
+                | pack_decl  
+                | type_decl  
+             /* | use_decl */     /* TODO */
+             /* | import_decl */ /* TODO */
 
+var_decl:         NAME COLON INTEGERTY /* NAME */ ASG INTEGER /* literal or expr */ SC 
+                | NAME COLON INTEGERTY SC                                               
+                                                                                        
 proc_decl:        PROCEDURE NAME IS decl_area BEGIN_KW body END NAME SC
+                | PROCEDURE NAME LPAR param_list RPAR BEGIN_KW body END NAME SC
+                | OVERRIDING proc_decl
 
+func_decl:        FUNCTION NAME RETURN NAME IS decl_area BEGIN_KW body END NAME SC                 
+                | FUNCTION NAME LPAR param_list RPAR RETURN NAME IS decl_area BEGIN_KW body END NAME SC
+                | OVERRIDING func_decl /* может не работать */
+
+pack_decl:        PACKAGE NAME IS decl_area END NAME SC         
+                | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC         
+
+type_decl:        record_decl
+                  /* enum_decl */
+
+record_decl:      TYPE NAME IS RECORD vars_decl END RECORD SC 
+                | TYPE NAME IS NEW NAME WITH RECORD vars_decl END RECORD SC
+
+vars_decl:        var_decl
+                | vars_decl var_decl
+
+param:            NAME COLON NAME
+
+param_list        param
+                | param_list SC param
+                 
+/* ----------------------------------------------------------------------------------------------- */
 body:             stms
 
 stms:             stm
                 | stms stm
 
 stm:              oper
+                | if_stm
+             /* | case_stm */
+                | while_stm
+                | for_stm
 
 oper:             assign
 
-assign:           lval ASG expr SC            { 
-                                                std::cout << $3 << '\n';
-                                                *$1 = $3;
-                                              }
+assign:           lval ASG expr SC            
+                                                
+lval:             NAME                      
 
-lval:             NAME                        {  
-                                                std::cout << $1 << " -- NOW:";
-                                                $$ = &dummy::vars[$1]; 
-                                              }
+expr:             expr PLUS expr              
+                | expr MINUS expr             
+                | expr MUL expr               
+                | expr DIV expr               
+                | expr MOD expr               
+                | MINUS expr %prec UMINUS     
+                | NAME                        
+                | INTEGER /* literal */       
+                | LPAR expr RPAR              
+             /* | LITERAL */ 
+            /*  | call    */
 
-expr:             expr PLUS expr              { $$ = $1 + $3; }
-                | expr MINUS expr             { $$ = $1 - $3; }
-                | expr MUL expr               { $$ = $1 * $3; }
-                | expr DIV expr               { $$ = $1 / $3; }
-                | expr MOD expr               { $$ = $1 % $3; }
-                | MINUS expr %prec UMINUS     { $$ = -$2; }
-                | NAME                        { $$ = dummy::vars.at($1); }
-                | INTEGER /* literal */       { $$ = $1; }
-                | LPAR expr RPAR              { $$ = $2; }
+                /*логический операции, конкатенация, взятие элемента массива*/
                  
+/* ----------------------------------------------------------------------------------------------- */
+if_stm:          if_head body END IF SC
+               | if_head body elsifs END IF SC
+               | if_head body elsifs else END IF SC
+               | if_head body else END IF SC
+
+elsifs:          elsif         
+               | elsifs elsif  
+
+elsif:           ELSIF expr THEN body
+
+else:            ELSE body
+
+if_head:         IF expr THEN 
+
+/* ----------------------------------------------------------------------------------------------- */
+for_stm:        FOR NAME IN range LOOP body END LOOP
+
+range:        expr DOT_DOT expr
+
+
+while_stm:        WHILE expr LOOP body END LOOP   
+
 
 
 %%
