@@ -152,7 +152,7 @@ param:            NAME COLON NAME
 
 param_list        param
                 | param_list SC param
-                 
+                                                                   
 /* ----------------------------------------------------------------------------------------------- */
 body:             stms
 
@@ -164,6 +164,9 @@ stm:              oper
              /* | case_stm */
                 | while_stm
                 | for_stm
+                | call_stm
+                    
+call_stm:         call SC
 
 oper:             assign
 
@@ -181,7 +184,9 @@ expr:             expr PLUS expr
                 | INTEGER /* literal */       
                 | LPAR expr RPAR              
              /* | LITERAL */ 
-            /*  | call    */
+                | call
+
+call: NAME LPAR RPAR 
 
                 /*логический операции, конкатенация, взятие элемента массива*/
                  
