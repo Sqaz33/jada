@@ -1,4 +1,5 @@
 %option c++
+%option yylineno
 
 %{
   #include <string>    
@@ -204,15 +205,16 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         
                       }
 
-{BAD_CHAR_EMPTY}      { handleLexicalError("Empty char"); }
-{BAD_CHAR_LONG}       { handleLexicalError("Bad char long", std::string(yytext, yyleng)); }
-{BAD_CHAR_UNTERM}     { handleLexicalError("Bad char unterm", std::string(yytext, yyleng)); }
-{BAD_STRING_LINE_FEED} { handleLexicalError("Bad string with LF", std::string(yytext, yyleng)); }
+{BAD_CHAR_EMPTY}      { handleLexicalError("Empty char"); return yy::parser::token_type::ERR; }
+{BAD_CHAR_LONG}       { handleLexicalError("Bad char long", std::string(yytext, yyleng)); return yy::parser::token_type::ERR; }
+{BAD_CHAR_UNTERM}     { handleLexicalError("Bad char unterm", std::string(yytext, yyleng)); return yy::parser::token_type::ERR; }
+{BAD_STRING_LINE_FEED} { handleLexicalError("Bad string with LF", std::string(yytext, yyleng)); return yy::parser::token_type::ERR; }
 {BAD_STRING_NO_CLOSE_DOUBLE_QUOTE} { handleLexicalError(
                                       "Bad string no close double quote",
-                                       std::string(yytext, yyleng));
+                                       std::string(yytext, yyleng)); 
+                                       return yy::parser::token_type::ERR; 
                                    }
 
-.                     { handleLexicalError("Unknown input text", std::string(yytext, yyleng)); }
+.                     { handleLexicalError("Unknown input text", std::string(yytext, yyleng)); return yy::parser::token_type::ERR; }
 
 %%

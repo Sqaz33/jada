@@ -43,11 +43,20 @@ int main(int argc, char** argv) try {
         std::cout << "Can`t open file\n";
         return 1; 
     }
+    helper::moduleFileNames.push_back(argv[1]);         
+
 
     yyFlexLexer lexer(&ifs);
     yy::parser p(&lexer);
-    p.set_debug_level(1); 
-    return !p.parse();
+    p.set_debug_level(1);
+    
+    int res = !p.parse();
+
+    for (auto&& e : helper::errs) {
+        std::cout << e << '\n';
+    }
+
+    return res;
 
 } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';

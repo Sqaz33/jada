@@ -85,6 +85,8 @@
 
 %token<std::pair<std::string, std::string>> ATTRIBUTE_CALL 
 
+%token ERR
+
 %left INPUT
 %left OR
 %left AND
@@ -125,7 +127,7 @@ decl:             var_decl
              /* | use_decl */     /* TODO */
              /* | import_decl */ /* TODO */
 
-var_decl:         NAME COLON INTEGERTY /* NAME */ ASG INTEGER /* literal or expr */ SC 
+var_decl:         NAME COLON INTEGERTY /* NAME */ ASG expr SC 
                 | NAME COLON INTEGERTY SC                                               
                                                                                         
 proc_decl:        PROCEDURE NAME IS decl_area BEGIN_KW body END NAME SC
