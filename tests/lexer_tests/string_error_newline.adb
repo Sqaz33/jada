@@ -1,2 +1,0 @@
-N : String := "Hello
-World";

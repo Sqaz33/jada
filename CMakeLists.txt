@@ -29,7 +29,16 @@ add_executable(${PROJECT_NAME}
 )
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
 
-
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+add_library(Core STATIC src/string_utility.cpp)
+add_library(Lexer STATIC ${FLEX_scanner_OUTPUTS})
+add_library(Parser STATIC ${BISON_parser_OUTPUTS})
+target_include_directories(Lexer PRIVATE src)
+target_include_directories(Lexer PRIVATE ${CMAKE_BINARY_DIR})
+target_include_directories(Parser PRIVATE src)
+target_include_directories(Parser PRIVATE ${CMAKE_BINARY_DIR})
+target_include_directories(Core PRIVATE ${CMAKE_BINARY_DIR})
+
+add_subdirectory(test)

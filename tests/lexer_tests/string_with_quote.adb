@@ -1,1 +1,0 @@
-Q : String := "He said ""Hello""";

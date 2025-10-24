@@ -1,1 +1,0 @@
-Str_var : String := "Ada_Lexer";

@@ -1,1 +1,0 @@
-X : String := "Line1\nLine2";

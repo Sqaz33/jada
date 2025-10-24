@@ -2,7 +2,6 @@
 #include <exception>
 #include <fstream>
 #include <string_view>
-#include <unordered_map>                   // TODO: delete then
 
 #include <FlexLexer.h>
 

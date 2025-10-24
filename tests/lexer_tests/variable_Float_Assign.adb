@@ -1,1 +1,0 @@
-Fl_var : Float := 3.14;

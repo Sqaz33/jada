@@ -1,1 +1,0 @@
-not A and B

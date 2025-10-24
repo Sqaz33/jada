@@ -1,2 +1,0 @@
-package My_Package is
-end My_Package;

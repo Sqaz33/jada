@@ -8,6 +8,18 @@
 
 #include <FlexLexer.h>
 
+#include "helper.hpp"
+#include "parser.hpp"
+
+namespace helper {
+    yy::parser::semantic_type* yylval = nullptr;
+    std::vector<std::string> moduleFileNames;
+    std::vector<std::string> errs;
+    bool hasErr = false;
+    int lineNo = 0;
+    int columnNo = 0;
+}
+
 int yyFlexLexer::yywrap() { return 1; }
 
 int main() {
@@ -15,12 +27,13 @@ int main() {
     namespace fs = std::filesystem;    
     fs::path tstdir(TSTDATADIR);
     if (!fs::is_directory(tstdir)) {
-        std::cerr << "the path is not a directory: " 
+        std::cout << "the path is not a directory: " 
                   << TSTDATADIR
                   << '\n';
         return 1;
     }
-
+    helper::moduleFileNames.push_back("test");
+    int savedStdOut = dup(STDERR_FILENO);
     for (auto&& entry : fs::directory_iterator(tstdir)) {
         if (entry.is_regular_file()) {
             const auto input = entry.path().string(); 
@@ -29,10 +42,10 @@ int main() {
                           + ".output.txt";
 
             int file = open(output.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0644);
-            int d = dup2(file, STDOUT_FILENO);
+            int d = dup2(file, STDERR_FILENO);
             close(file);
             if (d == -1) {
-                std::cerr << "can't open the output file: "
+                std::cout << "can't open the output file: "
                           <<  output
                           << '\n';
                 continue;
@@ -40,14 +53,20 @@ int main() {
             
             std::ifstream ifs(input);
             if (!ifs.is_open()) {
-                std::cerr << "can't open the input file: "
+                std::cout << "can't open the input file: "
                           << input 
                           << '\n';
                 continue;
             }
-
+            
             yyFlexLexer lexer(&ifs);
-            while (lexer.yylex());
+            yy::parser p(&lexer);
+            p.set_debug_level(1);
+            
+            if (!p.parse()) {
+                dup2(savedStdOut, STDERR_FILENO);
+                std::cout << "Error on " << input << '\n';
+            }
         }
     }
     

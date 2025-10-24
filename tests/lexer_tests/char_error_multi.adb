@@ -1,1 +1,0 @@
-M : Character := 'AB';

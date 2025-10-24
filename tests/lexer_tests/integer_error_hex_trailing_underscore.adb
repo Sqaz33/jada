@@ -1,1 +1,0 @@
-W : Integer := 16#FF_#;
