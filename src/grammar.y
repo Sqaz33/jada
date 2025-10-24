@@ -153,6 +153,9 @@ param_list:       param
                 | param_list SC param
 
 param:            NAME COLON any_type
+                | NAME COLON IN OUT any_type
+                | NAME COLON IN any_type
+                | NAME COLON OUT any_type
 
 optional_decl_area: %empty
                 |   decl_area
@@ -278,6 +281,6 @@ namespace yy {
   }
 
   void parser::error(const std::string& s) {
-    std::cerr << "Error: " << s << std::endl;
+    std::cerr << "Error: " << s << std::endl; // TODO
   }
 }
