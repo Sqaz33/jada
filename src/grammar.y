@@ -1,3 +1,10 @@
+/* 
+  file: grammar.y
+  description: Ada language grammar
+  authors: Ryzhkov, Matveev
+  Volgograd 2025 
+*/
+
 %language "c++"
 
 %skeleton "lalr1.cc"
@@ -23,92 +30,75 @@
   }
 }
 
-%token SC            
-%token COLON
-%token DOT_DOT         
-%token EQ            
-%token NEQ           
-%right ASG           
-%token LPAR          
-%token RPAR          
-%token DOT           
-%token AMPER         
-%token APOSTR        
-%token<std::string> NAME          
-%token COMMA        
+%defines
 
-%token IF            
-%token THEN          
-%token ELSE          
-%token ELSIF         
-
-%token FOR           
-%token LOOP          
-%token IN            
-%token EXIT          
-%token WHEN          
-%token WHILE         
-
-%token WITH          
-%token USE           
-
-%token PROCEDURE     
-%token FUNCTION      
-%token BEGIN_KW         
-%token PRIVATE         
-%token IS            
-%token END           
-%token RETURN        
-
-%token PACKAGE       
-%token BODY          
-%token TYPE          
-%token TAGGED        
-%token RECORD        
-%token OVERRIDING    
-%token NEW           
-
-%token INTEGERTY     
-%token STRINGTY      
-%token CHARACTERTY   
-%token FLOATTY       
-%token BOOLTY        
-
-%token<int> INTEGER               
-%token<float> FLOAT         
-%token FALSE         
-%token TRUE          
-%token NULL_KW
-
-%token<char> CHAR          
-%token<std::string> STRING        
-
-%token<std::pair<std::string, std::string>> ATTRIBUTE_CALL 
+%token SC COLON COMMA DOT DOT_DOT LPAR RPAR APOSTR
+%right ASG
+%token IF THEN ELSE ELSIF WHEN
+%token FOR LOOP WHILE EXIT IN OUT
+%token PROCEDURE FUNCTION RETURN IS BEGIN_KW END OVERRIDING NEW
+%token PACKAGE BODY PRIVATE WITH USE
+%token ARRAY OF TYPE TAGGED RECORD
+%token INTEGERTY STRINGTY CHARACTERTY FLOATTY BOOLTY
+%token FALSE TRUE NULL_KW
+%token<std::string> NAME
+%token<int> INTEGER
+%token<float> FLOAT
+%token<char> CHAR
+%token<std::string> STRING
+%token<std::pair<std::string, std::string>> GETTING_ATTRIBUTE
+%left INPUT
+%left OR AND NOT
+%left EQ NEQ MORE LESS GTE LTE
+%left PLUS MINUS AMPER
+%left MUL DIV MOD
 
 %token ERR
-
-%left INPUT
-%left OR
-%left AND
-%left NOT
-%left PLUS 
-%left MINUS
-%left MUL 
-%left DIV 
-%left MOD
-%left MORE
-%left LESS
 
 %nonassoc UMINUS
 
 %nterm stm            
-%nterm assign
-%nterm expr
-%nterm lval
-%nterm decl
 %nterm decl_area
+%nterm decl
+%nterm var_decl
+%nterm import_decl
+%nterm use_decl
+%nterm qualified_name
+%nterm proc_decl
+%nterm func_decl
+%nterm pack_decl
+%nterm type_decl
+%nterm record_decl
+%nterm vars_decl
+%nterm param
 %nterm param_list
-
+%nterm scalar_type
+%nterm any_type
+%nterm string_type
+%nterm array_type
+%nterm array_range
+%nterm static_ranges
+%nterm static_range
+%nterm body
+%nterm stms
+%nterm oper
+%nterm assign
+%nterm lval
+%nterm expr
+%nterm call_or_indexing
+%nterm call
+%nterm args
+%nterm literal
+%nterm literals
+%nterm aggregate
+%nterm if_stm
+%nterm if_head
+%nterm elsifs
+%nterm elsif
+%nterm else
+%nterm for_stm
+%nterm while_stm
+%nterm range
 
 %start program
 
@@ -116,46 +106,82 @@
 
 program: decl_area 
 
+/* declarations */
+/* ################################################################################ */
 decl_area:        decl
                 | decl_area decl
 
 decl:             var_decl
+                | import_decl
+                | use_decl 
                 | proc_decl  
                 | func_decl  
                 | pack_decl  
                 | type_decl  
-             /* | use_decl */     /* TODO */
-             /* | import_decl */ /* TODO */
 
-var_decl:         NAME COLON INTEGERTY /* NAME */ ASG expr SC 
-                | NAME COLON INTEGERTY SC                                               
-                                                                                        
-proc_decl:        PROCEDURE NAME IS decl_area BEGIN_KW body END NAME SC
-                | PROCEDURE NAME LPAR param_list RPAR BEGIN_KW body END NAME SC
+var_decl:         NAME COLON any_type ASG expr SC 
+                | NAME COLON any_type SC                                               
+
+import_decl:      WITH qualified_name SC
+
+use_decl:         USE qualified_name SC
+
+qualified_name:   NAME
+                | qualified_name DOT NAME
+
+proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC
+                | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC
                 | OVERRIDING proc_decl
 
-func_decl:        FUNCTION NAME RETURN NAME IS decl_area BEGIN_KW body END NAME SC                 
-                | FUNCTION NAME LPAR param_list RPAR RETURN NAME IS decl_area BEGIN_KW body END NAME SC
-                | OVERRIDING func_decl /* может не работать */
+func_decl:        FUNCTION NAME RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC                 
+                | FUNCTION NAME LPAR param_list RPAR RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC
+                | OVERRIDING func_decl 
 
 pack_decl:        PACKAGE NAME IS decl_area END NAME SC         
                 | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC         
 
 type_decl:        record_decl
-                  /* enum_decl */
+                  /* enum_decl */ /* TODO */
 
 record_decl:      TYPE NAME IS RECORD vars_decl END RECORD SC 
-                | TYPE NAME IS NEW NAME WITH RECORD vars_decl END RECORD SC
+                | TYPE NAME IS NEW qualified_name WITH RECORD vars_decl END RECORD SC
 
 vars_decl:        var_decl
                 | vars_decl var_decl
 
-param:            NAME COLON NAME
-
-param_list        param
+param_list:       param
                 | param_list SC param
-                                                                   
-/* ----------------------------------------------------------------------------------------------- */
+
+param:            NAME COLON any_type
+
+optional_decl_area: %empty
+                |   decl_area
+
+/* types */
+/* ################################################################################ */
+any_type:         scalar_type
+                | array_type
+
+scalar_type:      INTEGERTY 
+                | FLOATTY
+                | CHARACTERTY
+                | string_type  
+                | qualified_name
+                | getting_attribute
+
+string_type:      STRINGTY LPAR static_range RPAR
+
+array_type:       ARRAY array_range OF scalar_type
+
+array_range:      LPAR static_ranges RPAR
+
+static_ranges:    static_range
+                | static_range COMMA static_range
+
+static_range:     INTEGER DOT_DOT INTEGER
+
+/* statements */
+/* ################################################################################ */
 body:             stms
 
 stms:             stm
@@ -163,18 +189,19 @@ stms:             stm
 
 stm:              oper
                 | if_stm
-             /* | case_stm */
                 | while_stm
                 | for_stm
                 | call_stm
                     
 call_stm:         call SC
 
+call:             qualified_name LPAR args RPAR 
+
 oper:             assign
 
 assign:           lval ASG expr SC            
                                                 
-lval:             NAME                      
+lval:             qualified_name                      
 
 expr:             expr PLUS expr              
                 | expr MINUS expr             
@@ -182,17 +209,43 @@ expr:             expr PLUS expr
                 | expr DIV expr               
                 | expr MOD expr               
                 | MINUS expr %prec UMINUS     
-                | NAME                        
-                | INTEGER /* literal */       
-                | LPAR expr RPAR              
-             /* | LITERAL */ 
-                | call
+                | qualified_name
+                | call_or_indexing
+                | call_attribute
+                | literal
+                | expr EQ expr
+                | expr NEQ expr                                 
+                | expr MORE expr
+                | expr LESS expr
+                | expr GTE expr
+                | expr LTE expr
+                | expr AMPER expr 
+                | RPAR expr RPAR
 
-call: NAME LPAR RPAR 
+call_or_indexing:  qualified_name LPAR args RPAR
 
-                /*логический операции, конкатенация, взятие элемента массива*/
-                 
-/* ----------------------------------------------------------------------------------------------- */
+call_attribute:    getting_attribute LPAR args RPAR
+
+args:             expr
+                | args COMMA expr
+
+literal:          INTEGER
+                | FALSE
+                | TRUE
+                | CHAR
+                | STRING
+                | aggregate
+
+literals:         literal
+                | literals COMMA literal
+
+aggregate:        LPAR literals RPAR
+
+getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE
+                |    GETTING_ATTRIBUTE
+
+/* control structures */
+/* ################################################################################ */
 if_stm:          if_head body END IF SC
                | if_head body elsifs END IF SC
                | if_head body elsifs else END IF SC
@@ -207,19 +260,13 @@ else:            ELSE body
 
 if_head:         IF expr THEN 
 
-/* ----------------------------------------------------------------------------------------------- */
-for_stm:        FOR NAME IN range LOOP body END LOOP
+for_stm:         FOR NAME IN range LOOP body END LOOP
 
-range:        expr DOT_DOT expr
+range:           expr DOT_DOT expr
 
-
-while_stm:        WHILE expr LOOP body END LOOP   
-
-
+while_stm:       WHILE expr LOOP body END LOOP   
 
 %%
-
-
 
 #include "helper.hpp"
 

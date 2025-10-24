@@ -44,7 +44,7 @@ FLOAT         {INTEGER}\.{INTEGER}([Ee][+-]?{INTEGER})?
 CHAR          \'([^\'\n])\'
 STRING        \"([^\"\n]|\"\")*\"
 
-ATTRIBUTE_CALL    {NAME}\s*\'\s*{NAME}
+GETTING_ATTRIBUTE    {NAME}\s*\'\s*{NAME}
 BAD_CHAR_EMPTY     \'\'
 BAD_CHAR_LONG      \'([^\'\n]{2,})\'
 BAD_CHAR_UNTERM    \'([^\'\n]+)
@@ -66,9 +66,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 
 ";"                   { return yy::parser::token_type::SC; }
 ":"                   { return yy::parser::token_type::COLON; }
-".."                   { return yy::parser::token_type::DOT_DOT; }
-"="                   { return yy::parser::token_type::EQ; }
-"/="                  { return yy::parser::token_type::NEQ; }
+".."                  { return yy::parser::token_type::DOT_DOT; }
 ":="                  { return yy::parser::token_type::ASG; }
 "("                   { return yy::parser::token_type::LPAR; }
 ")"                   { return yy::parser::token_type::RPAR;}
@@ -82,9 +80,12 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 "else"                { return yy::parser::token_type::ELSE; }
 "elsif"               { return yy::parser::token_type::ELSIF; }
 
+"array"               { return yy::parser::token_type::ARRAY; } 
+"in"                  { return yy::parser::token_type::IN; } 
+"out"                 { return yy::parser::token_type::OUT; } 
+"of"                  { return yy::parser::token_type::OF; } 
 "for"                 { return yy::parser::token_type::FOR; }
 "loop"                { return yy::parser::token_type::LOOP; }
-"in"                  { return yy::parser::token_type::IN; }
 "exit"                { return yy::parser::token_type::EXIT; }
 "when"                { return yy::parser::token_type::WHEN; }
 "while"               { return yy::parser::token_type::WHILE; }
@@ -182,6 +183,11 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 "*"                   { return yy::parser::token_type::MUL;} 
 "<"                   { return yy::parser::token_type::MORE;} 
 ">"                   { return yy::parser::token_type::LESS;}
+"="                   { return yy::parser::token_type::EQ; }
+"/="                  { return yy::parser::token_type::NEQ; }
+">="                  { return yy::parser::token_type::GTE; }
+"<="                  { return yy::parser::token_type::LTE; }
+
 
 "or"                  { return yy::parser::token_type::OR; } 
 "not"                 { return yy::parser::token_type::NOT; } 
@@ -193,7 +199,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         yylval->emplace<std::string>(std::move(text));
                         return yy::parser::token_type::NAME;
                       }
-{ATTRIBUTE_CALL}      { 
+{GETTING_ATTRIBUTE}      { 
                         std::string text(yytext, yyleng);
                         std::regex re(R"(([a-zA-Z_][a-zA-Z0-9_]*)\s*'\s*([a-zA-Z_][a-zA-Z0-9_]*))");
                         std::smatch match;
@@ -201,8 +207,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         std::pair<std::string, std::string> res(match[1], match[2]);
                         yylval->
                           emplace<std::pair<std::string, std::string>>(std::move(res));
-                        return yy::parser::token_type::ATTRIBUTE_CALL;
-                        
+                        return yy::parser::token_type::GETTING_ATTRIBUTE;
                       }
 
 {BAD_CHAR_EMPTY}      { handleLexicalError("Empty char"); return yy::parser::token_type::ERR; }
