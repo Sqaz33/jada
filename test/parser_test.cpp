@@ -63,7 +63,7 @@ int main() {
             yy::parser p(&lexer);
             p.set_debug_level(1);
             
-            if (!p.parse()) {
+            if (p.parse()) {
                 dup2(savedStdOut, STDERR_FILENO);
                 std::cout << "Error on " << input << '\n';
             }

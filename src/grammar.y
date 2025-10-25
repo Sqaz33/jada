@@ -99,6 +99,8 @@
 %nterm for_stm
 %nterm while_stm
 %nterm range
+%nterm call_or_indexing_stm
+%nterm optional_args
 
 %start program
 
@@ -120,6 +122,7 @@ decl:             var_decl
                 | type_decl  
 
 var_decl:         NAME COLON any_type ASG expr SC 
+                | NAME COLON any_type ASG aggregate SC 
                 | NAME COLON any_type SC                                               
 
 import_decl:      WITH qualified_name SC
@@ -194,19 +197,26 @@ stm:              oper
                 | if_stm
                 | while_stm
                 | for_stm
-                | call_stm
                     
-call_stm:         call SC
-
-call:             qualified_name LPAR args RPAR 
-
 oper:             assign
+                | call_or_indexing_stm
+
+call_or_indexing_stm:  call_or_indexing SC
 
 assign:           lval ASG expr SC            
                                                 
-lval:             qualified_name                      
+lval:             qualified_name       
+                | call_or_indexing               
 
-expr:             expr PLUS expr              
+
+expr:             expr EQ expr
+                | expr NEQ expr                                 
+                | expr MORE expr
+                | expr LESS expr
+                | expr GTE expr
+                | expr LTE expr
+                | expr AMPER expr 
+                | expr PLUS expr              
                 | expr MINUS expr             
                 | expr MUL expr               
                 | expr DIV expr               
@@ -214,38 +224,41 @@ expr:             expr PLUS expr
                 | MINUS expr %prec UMINUS     
                 | qualified_name
                 | call_or_indexing
-                | call_attribute
                 | literal
-                | expr EQ expr
-                | expr NEQ expr                                 
-                | expr MORE expr
-                | expr LESS expr
-                | expr GTE expr
-                | expr LTE expr
-                | expr AMPER expr 
-                | RPAR expr RPAR
 
-call_or_indexing:  qualified_name LPAR args RPAR
+call_or_indexing:   qualified_name LPAR optional_args RPAR
+                |   getting_attribute LPAR optional_args RPAR
 
-call_attribute:    getting_attribute LPAR args RPAR
+optional_args:    %empty
+                | args
 
 args:             expr
+                | aggregate
                 | args COMMA expr
+                | args COMMA aggregate
+
+getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE
+                |    GETTING_ATTRIBUTE
 
 literal:          INTEGER
                 | FALSE
                 | TRUE
                 | CHAR
                 | STRING
-                | aggregate
+             /* | aggregate  ?? */
 
-literals:         literal
+aggregate:        LPAR inits RPAR
+                | LPAR literals RPAR 
+
+inits:            init
+                | inits init
+
+init:             NAME EQ MORE literal
+                | INTEGER EQ MORE literal 
+
+literals:         literal  COMMA literal
                 | literals COMMA literal
 
-aggregate:        LPAR literals RPAR
-
-getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE
-                |    GETTING_ATTRIBUTE
 
 /* control structures */
 /* ################################################################################ */
@@ -263,11 +276,11 @@ else:            ELSE body
 
 if_head:         IF expr THEN 
 
-for_stm:         FOR NAME IN range LOOP body END LOOP
+for_stm:         FOR NAME IN range LOOP body END LOOP SC
 
 range:           expr DOT_DOT expr
 
-while_stm:       WHILE expr LOOP body END LOOP   
+while_stm:       WHILE expr LOOP body END LOOP SC
 
 %%
 
