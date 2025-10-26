@@ -72,10 +72,9 @@
 %nterm vars_decl
 %nterm param
 %nterm param_list
-%nterm scalar_type
-%nterm any_type
 %nterm string_type
 %nterm array_type
+%nterm type
 %nterm array_range
 %nterm static_ranges
 %nterm static_range
@@ -118,11 +117,11 @@ decl:             var_decl
                 | proc_decl  
                 | func_decl  
                 | pack_decl  
-                | type_decl  
+                | type_decl
 
-var_decl:         NAME COLON any_type ASG expr SC 
-                | NAME COLON any_type ASG aggregate SC 
-                | NAME COLON any_type SC                                               
+var_decl:         NAME COLON type ASG expr SC 
+                | NAME COLON type ASG aggregate SC 
+                | NAME COLON type SC                                               
 
 import_decl:      WITH qualified_name SC
 
@@ -135,14 +134,15 @@ proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC
                 | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC
                 | OVERRIDING proc_decl
 
-func_decl:        FUNCTION NAME RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC                 
-                | FUNCTION NAME LPAR param_list RPAR RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC
+func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                 
+                | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC
                 | OVERRIDING func_decl 
 
 pack_decl:        PACKAGE NAME IS decl_area END NAME SC         
                 | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC         
 
 type_decl:        record_decl
+                 | type_alias_decl
                   /* enum_decl */ /* TODO */
 
 record_decl:      TYPE NAME IS RECORD vars_decl END RECORD SC 
@@ -154,29 +154,30 @@ vars_decl:        var_decl
 param_list:       param
                 | param_list SC param
 
-param:            NAME COLON any_type
-                | NAME COLON IN OUT any_type
-                | NAME COLON IN any_type
-                | NAME COLON OUT any_type
+param:            NAME COLON type
+                | NAME COLON IN OUT type
+                | NAME COLON IN type
+                | NAME COLON OUT type
 
 optional_decl_area: %empty
                 |   decl_area
 
+type_alias_decl:    TYPE NAME IS type SC
+
 /* types */
 /* ################################################################################ */
-any_type:         scalar_type
-                | array_type
 
-scalar_type:      INTEGERTY 
+type:             INTEGERTY 
                 | FLOATTY
                 | CHARACTERTY
                 | string_type  
                 | qualified_name
                 | getting_attribute
+                | array_type
 
 string_type:      STRINGTY LPAR static_range RPAR
 
-array_type:       ARRAY array_range OF scalar_type
+array_type:       ARRAY array_range OF type
 
 array_range:      LPAR static_ranges RPAR
 
