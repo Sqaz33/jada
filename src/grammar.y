@@ -85,7 +85,7 @@
 %nterm assign
 %nterm lval
 %nterm expr
-%nterm call_or_indexing
+%nterm call_or_indexing_or_var  
 %nterm args
 %nterm literal
 %nterm literals
@@ -98,7 +98,7 @@
 %nterm for_stm
 %nterm while_stm
 %nterm range
-%nterm call_or_indexing_stm
+%nterm call_or_indexing_or_var_stm
 %nterm optional_args
 
 %start program
@@ -199,14 +199,13 @@ stm:              oper
                 | return_stm
 
 oper:             assign
-                | call_or_indexing_stm
+                | call_or_indexing_or_var_stm
 
-call_or_indexing_stm:  call_or_indexing SC
+call_or_indexing_or_var_stm:  call_or_indexing_or_var SC
 
 assign:           lval ASG expr SC            
                                                 
-lval:             qualified_name       
-                | call_or_indexing               
+lval:             call_or_indexing_or_var               
 
 return_stm:       RETURN expr SC
                 | RETURN SC 
@@ -224,12 +223,12 @@ expr:             expr EQ expr
                 | expr DIV expr               
                 | expr MOD expr               
                 | MINUS expr %prec UMINUS     
-                | qualified_name
-                | call_or_indexing
+                | call_or_indexing_or_var
                 | literal
 
-call_or_indexing:   qualified_name LPAR optional_args RPAR
-                |   getting_attribute LPAR optional_args RPAR
+call_or_indexing_or_var:   qualified_name LPAR optional_args RPAR
+                |          getting_attribute LPAR optional_args RPAR
+                |          qualified_name
 
 optional_args:    %empty
                 | args

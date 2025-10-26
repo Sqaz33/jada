@@ -20,6 +20,14 @@ procedure TestLoops is
     i : Integer;
     sum : Integer := 0;
     arr : array(1..10) of Integer := (1, 2, 3, 4);
+
+    arr2: array(1..3) of Pack.Base := ((X => 1), (X => 2), (X => 3));
+
+    procedure Proc is 
+    begin 
+      Put("Hi from ada");
+      New_Line;
+    end Proc;
 begin
    --   -- Цикл for
     for i in 1..10 loop

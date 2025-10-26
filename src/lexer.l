@@ -181,8 +181,8 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 "-"                   { return yy::parser::token_type::MINUS;} 
 "/"                   { return yy::parser::token_type::DIV;} 
 "*"                   { return yy::parser::token_type::MUL;} 
-"<"                   { return yy::parser::token_type::MORE;} 
-">"                   { return yy::parser::token_type::LESS;}
+"<"                   { return yy::parser::token_type::LESS;} 
+">"                   { return yy::parser::token_type::MORE;}
 "="                   { return yy::parser::token_type::EQ; }
 "/="                  { return yy::parser::token_type::NEQ; }
 ">="                  { return yy::parser::token_type::GTE; }
