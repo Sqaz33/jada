@@ -15,9 +15,10 @@ namespace helper {
     yy::parser::semantic_type* yylval = nullptr;
     std::vector<std::string> moduleFileNames;
     std::vector<std::string> errs;
-    bool hasErr = false;
-    int lineNo = 0;
-    int columnNo = 0;
+    int first_line = 1;
+    int last_line = 1;
+    int first_column = 1;
+    int last_column = 1;
 }
 
 int yyFlexLexer::yywrap() { return 1; }
@@ -32,7 +33,6 @@ int main() {
                   << '\n';
         return 1;
     }
-    helper::moduleFileNames.push_back("test");
     int savedStdOut = dup(STDERR_FILENO);
     for (auto&& entry : fs::directory_iterator(tstdir)) {
         if (entry.is_regular_file()) {
@@ -42,6 +42,7 @@ int main() {
                           + ".output.txt";
 
             int file = open(output.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0644);
+            helper::moduleFileNames.push_back(input.c_str());
             int d = dup2(file, STDERR_FILENO);
             close(file);
             if (d == -1) {
@@ -64,9 +65,16 @@ int main() {
             p.set_debug_level(1);
             
             if (p.parse()) {
-                dup2(savedStdOut, STDERR_FILENO);
                 std::cout << "Error on " << input << '\n';
+                dup2(savedStdOut, STDERR_FILENO);
+                for (auto&& e : helper::errs) {
+                    std::cerr << e << '\n';
+                }
+            } else {
+                std::cout << "Done: " << input << '\n';
             }
+            helper::errs.clear();
+            helper::moduleFileNames.clear();
         }
     }
     

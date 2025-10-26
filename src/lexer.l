@@ -8,26 +8,28 @@
   #include <sstream>
 
   #include "string_utility.hpp"
-  #include "parser.hpp"
   #include "helper.hpp"
+  #include "parser.hpp"
+                                    
+  #define YY_USER_ACTION  helper::last_line = helper::first_line = yylineno; \
+                          helper::first_column = helper::last_column; \
+                          helper::last_column += yyleng;
 
-  #define YY_USER_ACTION helper::lineNo = yylineno; \
-      helper::columnNo += yyleng;
+                          
 
   using helper::yylval;
 
   void handleLexicalError(std::string msg, std::string err = "") {
       std::stringstream ss;
       ss << helper::moduleFileNames.back()
-         << ':' << helper::lineNo 
-         << ':' << helper::columnNo 
+         << ':' << helper::first_line 
+         << ':' << helper::first_column
          << ':';
       ss << " lexical error: ";
       ss << std::move(msg);
       ss << ": ";
       ss << std::move(err);
       helper::errs.push_back(ss.str());
-      helper::hasErr = true;
   }
 %}
 
@@ -62,7 +64,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 <COMMENT>.*           { BEGIN(INITIAL); }
 
 [ \t\r\v]+            /* игнорируем пробелы и переводы строк */
-"\n"                  { helper::columnNo = 1; }
+"\n"                  { helper::first_column = helper::last_column = 1; }
 
 ";"                   { return yy::parser::token_type::SC; }
 ":"                   { return yy::parser::token_type::COLON; }

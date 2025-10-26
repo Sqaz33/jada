@@ -9,6 +9,7 @@
 
 %skeleton "lalr1.cc"
 
+%locations
 %param {FlexLexer* lexer}
 %define api.value.type variant
 %define parse.trace  
@@ -17,6 +18,9 @@
 {
   #include <string>
   #include <utility>
+  #include <sstream>
+
+  #include "location.hh"
 
   class FlexLexer; 
 }
@@ -26,8 +30,11 @@
   #include <FlexLexer.h>
 
   namespace yy {
-      parser::token_type yylex(parser::semantic_type* yylval, FlexLexer* lexer); 
+      parser::token_type yylex(parser::semantic_type* yylval, 
+                                yy::parser::location_type*,  
+                                FlexLexer* lexer); 
   }
+
 }
 
 %defines
@@ -292,13 +299,25 @@ while_stm:       WHILE expr LOOP body END LOOP SC
 #include "helper.hpp"
 
 namespace yy {
-  parser::token_type yylex(parser::semantic_type* val, FlexLexer* lexer) {
+  parser::token_type yylex(parser::semantic_type* val, 
+                            yy::parser::location_type* loc, 
+                            FlexLexer* lexer) 
+  {
     helper::yylval = val; 
     auto tt = static_cast<parser::token_type>(lexer->yylex());
+    loc->initialize(&helper::moduleFileNames.back());
+    loc->begin.line = helper::first_line;
+    loc->end.line = helper::last_line;
+    loc->begin.column = helper::first_column - 1;
+    loc->end.column = helper::last_column;
     return tt;
   }
 
-  void parser::error(const std::string& s) {
-    std::cerr << "Error: " << s << std::endl; // TODO
+  void parser::error(const yy::parser::location_type& loc, 
+                      const std::string& msg) 
+  {
+    std::stringstream ss;
+    ss << loc << ' ' << msg << std::endl;
+    helper::errs.push_back(ss.str());
   }
 }

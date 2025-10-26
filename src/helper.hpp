@@ -9,7 +9,8 @@ namespace helper {
     extern yy::parser::semantic_type* yylval;
     extern std::vector<std::string> moduleFileNames;
     extern std::vector<std::string> errs;
-    extern bool hasErr;
-    extern int lineNo;  
-    extern int columnNo;
+    extern int first_line;  
+    extern int last_line;
+    extern int first_column;
+    extern int last_column;
 }

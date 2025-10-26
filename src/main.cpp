@@ -12,9 +12,10 @@ namespace helper {
     yy::parser::semantic_type* yylval = nullptr;
     std::vector<std::string> moduleFileNames;
     std::vector<std::string> errs;
-    bool hasErr = false;
-    int lineNo = 0;
-    int columnNo = 0;
+    int first_line = 1;
+    int last_line = 1;
+    int first_column = 1;
+    int last_column = 1; 
 }
 
 int yyFlexLexer::yywrap() { return 1; }
