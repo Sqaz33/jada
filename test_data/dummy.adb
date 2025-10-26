@@ -1,3 +1,20 @@
+with Ada.Text_IO; use Ada.Text_IO;
+
+package Pack is 
+
+type Base is record 
+   X: Integer := 1;
+end record;
+
+function print(self: Base) return Integer is
+begin
+   Put_Line(Integer'Image(self.X));
+   return 1;
+end print;
+
+end Pack;
+
+
 -- Тестирование циклов
 procedure TestLoops is
     i : Integer;

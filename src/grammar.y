@@ -86,7 +86,6 @@
 %nterm lval
 %nterm expr
 %nterm call_or_indexing
-%nterm call
 %nterm args
 %nterm literal
 %nterm literals
@@ -197,7 +196,8 @@ stm:              oper
                 | if_stm
                 | while_stm
                 | for_stm
-                    
+                | return_stm
+
 oper:             assign
                 | call_or_indexing_stm
 
@@ -208,6 +208,8 @@ assign:           lval ASG expr SC
 lval:             qualified_name       
                 | call_or_indexing               
 
+return_stm:       RETURN expr SC
+                | RETURN SC 
 
 expr:             expr EQ expr
                 | expr NEQ expr                                 
@@ -245,7 +247,6 @@ literal:          INTEGER
                 | TRUE
                 | CHAR
                 | STRING
-             /* | aggregate  ?? */
 
 aggregate:        LPAR inits RPAR
                 | LPAR literals RPAR 
@@ -255,9 +256,13 @@ inits:            init
 
 init:             NAME EQ MORE literal
                 | INTEGER EQ MORE literal 
+                | NAME EQ MORE aggregate
+                | INTEGER EQ MORE aggregate 
 
 literals:         literal  COMMA literal
                 | literals COMMA literal
+                | aggregate COMMA aggregate
+                | literals COMMA aggregate
 
 
 /* control structures */
