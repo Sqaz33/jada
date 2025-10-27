@@ -18,6 +18,13 @@ namespace helper {
     int last_column = 1; 
 }
 
+static void printErrors() {
+    for (auto&& e : helper::errs) {
+        std::cerr << e 
+                  << (e.back() == '\n' ? "" : "\n");
+    }
+}
+
 int yyFlexLexer::yywrap() { return 1; }
 
 int main(int argc, char** argv) try {
@@ -52,16 +59,17 @@ int main(int argc, char** argv) try {
     
     int res = !p.parse();
 
-    for (auto&& e : helper::errs) {
-        std::cout << e << '\n';
-    }
+    printErrors();
 
     return res;
 
 } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
+    printErrors();
+
     return 1;
 } catch (...) {
     std::cerr << "Unknown error\n";
+    printErrors();
     return 1;
 }

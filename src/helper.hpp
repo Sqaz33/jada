@@ -13,4 +13,4 @@ namespace helper {
     extern int last_line;
     extern int first_column;
     extern int last_column;
-}
+} // namespace helper

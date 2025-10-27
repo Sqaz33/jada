@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <exception>
 
 #include <FlexLexer.h>
 
@@ -21,9 +22,16 @@ namespace helper {
     int last_column = 1;
 }
 
+static void printErrors() {
+    for (auto&& e : helper::errs) {
+        std::cerr << e 
+                  << (e.back() == '\n' ? "" : "\n");
+    }
+}
+
 int yyFlexLexer::yywrap() { return 1; }
 
-int main() {
+int main() try {
 #if defined(TSTDATADIR) && defined(TSTOUTPUTDIR)
     namespace fs = std::filesystem;    
     fs::path tstdir(TSTDATADIR);
@@ -65,11 +73,9 @@ int main() {
             p.set_debug_level(1);
             
             if (p.parse()) {
-                std::cout << "Error on " << input << '\n';
                 dup2(savedStdOut, STDERR_FILENO);
-                for (auto&& e : helper::errs) {
-                    std::cerr << e << '\n';
-                }
+                std::cerr << "Error on " << input << '\n';
+                printErrors();
             } else {
                 std::cout << "Done: " << input << '\n';
             }
@@ -84,4 +90,9 @@ int main() {
         "you need to specify the path to the"
         " folder with .adb files and test output folder.");
 #endif // TSTDATADIR
+} catch (const std::exception& e) {
+    std::cout << e.what() << '\n';
+    printErrors();
+} catch (...) {
+    std::cout << "Unknown error\n";
 }

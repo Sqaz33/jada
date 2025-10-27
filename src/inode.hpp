@@ -1,15 +1,20 @@
 #pragma once
 
+#include "location.hh"
+
+
 namespace node {
 
 struct INode {
-    virtual void print() = 0;
+    virtual void print() const = 0;
+    virtual INode* calc() /* = 0 */;
+    virtual void* codegen() = 0; // TODO
+    virtual ~INode() = default;
+
+    void setLocation(const yy::location& loc);
+
+protected:
+    yy::location loc;
 };
 
-struct IScope : INode {
-    virtual void addBranch(INode* br) = 0;
-    virtual IScope* push() = 0;
-    virtual IScope* reset() = 0;
-};
-
-}
+} // namespace node
