@@ -52,7 +52,6 @@ void DeclArea::print(int spc) const {
     }
 }
 
-
 // VarDecl
 VarDecl::VarDecl(const std::string& name, IType* type, IExpr* rval) :
     name_(name)
@@ -227,8 +226,8 @@ void WithDecl::print(int spc) const {
 // RecordDecl
 RecordDecl::RecordDecl(const std::string& name, 
                        const std::vector<VarDecl*>& decls, 
-                       attribute::QualifiedName base = {}, 
-                       bool isTagged = false) :
+                       attribute::QualifiedName base, 
+                       bool isTagged) :
     name_(name)
     , decls_(decls)
     , base_(std::move(base))
@@ -573,6 +572,8 @@ void If::print(int spc) const {
     printElse_(spc + TAB);
 }
 
+
+// For
 For::For(const std::string& init, 
          std::pair<IExpr*, IExpr*> range, 
          Body* body) :
@@ -580,6 +581,12 @@ For::For(const std::string& init,
     , range_(range)
     , body_(body)
 {}
+
+For::~For() {
+    delete body_;
+    delete range_.first;
+    delete range_.second;
+}
 
 
 void For::print(int spc) const {
@@ -597,11 +604,18 @@ void For::print(int spc) const {
     body_->print(spc + TAB*2);
 }
 
+
+// While
 While::While(IExpr* cond, 
             Body* body) :
     cond_(cond)
     , body_(body)
 {}
+
+While::~While() {
+    delete cond_;
+    delete body_;
+}
 
 void While::print(int spc) const {
     std::cout <<  std::string(spc, ' ')

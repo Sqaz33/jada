@@ -43,7 +43,7 @@ namespace node {
 
 // Stms
 // #########################################
-class Stm : public INode { /*...*/ };
+class Stm : public INode { /* ... */ };
 
 class Body : public INode {
 public:
@@ -53,7 +53,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::vector<Stm*> stms_;
@@ -74,7 +74,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::vector<Decl*> decls_;
@@ -86,11 +86,7 @@ struct IType : INode {
 
 class IExpr : public INode { 
 public:
-    ~IExpr();
     virtual bool compareTypes(const IExpr* rhs) const = 0;
-
-protected:
-    IType* type_;
 };
 
 class VarDecl : public Decl {
@@ -107,16 +103,16 @@ public:
     // void setExpr(IExpr* expr) noexcept;           
     // IType* type() noexcept;
     // void setType(IType* type) noexcept;
-    bool compareTypes(IType* rhs) const;
+    bool compareTypes(IType* rhs) const {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::string name_;
-    IExpr* rval_;
     IType* type_;
+    IExpr* rval_;
 };
 
 class FuncDecl : public Decl {
@@ -133,7 +129,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
     
 
 private:
@@ -159,7 +155,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     void printParam_(int spc, const ParamType& param) const;
@@ -180,7 +176,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::string name_;
@@ -193,7 +189,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     attribute::QualifiedName name_;
@@ -205,7 +201,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     attribute::QualifiedName name_;
@@ -222,7 +218,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::string name_;
@@ -239,7 +235,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::string name_;
@@ -247,7 +243,7 @@ private:
 };
 
 } // namespace node
-
+ 
 
 // Typeinfo
 namespace node {
@@ -256,17 +252,15 @@ class SimpleLiteralType : public IType {
 public:
     SimpleLiteralType(SimpleType type);
 
-
 public:
     SimpleType type() const noexcept;
 
 public: // IType interface
-    bool compare(const IType* rhs) const override;
-
+    bool compare(const IType* rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     SimpleType type_;
@@ -278,11 +272,11 @@ public:
              IType* type);
 
 public: // IType interface
-    bool compare(const IType* rhs) const override;
+    bool compare(const IType* rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::vector<std::pair<int, int>> ranges_; 
@@ -294,11 +288,11 @@ public:
     StringType(std::pair<int, int> range);
 
 public: // IType interface
-    bool compare(const IType* rhs) const override;
+    bool compare(const IType* rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::pair<int, int> range_; 
@@ -316,15 +310,15 @@ public:
     ~Op();
 
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override; 
+    bool compareTypes(const IExpr* rhs) const override {}; 
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
-    OpType opType_;
     IExpr* lhs_;
+    OpType opType_;
     IExpr* rhs_;
 };
 
@@ -339,7 +333,7 @@ class ILiteral : public IExpr { /*...*/ };
 class SimpleLiteral : public ILiteral {
 public:
     template <class T>
-    SimpleLiteral(T&& value, SimpleType* type):
+    SimpleLiteral(T&& value, SimpleLiteralType* type):
         value_(std::forward<T>(value))
         , type_(type)
     {}
@@ -354,11 +348,11 @@ public:
     SimpleType type() const noexcept;
 
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override;
+    bool compareTypes(const IExpr* rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     void printValue_(int spc) const;
@@ -376,11 +370,11 @@ public:
     ~String();
 
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override;
+    bool compareTypes(const IExpr* rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
     
 private:
     std::string str_; 
@@ -396,11 +390,11 @@ public:
     void addInit(ILiteral* lit);
 
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override;
+    bool compareTypes(const IExpr* rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     void printNamed_(int spc) const;
@@ -425,7 +419,7 @@ private:
 
 // public: // INode interface
 //     void print(int spc) const override;
-//     void* codegen() override {} // TODO
+//     void* codegen() override { return nullptr; } // TODO
     
 // private:
 //     Aggregate* value_;
@@ -448,7 +442,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     void printElsif_(std::pair<IExpr*, Body*> elsif, int spc) const;
@@ -471,7 +465,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::string init_;
@@ -488,7 +482,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 
 private:
@@ -511,11 +505,11 @@ public:
     ~DummyCallOrIndexingOrVar();
     
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override;
+    bool compareTypes(const IExpr* rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     void printArgs_(int spc) const;
@@ -535,11 +529,11 @@ class DummyType : IType {
     DummyType(attribute::Attribute attr);
 
 public: // IType interface
-    bool compare(const IType* rhs) const override;
+    bool compare(const IType* rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     attribute::QualifiedName name_;
@@ -560,7 +554,7 @@ public:
 
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     DummyCallOrIndexingOrVar* lval_;
@@ -571,10 +565,10 @@ class DummyCallOrIndexingOrVarStm : Stm {
 public:
     DummyCallOrIndexingOrVarStm(DummyCallOrIndexingOrVar* CIV);
     ~DummyCallOrIndexingOrVarStm();
-    
+
 public: // INode interface
     void print(int spc) const override;
-    void* codegen() override {} // TODO
+    void* codegen() override { return nullptr; } // TODO
 
 private:
     DummyCallOrIndexingOrVar* CIV_;

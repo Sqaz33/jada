@@ -19,8 +19,10 @@
   #include <string>
   #include <utility>
   #include <sstream>
-
+  
   #include "location.hh"
+
+  #include "node.hpp"
 
   class FlexLexer; 
 }
@@ -93,7 +95,7 @@
 %nterm expr
 %nterm call_or_indexing_or_var  
 %nterm args
-%nterm literal
+%nterm<node::ILiteral*> literal
 %nterm literals
 %nterm aggregate
 %nterm if_stm
@@ -249,11 +251,15 @@ args:             expr
 getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE
                 |    GETTING_ATTRIBUTE
 
-literal:          INTEGER
-                | FALSE
-                | TRUE
-                | CHAR
-                | STRING
+literal:          INTEGER                                                 { 
+                                                                            auto* type = new node::SimpleLiteralType(
+                                                                                          node::SimpleType::INTEGER);
+                                                                            $$ = new node::SimpleLiteral($1, type);
+                                                                          }
+                | FALSE                                                   {}
+                | TRUE                                                    {}
+                | CHAR                                                    {}
+                | STRING                                                  {}
 
 aggregate:        LPAR inits RPAR
                 | LPAR literals RPAR 
