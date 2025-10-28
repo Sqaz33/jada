@@ -10,7 +10,7 @@ class QualifiedName { // TODO: expand interface
 public:
     void push(const std::string& name);
     bool empty() const;
-    void print() const;
+    void print(int spc) const;
     
     auto operator<=>(const QualifiedName&) const = default;
 
@@ -22,8 +22,9 @@ private:
 class Attribute {
 public:
     Attribute(QualifiedName left, const std::string& right);
-
-    void print() const;
+    Attribute() = default;
+    
+    void print(int spc) const;
 private:
     QualifiedName left_; 
     std::string right_;

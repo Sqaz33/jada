@@ -7,6 +7,7 @@
 #include <string>
 #include <variant>
 
+// enums
 namespace node {
 
 enum class OpType {
@@ -26,7 +27,10 @@ enum class OpType {
 };
 
 enum class SimpleType {
-    INTEGER, BOOL, CHAR
+    INTEGER, 
+    BOOL, 
+    CHAR,
+    FLOAT 
 };
 
 enum class ParamMode {
@@ -48,15 +52,18 @@ public:
     void addStm(Stm* stm);
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
     std::vector<Stm*> stms_;
 };
 
+} // namespace node
+
 // Decls 
-// #########################################
+namespace node {
+
 class Decl : public INode { /*...*/ };
  
 class DeclArea : public INode {
@@ -66,7 +73,7 @@ public:
     void addDecl(Decl* decl);
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
@@ -76,8 +83,6 @@ private:
 struct IType : INode { 
     virtual bool compare(const IType* rhs) const = 0;
 };
-
-// Types
 
 class IExpr : public INode { 
 public:
@@ -90,35 +95,36 @@ protected:
 
 class VarDecl : public Decl {
 public:
-    VarDecl(const std::string& name, IType* type, IExpr* expr);
-    VarDecl() = default;
+    VarDecl(const std::string& name, IType* type, IExpr* rval = nullptr);
     
     ~VarDecl();
 
 public:
     // TODO: reduce interface ? 
-    const std::string& name() const noexcept;
-    void setName(const std::string& name);
-    IExpr* expr() noexcept;
-    void setExpr(IExpr* expr) noexcept;           
-    IType* type() noexcept;
-    void setType(IType* type) noexcept;
+    // const std::string& name() const noexcept;
+    // void setName(const std::string& name);
+    // IExpr* expr() noexcept;
+    // void setExpr(IExpr* expr) noexcept;           
+    // IType* type() noexcept;
+    // void setType(IType* type) noexcept;
     bool compareTypes(IType* rhs) const;
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
     std::string name_;
-    IExpr* val_;
+    IExpr* rval_;
     IType* type_;
 };
 
 class FuncDecl : public Decl {
 public:
+    using ParamType = std::pair<ParamMode, VarDecl*>;
+
     FuncDecl(const std::string& name, 
-             std::vector<std::pair<ParamMode, VarDecl*>> params = {},
+             const std::vector<ParamType>& params ,
              IType* retType,
              DeclArea* decls,
              Body* body);
@@ -126,12 +132,16 @@ public:
     ~FuncDecl();
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
+    
+
+private:
+    void printParam_(int spc, const ParamType& param) const;
 
 private:
     std::string name_;
-    std::vector<std::pair<ParamMode, VarDecl*>> params_;
+    std::vector<ParamType> params_;
     IType* retType_;
     DeclArea* decls_;
     Body* body_;
@@ -139,21 +149,25 @@ private:
 
 class ProcDecl : public Decl {
 public:
+    using ParamType = std::pair<ParamMode, VarDecl*>;
     ProcDecl(const std::string& name, 
-             std::vector<std::pair<ParamMode, VarDecl*>> params = {},
+             const std::vector<ParamType>& params,
              DeclArea* decls,
              Body* body);
 
     ~ProcDecl();
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
+    void printParam_(int spc, const ParamType& param) const;
+
+private:
     std::string name_;
-    std::vector<std::pair<ParamMode, VarDecl*>> params_;
-    DeclArea* decls;
+    std::vector<ParamType> params_;
+    DeclArea* decls_;
     Body* body_;
 };
 
@@ -165,7 +179,7 @@ public:
     ~PackDecl();
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
@@ -173,17 +187,41 @@ private:
     DeclArea* decls_;
 };
 
+class UseDecl : public Decl {
+public:
+    UseDecl(attribute::QualifiedName name);
+
+public: // INode interface
+    void print(int spc) const override;
+    void* codegen() override {} // TODO
+
+private:
+    attribute::QualifiedName name_;
+};
+
+class WithDecl : public Decl{
+public:
+    WithDecl(attribute::QualifiedName name);
+
+public: // INode interface
+    void print(int spc) const override;
+    void* codegen() override {} // TODO
+
+private:
+    attribute::QualifiedName name_;
+};
+
 class RecordDecl : public Decl {
 public:
     RecordDecl(const std::string& name, 
-               std::vector<VarDecl*> decls, 
+               const std::vector<VarDecl*>& decls, 
                attribute::QualifiedName base = {}, 
                bool isTagged = false);
 
     ~RecordDecl();
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
@@ -196,12 +234,11 @@ private:
 
 class TypeAliasDecl : public Decl {
 public:
-    TypeAliasDecl(const std::string& name, 
-                  attribute::QualifiedName origin);
+    TypeAliasDecl(const std::string& name, IType* type); 
 
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
@@ -209,11 +246,16 @@ private:
     IType* origin_;
 };
 
+} // namespace node
+
+
 // Typeinfo
-// #########################################
+namespace node {
+
 class SimpleLiteralType : public IType {
 public:
     SimpleLiteralType(SimpleType type);
+
 
 public:
     SimpleType type() const noexcept;
@@ -221,8 +263,9 @@ public:
 public: // IType interface
     bool compare(const IType* rhs) const override;
 
+
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
@@ -231,14 +274,14 @@ private:
 
 class ArrayType : public IType {
 public:
-    ArrayType(std::vector<std::pair<int, int>> ranges, 
+    ArrayType(const std::vector<std::pair<int, int>>& ranges, 
              IType* type);
 
 public: // IType interface
     bool compare(const IType* rhs) const override;
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
@@ -254,15 +297,19 @@ public: // IType interface
     bool compare(const IType* rhs) const override;
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
     std::pair<int, int> range_; 
 };
 
+} // namespace node
+
+
 // Exprs
-// #########################################
+namespace node {
+
 class Op : public IExpr {
 public:
     Op(IExpr* lhs, OpType opType, IExpr* rhs);
@@ -272,7 +319,7 @@ public: // IExpr interface
     bool compareTypes(const IExpr* rhs) const override; 
 
 public: // INode interface
-    void print() const override;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
@@ -281,9 +328,12 @@ private:
     IExpr* rhs_;
 };
 
+} // namespace node
+
 
 // Exprs - Literals
-// #########################################
+namespace node {
+
 class ILiteral : public IExpr { /*...*/ };
 
 class SimpleLiteral : public ILiteral {
@@ -307,11 +357,14 @@ public: // IExpr interface
     bool compareTypes(const IExpr* rhs) const override;
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
-    std::variant<int, bool, char> value_;
+    void printValue_(int spc) const;
+
+private:
+    std::variant<int, bool, char, float> value_; 
     SimpleLiteralType* type_;
 };
 
@@ -326,7 +379,7 @@ public: // IExpr interface
     bool compareTypes(const IExpr* rhs) const override;
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
     
 private:
@@ -338,52 +391,68 @@ class Aggregate : ILiteral {
 public:
     ~Aggregate();
 
-    void addInit(ILiteral* lit, const std::string& name = "");
+    void addNamedInit(const std::string& name, ILiteral* lit);
+    void addIndexingInit(int idx, ILiteral* lit);
+    void addInit(ILiteral* lit);
 
 public: // IExpr interface
     bool compareTypes(const IExpr* rhs) const override;
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
-    std::vector<std::pair<std::string, ILiteral*>> inits_;
+    void printNamed_(int spc) const;
+    void printIdx_(int spc) const;
+    void printInits_(int spc) const;
+
+private:
+    std::vector<std::pair<std::string, ILiteral*>> namedInits_;
+    std::vector<std::pair<int, ILiteral*>> idxInits_;
+    std::vector<ILiteral*> inits_;
 };
 
-class Array : ILiteral {
-public:
-    Array(ArrayType* type,
-          Aggregate* init);
+// class Array : ILiteral {
+// public:
+//     Array(ArrayType* type,
+//           Aggregate* init);
 
-    ~Array();
+//     ~Array();
 
-public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override;
+// public: // IExpr interface
+//     bool compareTypes(const IExpr* rhs) const override;
 
-public: // INode interface
-    void print() const override ;
-    void* codegen() override {} // TODO
+// public: // INode interface
+//     void print(int spc) const override;
+//     void* codegen() override {} // TODO
     
-private:
-    Aggregate* value_;
-    StringType* type_;
-};
+// private:
+//     Aggregate* value_;
+//     StringType* type_;
+// };
+
+} // namespace node
+
 
 // Stms - Control Structure
-// #########################################
+namespace node {
 class If : public Stm {
 public:
     If(IExpr* cond, 
        Body* body, 
        Body* els, 
-       std::vector<std::pair<IExpr*, Body*>> elsifs);
+       const std::vector<std::pair<IExpr*, Body*>>& elsifs);
 
     ~If();
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
+
+private:
+    void printElsif_(std::pair<IExpr*, Body*> elsif, int spc) const;
+    void printElse_(int spc) const; 
 
 private:
     IExpr* cond_;
@@ -401,7 +470,7 @@ public:
     ~For();
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
@@ -418,29 +487,38 @@ public:
     ~While();
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
+
 
 private:
     IExpr* cond_;
     Body* body_;
 };
 
+} // namespace node
+
+
 // Stms - Other
-// #########################################
+namespace node {
+
 class DummyCallOrIndexingOrVar : IExpr {
+public:
     DummyCallOrIndexingOrVar(attribute::QualifiedName name, 
-                             std::vector<IExpr*> args = {});
+                             const std::vector<IExpr*>& args = {});
     DummyCallOrIndexingOrVar(attribute::Attribute attr, 
-                             std::vector<IExpr*> args = {});
+                             const std::vector<IExpr*>& args = {});
     ~DummyCallOrIndexingOrVar();
     
 public: // IExpr interface
     bool compareTypes(const IExpr* rhs) const override;
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
+
+private:
+    void printArgs_(int spc) const;
 
 private:
     attribute::QualifiedName name_;
@@ -448,9 +526,10 @@ private:
     std::vector<IExpr*> args_;
 };
 
+} // namespace node
 
 // Typeinfo - Other
-// #########################################
+namespace node {
 class DummyType : IType {
     DummyType(attribute::QualifiedName name);
     DummyType(attribute::Attribute attr);
@@ -459,12 +538,46 @@ public: // IType interface
     bool compare(const IType* rhs) const override;
 
 public: // INode interface
-    void print() const override ;
+    void print(int spc) const override;
     void* codegen() override {} // TODO
 
 private:
     attribute::QualifiedName name_;
     attribute::Attribute attr_;
+};
+
+} // namespace node
+
+// Stms - Ops 
+namespace node {
+
+class Assign : Stm {
+public:
+    Assign(DummyCallOrIndexingOrVar* lval,
+           IExpr* rval);
+    
+    ~Assign();
+
+public: // INode interface
+    void print(int spc) const override;
+    void* codegen() override {} // TODO
+
+private:
+    DummyCallOrIndexingOrVar* lval_;
+    IExpr* rval_;
+};
+
+class DummyCallOrIndexingOrVarStm : Stm {
+public:
+    DummyCallOrIndexingOrVarStm(DummyCallOrIndexingOrVar* CIV);
+    ~DummyCallOrIndexingOrVarStm();
+    
+public: // INode interface
+    void print(int spc) const override;
+    void* codegen() override {} // TODO
+
+private:
+    DummyCallOrIndexingOrVar* CIV_;
 };
 
 } // namespace node

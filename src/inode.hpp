@@ -6,7 +6,7 @@
 namespace node {
 
 struct INode {
-    virtual void print() const = 0;
+    virtual void print(int spc) const = 0;
     virtual INode* calc() /* = 0 */;
     virtual void* codegen() = 0; // TODO
     virtual ~INode() = default;
