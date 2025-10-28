@@ -50,6 +50,14 @@ begin
         arr(i) := i * 2;
         sum := sum + arr(i);
     end loop;
+
+   if I = 0 then
+      I := 1;
+   elsif I = 2 then
+      I := 3;
+   else 
+      I := 4;
+   end if;
     
    -- Цикл while
     i := 1;
