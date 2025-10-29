@@ -96,13 +96,6 @@ public:
     ~VarDecl();
 
 public:
-    // TODO: reduce interface ? 
-    // const std::string& name() const noexcept;
-    // void setName(const std::string& name);
-    // IExpr* expr() noexcept;
-    // void setExpr(IExpr* expr) noexcept;           
-    // IType* type() noexcept;
-    // void setType(IType* type) noexcept;
     bool compareTypes(IType* rhs) const {};
 
 public: // INode interface
@@ -333,9 +326,9 @@ class ILiteral : public IExpr { /*...*/ };
 class SimpleLiteral : public ILiteral {
 public:
     template <class T>
-    SimpleLiteral(T&& value, SimpleLiteralType* type):
-        value_(std::forward<T>(value))
-        , type_(type)
+    SimpleLiteral(SimpleLiteralType* type, T&& value):
+        type_(type)
+        , value_(std::forward<T>(value))
     {}
 
     ~SimpleLiteral();
@@ -358,16 +351,16 @@ private:
     void printValue_(int spc) const;
 
 private:
-    std::variant<int, bool, char, float> value_; 
     SimpleLiteralType* type_;
+    std::variant<int, bool, char, float> value_; 
 };
 
-class String : public ILiteral {
+class StringLiteral : public ILiteral {
 public:
-    String(StringType* type, 
+    StringLiteral(StringType* type, 
            const std::string& str);
 
-    ~String();
+    ~StringLiteral();
 
 public: // IExpr interface
     bool compareTypes(const IExpr* rhs) const override {};
@@ -496,13 +489,13 @@ private:
 // Stms - Other
 namespace node {
 
-class DummyCallOrIndexingOrVar : IExpr {
+class CallOrIndexingOrVar : IExpr {
 public:
-    DummyCallOrIndexingOrVar(attribute::QualifiedName name, 
+    CallOrIndexingOrVar(attribute::QualifiedName name, 
                              const std::vector<IExpr*>& args = {});
-    DummyCallOrIndexingOrVar(attribute::Attribute attr, 
+    CallOrIndexingOrVar(attribute::Attribute attr, 
                              const std::vector<IExpr*>& args = {});
-    ~DummyCallOrIndexingOrVar();
+    ~CallOrIndexingOrVar();
     
 public: // IExpr interface
     bool compareTypes(const IExpr* rhs) const override {};
@@ -524,9 +517,9 @@ private:
 
 // Typeinfo - Other
 namespace node {
-class DummyType : IType {
-    DummyType(attribute::QualifiedName name);
-    DummyType(attribute::Attribute attr);
+class TypeName : IType {
+    TypeName(attribute::QualifiedName name);
+    TypeName(attribute::Attribute attr);
 
 public: // IType interface
     bool compare(const IType* rhs) const override {};
@@ -547,7 +540,7 @@ namespace node {
 
 class Assign : Stm {
 public:
-    Assign(DummyCallOrIndexingOrVar* lval,
+    Assign(CallOrIndexingOrVar* lval,
            IExpr* rval);
     
     ~Assign();
@@ -557,21 +550,21 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    DummyCallOrIndexingOrVar* lval_;
+    CallOrIndexingOrVar* lval_;
     IExpr* rval_;
 };
 
-class DummyCallOrIndexingOrVarStm : Stm {
+class CallOrIndexingOrVarStm : Stm {
 public:
-    DummyCallOrIndexingOrVarStm(DummyCallOrIndexingOrVar* CIV);
-    ~DummyCallOrIndexingOrVarStm();
+    CallOrIndexingOrVarStm(CallOrIndexingOrVar* CIV);
+    ~CallOrIndexingOrVarStm();
 
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    DummyCallOrIndexingOrVar* CIV_;
+    CallOrIndexingOrVar* CIV_;
 };
 
 } // namespace node

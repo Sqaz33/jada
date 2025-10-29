@@ -175,8 +175,14 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         return yy::parser::token_type::STRING;
                       }
                       
-"False"               { return yy::parser::token_type::FALSE; }
-"True"                { return yy::parser::token_type::TRUE; }
+"False"               { 
+                        yylval->emplace<bool>(false); 
+                        return yy::parser::token_type::BOOL; 
+                      }
+"True"                { 
+                        yylval->emplace<bool>(true); 
+                        return yy::parser::token_type::BOOL;
+                      }
 "null"                { return yy::parser::token_type::NULL_KW; }
 
 "+"                   { return yy::parser::token_type::PLUS;} 

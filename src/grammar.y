@@ -49,7 +49,7 @@
 %token PACKAGE BODY PRIVATE WITH USE
 %token ARRAY OF TYPE TAGGED RECORD
 %token INTEGERTY STRINGTY CHARACTERTY FLOATTY BOOLTY
-%token FALSE TRUE NULL_KW
+%token<bool> BOOL NULL_KW
 %token<std::string> NAME
 %token<int> INTEGER
 %token<float> FLOAT
@@ -96,8 +96,10 @@
 %nterm call_or_indexing_or_var  
 %nterm args
 %nterm<node::ILiteral*> literal
-%nterm literals
-%nterm aggregate
+%nterm<std::vector<node::ILiteral*>> literals
+%nterm<node::ILiteral*> aggregate
+%nterm<std::pair<std::pair<int, std::string>, node::ILiteral*>> init
+%nterm<std::vector<std::pair<std::pair<int, std::string>, node::ILiteral*>>> inits
 %nterm if_stm
 %nterm if_head
 %nterm elsifs
@@ -113,7 +115,7 @@
 
 %%
 
-program: decl_area 
+program: optional_imports compile_unit
 
 /* declarations */
 /* ################################################################################ */
@@ -135,6 +137,11 @@ var_decl:         NAME COLON type ASG expr SC
 import_decl:      WITH qualified_name SC
 
 use_decl:         USE qualified_name SC
+
+optional_imports: import_decl
+                | use_decl
+                | optional_imports import_decl
+                | optional_imports use_decl
 
 qualified_name:   NAME
                 | qualified_name DOT NAME
@@ -172,6 +179,10 @@ optional_decl_area: %empty
                 |   decl_area
 
 type_alias_decl:    TYPE NAME IS type SC
+
+compile_unit:     proc_decl
+                | func_decl
+                | pack_decl
 
 /* types */
 /* ################################################################################ */
@@ -254,28 +265,45 @@ getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE
 literal:          INTEGER                                                 { 
                                                                             auto* type = new node::SimpleLiteralType(
                                                                                           node::SimpleType::INTEGER);
-                                                                            $$ = new node::SimpleLiteral($1, type);
+                                                                            $$ = new node::SimpleLiteral(type, $1);
                                                                           }
-                | FALSE                                                   {}
-                | TRUE                                                    {}
-                | CHAR                                                    {}
-                | STRING                                                  {}
+                | BOOL                                                    {
+                                                                            auto* type = new node::SimpleLiteralType(
+                                                                                          node::SimpleType::BOOL);
+                                                                            $$ = new node::SimpleLiteral(type, $1);
+                                                                          }
+                | CHAR                                                    {
+                                                                            auto* type = new node::SimpleLiteralType(
+                                                                                          node::SimpleType::CHAR);
+                                                                            $$ = new node::SimpleLiteral(type, $1);
+                                                                          }
+                | STRING                                                  {
+                                                                            auto* type = new node::StringType(
+                                                                                std::make_pair(1, $1.length()));
+                                                                            $$ = new node::StringLiteral(type, $1);
+                                                                          }
+                | FLOAT                                                   {
+                                                                            auto* type = new node::SimpleLiteralType(
+                                                                                          node::SimpleType::FLOAT);
+                                                                            $$ = new node::SimpleLiteral(type, $1);
+                                                                          }
+                 
 
-aggregate:        LPAR inits RPAR
+aggregate:        LPAR inits RPAR 
                 | LPAR literals RPAR 
 
 inits:            init
                 | inits init
 
-init:             NAME EQ MORE literal
-                | INTEGER EQ MORE literal 
-                | NAME EQ MORE aggregate
-                | INTEGER EQ MORE aggregate 
-
-literals:         literal  COMMA literal
-                | literals COMMA literal
-                | aggregate COMMA aggregate
-                | literals COMMA aggregate
+init:             NAME EQ MORE literal                                    {}
+                | INTEGER EQ MORE literal                                 {}
+                | NAME EQ MORE aggregate                                  {}
+                | INTEGER EQ MORE aggregate                               {}
+  
+literals:         literal  COMMA literal                                  { $$ = std::vector<node::ILiteral*>({$1, $3}); }
+                | literals COMMA literal                                  { $$.push_back($3); }
+                | aggregate COMMA aggregate                               { $$ = std::vector<node::ILiteral*>({$1, $3}); }
+                | literals COMMA aggregate                                {}
 
 
 /* control structures */

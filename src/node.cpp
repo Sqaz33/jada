@@ -489,20 +489,20 @@ void SimpleLiteral::print(int spc) const {
     printValue_(spc + TAB*2);
 }
 
-// String
-String::String(StringType* type, 
+// StringLiteral
+StringLiteral::StringLiteral(StringType* type, 
                const std::string& str) :
     str_(str)
     , type_(type)
 {}
 
-String::~String() {
+StringLiteral::~StringLiteral() {
     delete type_;
 }
 
-void String::print(int spc) const {
+void StringLiteral::print(int spc) const {
     std::cout << std::string(spc, ' ') 
-              << "String:\n";
+              << "StringLiteral:\n";
     std::cout << std::string(spc + TAB, ' ')
               << "Type:\n";
     type_->print(spc + TAB*2);
@@ -631,35 +631,35 @@ void While::print(int spc) const {
 // Stms - Other
 namespace node {
 
-// DummyCallOrIndexingOrVar:
-DummyCallOrIndexingOrVar::DummyCallOrIndexingOrVar(
+// CallOrIndexingOrVar:
+CallOrIndexingOrVar::CallOrIndexingOrVar(
     attribute::QualifiedName name, 
     const std::vector<IExpr*>& args):
     name_(std::move(name))
     , args_(args)
 {}
 
-DummyCallOrIndexingOrVar::DummyCallOrIndexingOrVar(
+CallOrIndexingOrVar::CallOrIndexingOrVar(
     attribute::Attribute attr, 
     const std::vector<IExpr*>& args) :
     attr_(std::move(attr))
     , args_(args)
 {}
 
-DummyCallOrIndexingOrVar::~DummyCallOrIndexingOrVar() {
+CallOrIndexingOrVar::~CallOrIndexingOrVar() {
     for (auto* arg : args_) {
         delete arg;
     }
 }
 
-void DummyCallOrIndexingOrVar::print(int spc) const {
+void CallOrIndexingOrVar::print(int spc) const {
     std::cout << std::string(spc, ' ')
               << "Unresolved Subporgram" 
                  " Call or Indexing or Variable:\n";
     printArgs_(spc + TAB);
 }
 
-void DummyCallOrIndexingOrVar::printArgs_(int spc) const {
+void CallOrIndexingOrVar::printArgs_(int spc) const {
     std::cout << std::string(spc, ' ')
               << "Args";
     for (auto* arg : args_) {
@@ -673,16 +673,16 @@ void DummyCallOrIndexingOrVar::printArgs_(int spc) const {
 // Typeinfo - Other
 namespace node {
 
-// DummyType
-DummyType::DummyType(attribute::QualifiedName name) :
+// TypeName
+TypeName::TypeName(attribute::QualifiedName name) :
     name_(std::move(name))
 {}
 
-DummyType::DummyType(attribute::Attribute attr) :
+TypeName::TypeName(attribute::Attribute attr) :
     attr_(std::move(attr))
 {}
 
-void DummyType::print(int spc) const {
+void TypeName::print(int spc) const {
     std::cout << std::string(spc, ' ')
               << "Unresolved Type Name:\n";
     std::cout << std::string(spc + TAB, ' ')
@@ -701,7 +701,7 @@ void DummyType::print(int spc) const {
 namespace node {
 
 // Assign
-Assign::Assign(DummyCallOrIndexingOrVar* lval,
+Assign::Assign(CallOrIndexingOrVar* lval,
                IExpr* rval) :
     lval_(lval)
     , rval_(rval)
@@ -723,19 +723,19 @@ void Assign::print(int spc) const {
     rval_->print(spc + TAB*2);
 }
 
-// DummyCallOrIndexingOrVarStm
-DummyCallOrIndexingOrVarStm::
-DummyCallOrIndexingOrVarStm(DummyCallOrIndexingOrVar* CIV):
+// CallOrIndexingOrVarStm
+CallOrIndexingOrVarStm::
+CallOrIndexingOrVarStm(CallOrIndexingOrVar* CIV):
     CIV_(CIV)
 {}
 
-DummyCallOrIndexingOrVarStm::
-~DummyCallOrIndexingOrVarStm() {
+CallOrIndexingOrVarStm::
+~CallOrIndexingOrVarStm() {
     delete CIV_;
 }
 
 void 
-DummyCallOrIndexingOrVarStm::print(int spc) const {
+CallOrIndexingOrVarStm::print(int spc) const {
     std::cout << std::string(spc, ' ')
               << "Unresolved Call Or "
                  "Indexing Or Var Statement\n";

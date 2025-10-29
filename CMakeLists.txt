@@ -27,7 +27,7 @@ add_executable(${PROJECT_NAME}
                ${BISON_parser_OUTPUTS}
                ${FLEX_scanner_OUTPUTS}
 )
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wno-all) # TODO:
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
