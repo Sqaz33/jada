@@ -4,6 +4,10 @@
 
 namespace attribute {
 
+QualifiedName::QualifiedName(const std::string& base) :
+    fullName_({base})
+{}
+
 void QualifiedName::push(const std::string& name) {
     fullName_.push_back(name);
 }
@@ -22,6 +26,8 @@ void QualifiedName::print(int spc) const {
     std::cout << fullName_.back();
     std::cout << '\n';
 }
+
+
 
 Attribute::Attribute(QualifiedName left, const std::string& right) :
     left_(std::move(left))

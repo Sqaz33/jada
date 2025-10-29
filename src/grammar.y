@@ -72,7 +72,8 @@
 %nterm var_decl
 %nterm import_decl
 %nterm use_decl
-%nterm qualified_name
+%nterm<attribute::QualifiedName> qualified_name
+%nterm<attribute::Attribute> getting_attribute
 %nterm proc_decl
 %nterm func_decl
 %nterm pack_decl
@@ -92,24 +93,25 @@
 %nterm oper
 %nterm assign
 %nterm lval
-%nterm expr
+%nterm<node::IExpr*> expr
 %nterm call_or_indexing_or_var  
-%nterm args
+%nterm<std::vector<node::IExpr*>> args
+%nterm<std::vector<node::IExpr*>> optional_args
 %nterm<node::ILiteral*> literal
 %nterm<std::vector<node::ILiteral*>> literals
 %nterm<node::ILiteral*> aggregate
 %nterm<std::pair<std::pair<int, std::string>, node::ILiteral*>> init
 %nterm<std::vector<std::pair<std::pair<int, std::string>, node::ILiteral*>>> inits
-%nterm if_stm
-%nterm if_head
-%nterm elsifs
-%nterm elsif
-%nterm else
-%nterm for_stm
-%nterm while_stm
-%nterm range
-%nterm call_or_indexing_or_var_stm
-%nterm optional_args
+%nterm<node::IStm*> if_stm
+%nterm<node::IExpr*> if_head
+%nterm<std::vector<std::pair<node::IExpr*, node::Body*>>> elsifs
+%nterm<std::pair<node::IExpr*, node::Body*>> elsif 
+%nterm<node::Body*> else
+%nterm<node::IStm*> for_stm
+%nterm<node::IStm*> while_stm
+%nterm<std::pair<node::IExpr*, node::IExpr*>> range
+%nterm<node::IStm*> call_or_indexing_or_var_stm
+%nterm<node::IExpr*> call_or_indexing_or_var
 
 %start program
 
@@ -123,7 +125,6 @@ decl_area:        decl
                 | decl_area decl
 
 decl:             var_decl
-                | import_decl
                 | use_decl 
                 | proc_decl  
                 | func_decl  
@@ -229,38 +230,43 @@ assign:           lval ASG expr SC
 lval:             call_or_indexing_or_var               
 
 return_stm:       RETURN expr SC
-                | RETURN SC 
+                | RETURN SC                                             
 
-expr:             expr EQ expr
-                | expr NEQ expr                                 
-                | expr MORE expr
-                | expr LESS expr
-                | expr GTE expr
-                | expr LTE expr
-                | expr AMPER expr 
-                | expr PLUS expr              
-                | expr MINUS expr             
-                | expr MUL expr               
-                | expr DIV expr               
-                | expr MOD expr               
-                | MINUS expr %prec UMINUS     
-                | call_or_indexing_or_var
-                | literal
+expr:             expr EQ expr                                          { $$ = new node::Op($1, node::OpType::EQ, $3);          }
+                | expr NEQ expr                                         { $$ = new node::Op($1, node::OpType::NEQ, $3);         }
+                | expr MORE expr                                        { $$ = new node::Op($1, node::OpType::MORE, $3);        }
+                | expr LESS expr                                        { $$ = new node::Op($1, node::OpType::LESS, $3);        }
+                | expr GTE expr                                         { $$ = new node::Op($1, node::OpType::GTE, $3);         }
+                | expr LTE expr                                         { $$ = new node::Op($1, node::OpType::LTE, $3);         }
+                | expr AMPER expr                                       { $$ = new node::Op($1, node::OpType::AMPER, $3);       }
+                | expr PLUS expr                                        { $$ = new node::Op($1, node::OpType::PLUS, $3);        }
+                | expr MINUS expr                                       { $$ = new node::Op($1, node::OpType::MINUS, $3);       }
+                | expr MUL expr                                         { $$ = new node::Op($1, node::OpType::MUL, $3);         }
+                | expr DIV expr                                         { $$ = new node::Op($1, node::OpType::DIV, $3);         }
+                | expr MOD expr                                         { $$ = new node::Op($1, node::OpType::MOD, $3);         }
+                | MINUS expr %prec UMINUS                               { $$ = new node::Op(nullptr, node::OpType::UMINUS, $2); }
+                | call_or_indexing_or_var                               { $$ = $1;                                              }
+                | literal                                               { $$ = $1;                                              }
 
-call_or_indexing_or_var:   qualified_name LPAR optional_args RPAR
-                |          getting_attribute LPAR optional_args RPAR
-                |          qualified_name
+call_or_indexing_or_var:   qualified_name LPAR optional_args RPAR       { $$ = new node::CallOrIndexingOrVar($1, $3); }
+                |          getting_attribute LPAR optional_args RPAR    { $$ = new node::CallOrIndexingOrVar($1, $3); }
+                |          qualified_name                               { $$ = new node::CallOrIndexingOrVar($1); }
 
-optional_args:    %empty
-                | args
+optional_args:    %empty                                                { $$ = std::vector<node::IExpr*>(); }
+                | args                                                  { $$ = std::move($1); }
 
-args:             expr
-                | aggregate
-                | args COMMA expr
-                | args COMMA aggregate
+args:             expr                                                   { $$ = std::vector<node::IExpr*>({$1}); }
+                | aggregate                                              { $$ = std::vector<node::IExpr*>({$1}); }
+                | args COMMA expr                                        { $$ = std::move($1); $$.push_back($3); }
+                | args COMMA aggregate                                   { $$ = std::move($1); $$.push_back($3); }
 
-getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE
-                |    GETTING_ATTRIBUTE
+getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE                 { 
+                                                                            $1.push($3.first);
+                                                                            $$ = attribute::Attribute($1, $3.second);
+                                                                          }
+                |    GETTING_ATTRIBUTE                                    {
+                                                                            $$ = attribute::Attribute($1.first, $1.second);
+                                                                          }
 
 literal:          INTEGER                                                 { 
                                                                             auto* type = new node::SimpleLiteralType(
@@ -289,21 +295,41 @@ literal:          INTEGER                                                 {
                                                                           }
                  
 
-aggregate:        LPAR inits RPAR 
-                | LPAR literals RPAR 
+aggregate:        LPAR inits RPAR                                         {   
+                                                                            auto* aggr = new node::Aggregate();
+                                                                            for (auto&& [init, lit] : $2) {
+                                                                              if (init.second.empty()) {
+                                                                                aggr->addInit(init.first, lit);
+                                                                              } else {
+                                                                                aggr->addInit(init.second, lit);
+                                                                              }
+                                                                            }
+                                                                            $$ = aggr;
+                                                                          }
+                | LPAR literals RPAR                                      {
+                                                                            auto* aggr = new node::Aggregate();
+                                                                            for (auto* lit : $2) {
+                                                                              aggr->addInit(lit);
+                                                                            }
+                                                                            $$ = aggr;
+                                                                          }
 
-inits:            init
-                | inits init
+inits:            init                                                    { 
+                                                                            $$ = std::vector<
+                                                                                std::pair<std::pair<int, std::string>, 
+                                                                                node::ILiteral*>>({$1}); 
+                                                                          }
+                | inits init                                              { $$ = std::move($1); $$.push_back($2); }
 
-init:             NAME EQ MORE literal                                    {}
-                | INTEGER EQ MORE literal                                 {}
-                | NAME EQ MORE aggregate                                  {}
-                | INTEGER EQ MORE aggregate                               {}
+init:             NAME EQ MORE literal                                    { $$ = std::make_pair(std::pair<int, std::string>(0, $1), $4); }
+                | INTEGER EQ MORE literal                                 { $$ = std::make_pair(std::pair<int, std::string>($1, ""), $4); }
+                | NAME EQ MORE aggregate                                  { $$ = std::make_pair(std::pair<int, std::string>(0, $1), $4); }
+                | INTEGER EQ MORE aggregate                               { $$ = std::make_pair(std::pair<int, std::string>($1, ""), $4); }
   
 literals:         literal  COMMA literal                                  { $$ = std::vector<node::ILiteral*>({$1, $3}); }
-                | literals COMMA literal                                  { $$.push_back($3); }
+                | literals COMMA literal                                  { $$ = std::move($1); $$.push_back($3); }
                 | aggregate COMMA aggregate                               { $$ = std::vector<node::ILiteral*>({$1, $3}); }
-                | literals COMMA aggregate                                {}
+                | literals COMMA aggregate                                { $$ = std::move($1); $$.push_back($3); }
 
 
 /* control structures */
@@ -313,20 +339,20 @@ if_stm:          if_head body END IF SC
                | if_head body elsifs else END IF SC
                | if_head body else END IF SC
 
-elsifs:          elsif         
+elsifs:          elsif                                                    { $$ = std::vector($1); }
                | elsifs elsif  
 
-elsif:           ELSIF expr THEN body
+elsif:           ELSIF expr THEN body                                     { $$ = std::make_pair($2, $4); }
 
-else:            ELSE body
+else:            ELSE body                                                { $$ = $2; }
 
-if_head:         IF expr THEN 
+if_head:         IF expr THEN                                             { $$ = $2; }
 
-for_stm:         FOR NAME IN range LOOP body END LOOP SC
+for_stm:         FOR NAME IN range LOOP body END LOOP SC                  { $$ = new node::For($2, $4, $6); }
+ 
+range:           expr DOT_DOT expr                                        { $$ = std::make_pair($1, $3); }
 
-range:           expr DOT_DOT expr
-
-while_stm:       WHILE expr LOOP body END LOOP SC
+while_stm:       WHILE expr LOOP body END LOOP SC                         { $$ = new node::While($2, $4); }
 
 %%
 

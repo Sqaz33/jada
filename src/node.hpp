@@ -1,3 +1,10 @@
+/*
+ * // TODO: return stm
+ *
+ *
+*/
+
+
 #pragma once
 
 #include "inode.hpp"
@@ -43,20 +50,20 @@ namespace node {
 
 // Stms
 // #########################################
-class Stm : public INode { /* ... */ };
+class IStm : public INode { /* ... */ };
 
 class Body : public INode {
 public:
     ~Body();
 
-    void addStm(Stm* stm);
+    void addStm(IStm* stm);
 
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    std::vector<Stm*> stms_;
+    std::vector<IStm*> stms_;
 };
 
 } // namespace node
@@ -374,12 +381,12 @@ private:
     StringType* type_;
 };
 
-class Aggregate : ILiteral {
+class Aggregate : public ILiteral {
 public:
     ~Aggregate();
 
-    void addNamedInit(const std::string& name, ILiteral* lit);
-    void addIndexingInit(int idx, ILiteral* lit);
+    void addInit(const std::string& name, ILiteral* lit);
+    void addInit(int idx, ILiteral* lit);
     void addInit(ILiteral* lit);
 
 public: // IExpr interface
@@ -424,7 +431,7 @@ private:
 
 // Stms - Control Structure
 namespace node {
-class If : public Stm {
+class If : public IStm {
 public:
     If(IExpr* cond, 
        Body* body, 
@@ -448,7 +455,7 @@ private:
     std::vector<std::pair<IExpr*, Body*>> elsifs_;
 };
 
-class For : public Stm {
+class For : public IStm {
 public:
     For(const std::string& init, 
         std::pair<IExpr*, IExpr*> range, 
@@ -466,10 +473,10 @@ private:
     Body* body_;
 };
 
-class While : public Stm {
+class While : public IStm {
 public:
     While(IExpr* cond, 
-       Body* body);
+          Body* body);
 
     ~While();
 
@@ -489,7 +496,7 @@ private:
 // Stms - Other
 namespace node {
 
-class CallOrIndexingOrVar : IExpr {
+class CallOrIndexingOrVar : public IExpr {
 public:
     CallOrIndexingOrVar(attribute::QualifiedName name, 
                              const std::vector<IExpr*>& args = {});
@@ -538,7 +545,7 @@ private:
 // Stms - Ops 
 namespace node {
 
-class Assign : Stm {
+class Assign : IStm {
 public:
     Assign(CallOrIndexingOrVar* lval,
            IExpr* rval);
@@ -554,7 +561,7 @@ private:
     IExpr* rval_;
 };
 
-class CallOrIndexingOrVarStm : Stm {
+class CallOrIndexingOrVarStm : IStm {
 public:
     CallOrIndexingOrVarStm(CallOrIndexingOrVar* CIV);
     ~CallOrIndexingOrVarStm();

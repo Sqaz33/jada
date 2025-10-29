@@ -14,7 +14,7 @@ Body::~Body() {
     }
 }
 
-void Body::addStm(Stm* stm) {
+void Body::addStm(IStm* stm) {
     stms_.push_back(stm);
 }
 
@@ -346,11 +346,11 @@ Aggregate::~Aggregate() {
     }
 }
 
-void Aggregate::addNamedInit(const std::string& name, ILiteral* lit) {
+void Aggregate::addInit(const std::string& name, ILiteral* lit) {
     namedInits_.push_back(std::make_pair(name, lit));
 }
 
-void Aggregate::addIndexingInit(int idx, ILiteral* lit) {
+void Aggregate::addInit(int idx, ILiteral* lit) {
     idxInits_.push_back(std::make_pair(idx, lit));
 }
 

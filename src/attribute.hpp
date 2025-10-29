@@ -8,6 +8,10 @@ namespace attribute {
 
 class QualifiedName { // TODO: expand interface
 public:
+    QualifiedName() = default;
+    QualifiedName(const std::string& base);
+
+public:
     void push(const std::string& name);
     bool empty() const;
     void print(int spc) const;
