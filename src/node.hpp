@@ -1,10 +1,3 @@
-/*
- * // TODO: return stm
- *
- *
-*/
-
-
 #pragma once
 
 #include "inode.hpp"
@@ -47,19 +40,34 @@ enum class ParamMode {
 } // namespace node
 
 namespace node {
+    
+class IStm : public INode { /* ... */ };
+
+class IDecl : public INode { /*...*/ };
+
+struct IType : INode { 
+    virtual bool compare(const IType* rhs) const = 0;
+};
+
+class IExpr : public INode { 
+public:
+    virtual bool compareTypes(const IExpr* rhs) const = 0;
+};
+
+class ILiteral : public IExpr { /*...*/ };
+
+} // namespace node
+
 
 // Stms
 // #########################################
-class IStm : public INode { /* ... */ };
+namespace node {
 
 class Body : public INode {
 public:
     Body(const std::vector<IStm*>& stms);
     
     ~Body();
-
-    void addStm(IStm* stm);
-
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
@@ -71,10 +79,7 @@ private:
 } // namespace node
 
 // Decls 
-namespace node {
-
-class IDecl : public INode { /*...*/ };
- 
+namespace node { 
 class DeclArea : public INode {
 public:
     ~DeclArea();
@@ -87,15 +92,6 @@ public: // INode interface
 
 private:
     std::vector<IDecl*> decls_;
-};
-
-struct IType : INode { 
-    virtual bool compare(const IType* rhs) const = 0;
-};
-
-class IExpr : public INode { 
-public:
-    virtual bool compareTypes(const IExpr* rhs) const = 0;
 };
 
 class VarDecl : public IDecl {
@@ -133,7 +129,6 @@ public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
     
-
 private:
     void printParam_(int spc, const ParamType& param) const;
 
@@ -336,8 +331,6 @@ private:
 
 // Exprs - Literals
 namespace node {
-
-class ILiteral : public IExpr { /*...*/ };
 
 class SimpleLiteral : public ILiteral {
 public:
