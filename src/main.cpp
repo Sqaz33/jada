@@ -32,9 +32,6 @@ int main(int argc, char** argv) try {
         std::cout << "usage ./jada file.adb" << std::endl;
         return 1;
     }
-
-    // argv = new char*[2];
-    // argv[1] = "../test_data/complex.adb";
     
     std::string_view sv(argv[1]);
     if (!sv.ends_with(".adb")) {

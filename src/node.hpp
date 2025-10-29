@@ -238,6 +238,7 @@ class TypeAliasDecl : public IDecl {
 public:
     TypeAliasDecl(const std::string& name, IType* type); 
 
+    ~TypeAliasDecl();
 
 public: // INode interface
     void print(int spc) const override;
@@ -276,6 +277,8 @@ class ArrayType : public IType {
 public:
     ArrayType(const std::vector<std::pair<int, int>>& ranges, 
              IType* type);
+    
+    ~ArrayType();
 
 public: // IType interface
     bool compare(const IType* rhs) const override {};
@@ -412,25 +415,6 @@ private:
     std::vector<std::pair<int, ILiteral*>> idxInits_;
     std::vector<ILiteral*> inits_;
 };
-
-// class Array : ILiteral {
-// public:
-//     Array(ArrayType* type,
-//           Aggregate* init);
-
-//     ~Array();
-
-// public: // IExpr interface
-//     bool compareTypes(const IExpr* rhs) const override;
-
-// public: // INode interface
-//     void print(int spc) const override;
-//     void* codegen() override { return nullptr; } // TODO
-    
-// private:
-//     Aggregate* value_;
-//     StringType* type_;
-// };
 
 } // namespace node
 

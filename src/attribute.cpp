@@ -27,14 +27,13 @@ void QualifiedName::print(int spc) const {
     std::cout << '\n';
 }
 
-
-
 Attribute::Attribute(QualifiedName left, const std::string& right) :
     left_(std::move(left))
     , right_(right)
 {}
 
 void Attribute::print(int spc) const {
+    if (left_.empty() || right_.empty()) return;
     std::cout << std::string(spc, ' ')
               << "Attribute: ";
     left_.print(spc + 4);

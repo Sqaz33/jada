@@ -115,7 +115,7 @@ void FuncDecl::printParam_(int spc,
     };
 
     std::cout << std::string(spc, ' ') 
-              << "Param: Mode:"
+              << "Param: Mode: "
               << modes.at(param.second)
               << '\n';
     param.first->print(spc + TAB);
@@ -286,6 +286,10 @@ TypeAliasDecl::TypeAliasDecl(const std::string& name, IType* origin):
     , origin_(origin)
 {}
 
+TypeAliasDecl::~TypeAliasDecl() {
+    delete origin_;
+}
+
 void TypeAliasDecl::print(int spc) const {
     std::cout << std::string(spc, ' ') 
               << "Type Alias: Name: "
@@ -328,6 +332,7 @@ ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges,
     ranges_(ranges)
     , type_(type)
 {}
+ArrayType::~ArrayType() { delete type_; }
 
 void ArrayType::print(int spc) const {
     std::cout << std::string(spc, ' ') 
@@ -459,12 +464,12 @@ void Op::print(int spc) const {
               << ops.at(opType_)
               << '\n';
     if (lhs_) {
-        std::cout << std::string(spc, ' ' + TAB)
+        std::cout << std::string(spc + TAB, ' ')
                   << "Lhs:\n";
         lhs_->print(spc + TAB*2);
     }
     if (rhs_) {
-        std::cout << std::string(spc, ' ' + TAB)
+        std::cout << std::string(spc + TAB, ' ')
                   << "Rhs:\n";
         rhs_->print(spc + TAB*2);
     }
@@ -507,7 +512,7 @@ void SimpleLiteral::print(int spc) const {
     std::cout << std::string(spc + TAB, ' ')
               << "Type:\n";
     type_->print(spc + TAB*2);
-    printValue_(spc + TAB*2);
+    printValue_(spc + TAB);
 }
 
 // StringLiteral
@@ -527,7 +532,7 @@ void StringLiteral::print(int spc) const {
     std::cout << std::string(spc + TAB, ' ')
               << "Type:\n";
     type_->print(spc + TAB*2);
-    std::cout << std::string(spc + TAB*2, ' ') 
+    std::cout << std::string(spc + TAB, ' ') 
               << "Value: "
               << str_ 
               << '\n';
@@ -537,8 +542,6 @@ void StringLiteral::print(int spc) const {
 
 
 } // namespace node 
-
-
 
 // Stms - Control Structure
 namespace node {
@@ -679,12 +682,17 @@ void CallOrIndexingOrVar::print(int spc) const {
     std::cout << std::string(spc, ' ')
               << "Unresolved Subporgram" 
                  " Call or Indexing or Variable:\n";
+    std::cout << std::string(spc + TAB, ' ')
+              << "Name:\n";
+    name_.print(spc + TAB*2);
+    attr_.print(spc + TAB*2);
     printArgs_(spc + TAB);
 }
 
 void CallOrIndexingOrVar::printArgs_(int spc) const {
+    if (args_.empty()) return;
     std::cout << std::string(spc, ' ')
-              << "Args";
+              << "Args:\n";
     for (auto* arg : args_) {
         arg->print(spc + TAB);
     }

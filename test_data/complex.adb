@@ -17,6 +17,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 procedure TestLoops is
    i : Integer;
    sum : Integer := 0;
+   L: String(1..2) := "1234";
    arr : array(1..10) of Integer := (1, 2, 3, 4);
 
    arr2: array(1..3) of Pack.Base := ((X => 1), (X => 2), (X => 3));

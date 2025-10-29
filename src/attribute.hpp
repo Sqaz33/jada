@@ -22,7 +22,6 @@ private:
     std::vector<std::string> fullName_;
 };
 
-
 class Attribute {
 public:
     Attribute(QualifiedName left, const std::string& right);
