@@ -292,8 +292,9 @@ expr:             expr EQ expr                                          { $$ = n
                 | expr MUL expr                                         { $$ = new node::Op($1, node::OpType::MUL, $3);         }
                 | expr DIV expr                                         { $$ = new node::Op($1, node::OpType::DIV, $3);         }
                 | expr MOD expr                                         { $$ = new node::Op($1, node::OpType::MOD, $3);         }
+                | LPAR expr RPAR                                        { $$ = $2; }
                 | MINUS expr %prec UMINUS                               { $$ = new node::Op(nullptr, node::OpType::UMINUS, $2); }
-                | call_or_indexing_or_var                                 
+                | call_or_indexing_or_var                    
                 | literal                                               { $$ = $1; }
 
 call_or_indexing_or_var:   qualified_name LPAR optional_args RPAR       { $$ = new node::CallOrIndexingOrVar($1, std::move($3)); }

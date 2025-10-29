@@ -32,20 +32,28 @@ procedure TestLoops is
    procedure Sort(arr: in out IntArray; len: Integer) is 
       min: Integer;
       buf: Integer;
-   begin
-      for i in 1..len loop 
-         min := i;
-         for j in i..len loop
-            if arr(j) < min then
-               min := j;
-            end if;
-         end loop; 
-         buf := arr(i);
-         arr(i) := arr(min);
-         arr(min) := buf;
-      end loop;
-   end Sort;
+      begin
+         for i in 1..len loop 
+            min := i;
+            for j in i..len loop
+               if arr(j) < min then
+                  min := j;
+               end if;
+            end loop; 
+            buf := arr(i);
+            arr(i) := arr(min);
+            arr(min) := buf;
+         end loop;
+      end Sort;
 begin
+
+   if 1 > 0 then
+      if 2 > 0 then 
+         x := x + 1;
+      else 
+         x := x + 1;
+      end if;
+   end if;
    -- Цикл for
     for i in 1..10 loop
         arr(i) := i * 2;
