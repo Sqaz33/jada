@@ -99,8 +99,6 @@
 %nterm<node::ILiteral*> literal
 %nterm<std::vector<node::ILiteral*>> literals
 %nterm<node::ILiteral*> aggregate
-%nterm<std::pair<std::pair<int, std::string>, node::ILiteral*>> init
-%nterm<std::vector<std::pair<std::pair<int, std::string>, node::ILiteral*>>> inits
 %nterm<node::IStm*> if_stm
 %nterm<node::IExpr*> if_head
 %nterm<std::vector<std::pair<node::IExpr*, node::Body*>>> elsifs
@@ -116,6 +114,8 @@
 %nterm<node::DeclArea*> optional_decl_area
 %nterm<node::DeclArea*> decl_area
 %nterm<std::vector<node::IDecl*>> optional_imports
+%nterm<node::IType*> composite_type;
+%nterm<node::IType*> any_type;
 
 %start program
 
@@ -143,8 +143,9 @@ decl:             var_decl
                 | type_decl
 
 var_decl:         NAME COLON type ASG expr SC                           { $$ = new node::VarDecl($1, $3, $5); }
-                | NAME COLON type ASG aggregate SC                      { $$ = new node::VarDecl($1, $3, $5); }
                 | NAME COLON type SC                                    { $$ = new node::VarDecl($1, $3); }
+                | NAME COLON composite_type SC                          { $$ = new node::VarDecl($1, $3); }
+                | NAME COLON composite_type ASG aggregate SC            { $$ = new node::VarDecl($1, $3, $5); }
  
 import_decl:      WITH qualified_name SC                                { $$ = new node::WithDecl(std::move($2)); }
 
@@ -162,8 +163,8 @@ proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC
                 | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { $$ = new node::ProcDecl($2, $4, $7, $9); }
                 | OVERRIDING proc_decl                                                                               { $$ = $2; }
 
-func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { $$ = new node::FuncDecl($2, {}, $4, $6, $8); }
-                | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC     { $$ = new node::FuncDecl($2, $4, $7, $9, $11); }
+func_decl:        FUNCTION NAME RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC                      { $$ = new node::FuncDecl($2, {}, $4, $6, $8); }
+                | FUNCTION NAME LPAR param_list RPAR RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC { $$ = new node::FuncDecl($2, $4, $7, $9, $11); }
                 | OVERRIDING func_decl                                                                               { $$ = $2; }
 
 pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                       { $$ = new node::PackDecl($2, $4); }
@@ -190,19 +191,19 @@ vars_decl:        var_decl                                              {
 param_list:       param                                                 { $$ = std::vector({$1}); }
                 | param_list SC param                                   { $$ = std::move($1); $$.push_back($3); }
 
-param:            NAME COLON type                                       { 
+param:            NAME COLON any_type                                   { 
                                                                           auto* decl = new node::VarDecl($1, $3);
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN); 
                                                                         }
-                | NAME COLON IN OUT type                                { 
+                | NAME COLON IN OUT any_type                            { 
                                                                           auto* decl = new node::VarDecl($1, $5);
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN_OUT); 
                                                                         }
-                | NAME COLON IN type                                    { 
+                | NAME COLON IN any_type                                { 
                                                                           auto* decl = new node::VarDecl($1, $4);
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN); 
                                                                         }
-                | NAME COLON OUT type                                   { 
+                | NAME COLON OUT any_type                               { 
                                                                           auto* decl = new node::VarDecl($1, $4);
                                                                           $$ = std::make_pair(decl, node::ParamMode::OUT); 
                                                                         }
@@ -210,7 +211,7 @@ param:            NAME COLON type                                       {
 optional_decl_area: %empty                                              { $$ = nullptr; }
                 |   decl_area                                           
 
-type_alias_decl:    TYPE NAME IS type SC                                { $$ = new node::TypeAliasDecl($2, $4); }        
+type_alias_decl:    TYPE NAME IS any_type SC                            { $$ = new node::TypeAliasDecl($2, $4); }        
 
 compile_unit:     proc_decl                                             
                 | func_decl                 
@@ -218,6 +219,9 @@ compile_unit:     proc_decl
 
 /* types */
 /* ################################################################################ */
+
+any_type: composite_type
+        | type
 
 type:             INTEGERTY                                             { 
                                                                            $$ = new node::SimpleLiteralType(
@@ -231,10 +235,11 @@ type:             INTEGERTY                                             {
                                                                            $$ = new node::SimpleLiteralType(
                                                                                    node::SimpleType::CHAR); 
                                                                         }
-                | string_type                                            
                 | qualified_name                                        { $$ = new node::TypeName($1); }
+                | string_type                                            
                 | getting_attribute                                     { $$ = new node::TypeName($1); }             
-                | array_type                                             
+
+composite_type:   array_type          
 
 string_type:      STRINGTY LPAR static_range RPAR                       { $$ = new node::StringType($3); }
 
@@ -343,32 +348,8 @@ literal:          INTEGER                                               {
                                                                           $$ = new node::SimpleLiteral(type, $1);
                                                                         }
                  
-aggregate:        LPAR inits RPAR                                       {   
-                                                                          auto* aggr = new node::Aggregate();
-                                                                          for (auto&& [init, lit] : $2) {
-                                                                            if (init.second.empty()) {
-                                                                              aggr->addInit(init.first, lit);
-                                                                            } else {
-                                                                              aggr->addInit(init.second, lit);
-                                                                            }
-                                                                          }
-                                                                          $$ = aggr;
-                                                                        }
-                | LPAR literals RPAR                                    {
-                                                                          auto* aggr = new node::Aggregate();
-                                                                          for (auto* lit : $2) {
-                                                                            aggr->addInit(lit);
-                                                                          }
-                                                                          $$ = aggr;
-                                                                        }
+aggregate:       LPAR literals RPAR                                     { $$ = new node::Aggregate($2); }
 
-inits:            init                                                  { $$ = std::vector({$1}); }
-                | inits COMMA init                                      { $$ = std::move($1); $$.push_back($3); }
-
-init:             NAME EQ MORE literal                                  { $$ = std::make_pair(std::pair<int, std::string>(0, $1), $4); }
-                | INTEGER EQ MORE literal                               { $$ = std::make_pair(std::pair<int, std::string>($1, ""), $4); }
-                | NAME EQ MORE aggregate                                { $$ = std::make_pair(std::pair<int, std::string>(0, $1), $4); }
-                | INTEGER EQ MORE aggregate                             { $$ = std::make_pair(std::pair<int, std::string>($1, ""), $4); }
   
 literals:         literal  COMMA literal                                { $$ = std::vector({$1, $3}); }
                 | literals COMMA literal                                { $$ = std::move($1); $$.push_back($3); }

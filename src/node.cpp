@@ -360,28 +360,14 @@ void StringType::print(int spc) const {
 }
 
 // Aggregate
+Aggregate::Aggregate(const std::vector<ILiteral*>& inits) :
+    inits_(inits)
+{}
+
 Aggregate::~Aggregate() {
-    for (auto&& [_, lit] : namedInits_) {
-        delete lit;
-    } 
-    for (auto&& [_, lit] : idxInits_) {
-        delete lit;
-    }
     for (auto* lit : inits_) {
         delete lit;
     }
-}
-
-void Aggregate::addInit(const std::string& name, ILiteral* lit) {
-    namedInits_.push_back(std::make_pair(name, lit));
-}
-
-void Aggregate::addInit(int idx, ILiteral* lit) {
-    idxInits_.push_back(std::make_pair(idx, lit));
-}
-
-void Aggregate::addInit(ILiteral* lit) {
-    inits_.push_back(lit);
 }
 
 void Aggregate::print(int spc) const {
@@ -389,34 +375,9 @@ void Aggregate::print(int spc) const {
               << "Aggregate: \n";
     std::cout << std::string(spc + TAB, ' ')
               << "Values: \n";
-    printNamed_(spc + TAB*2);
-    printIdx_(spc + TAB*2);
     printInits_(spc + TAB*2);
 }
 
-void Aggregate::printNamed_(int spc) const {
-    for (auto&& [name, lit] : namedInits_) {
-        std::cout << std::string(spc, ' ')
-                  << "Name: " 
-                  << name 
-                  << '\n';
-        std::cout << std::string(spc, ' ')
-                  << "Value\n";
-        lit->print(spc + TAB);
-    }
-}
-
-void Aggregate::printIdx_(int spc) const {
-    for (auto&& [idx, lit] : idxInits_) {
-        std::cout << std::string(spc, ' ')
-                  << "Idx: " 
-                  << idx 
-                  << '\n';
-        std::cout << std::string(spc, ' ')
-                  << "Value\n";
-        lit->print(spc + TAB);
-    }
-}
 void Aggregate::printInits_(int spc) const {
     for (auto* lit : inits_) {
         std::cout << std::string(spc, ' ')

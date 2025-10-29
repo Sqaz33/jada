@@ -392,11 +392,9 @@ private:
 
 class Aggregate : public ILiteral {
 public:
-    ~Aggregate();
+    Aggregate(const std::vector<ILiteral*>& inits);
 
-    void addInit(const std::string& name, ILiteral* lit);
-    void addInit(int idx, ILiteral* lit);
-    void addInit(ILiteral* lit);
+    ~Aggregate();
 
 public: // IExpr interface
     bool compareTypes(const IExpr* rhs) const override {};
@@ -406,13 +404,9 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    void printNamed_(int spc) const;
-    void printIdx_(int spc) const;
     void printInits_(int spc) const;
 
 private:
-    std::vector<std::pair<std::string, ILiteral*>> namedInits_;
-    std::vector<std::pair<int, ILiteral*>> idxInits_;
     std::vector<ILiteral*> inits_;
 };
 
