@@ -8,6 +8,10 @@
 // Stms
 namespace node {
 
+Body::Body(const std::vector<IStm*>& stms) :
+    stms_(stms)
+{}
+
 Body::~Body() {
     for (auto* ptr : stms_) {
         delete ptr;
@@ -40,7 +44,7 @@ DeclArea::~DeclArea() {
     }
 }
 
-void DeclArea::addDecl(Decl* decl) {
+void DeclArea::addDecl(IDecl* decl) {
     decls_.push_back(decl);
 }
 
@@ -93,7 +97,7 @@ FuncDecl::FuncDecl(const std::string& name,
 {}
 
 FuncDecl::~FuncDecl() {
-    for (auto&& [_, param] : params_) {
+    for (auto&& [param, _] : params_) {
         delete param;
     }
     delete retType_;
@@ -112,9 +116,9 @@ void FuncDecl::printParam_(int spc,
 
     std::cout << std::string(spc, ' ') 
               << "Param: Mode:"
-              << modes.at(param.first)
+              << modes.at(param.second)
               << '\n';
-    param.second->print(spc + TAB);
+    param.first->print(spc + TAB);
 }
 
 void FuncDecl::print(int spc) const {
@@ -124,12 +128,16 @@ void FuncDecl::print(int spc) const {
     std::cout << std::string(spc + TAB, ' ') 
               << "Return Type:\n";
     retType_->print(spc + TAB*2);
-    std::cout << std::string(spc + TAB, ' ') 
+    if (!params_.empty()) {
+        std::cout << std::string(spc + TAB, ' ') 
               << "Param list:\n";
-    for (auto&& param: params_) {
-        printParam_(spc + TAB*2, param);
+        for (auto&& param: params_) {
+            printParam_(spc + TAB*2, param);
+        }
     }
-    decls_->print(spc + TAB);
+    if (decls_) {
+        decls_->print(spc + TAB); 
+    }
     body_->print(spc + TAB);
 }
 
@@ -145,7 +153,7 @@ ProcDecl::ProcDecl(const std::string& name,
 {}
 
 ProcDecl::~ProcDecl() {
-    for (auto&& [_, param] : params_) {
+    for (auto&& [param, _] : params_) {
         delete param;
     }
     delete decls_;
@@ -153,7 +161,7 @@ ProcDecl::~ProcDecl() {
 }
 
 void ProcDecl::printParam_(int spc, 
-                           const FuncDecl::ParamType& param) const 
+                           const ProcDecl::ParamType& param) const 
 { 
     static const std::unordered_map<ParamMode, std::string> modes {
         { ParamMode::IN, "IN" },
@@ -163,9 +171,9 @@ void ProcDecl::printParam_(int spc,
 
     std::cout << std::string(spc, ' ') 
               << "Param: Mode:"
-              << modes.at(param.first)
+              << modes.at(param.second)
               << '\n';
-    param.second->print(spc + TAB);
+    param.first->print(spc + TAB);
 }
 
 void ProcDecl::print(int spc) const {
@@ -174,20 +182,26 @@ void ProcDecl::print(int spc) const {
               << name_ << '\n';
     std::cout << std::string(spc + TAB, ' ') 
               << "Return Type:\n";
-    std::cout << std::string(spc + TAB, ' ') 
+    if (!params_.empty()) {
+        std::cout << std::string(spc + TAB, ' ') 
               << "Param list:\n";
-    for (auto&& param: params_) {
-        printParam_(spc + TAB*2, param);
+        for (auto&& param: params_) {
+            printParam_(spc + TAB*2, param);
+        }
     }
-    decls_->print(spc + TAB);
+    if (decls_) {
+        decls_->print(spc + TAB); 
+    }
     body_->print(spc + TAB);
 }
 
 // ProcDecl
 PackDecl::PackDecl(const std::string& name, 
-                   DeclArea* decls):
+                   DeclArea* decls,
+                   DeclArea* privateDecls):
     name_(name)
     , decls_(decls)
+    , privateDecls_(privateDecls)
 {}
 
 PackDecl::~PackDecl() {
@@ -198,7 +212,14 @@ void PackDecl::print(int spc) const {
     std::cout << std::string(spc, ' ') 
               << "Pack Decl: Name: "
               << name_ << '\n';
-    decls_->print(spc + TAB);
+    std::cout << std::string(spc + TAB, ' ') 
+              << "Public:\n";
+    decls_->print(spc + TAB*2);
+    if (privateDecls_) {
+        std::cout << std::string(spc + TAB, ' ') 
+                << "Private:\n";
+        privateDecls_->print(spc + TAB*2);
+    }
 }
 
 // Use Decl 
@@ -543,6 +564,7 @@ If::~If() {
 }
 
 void If::printElsif_(std::pair<IExpr*, Body*> elsif, int spc) const {
+    if (elsifs_.empty()) return;
     std::cout << std::string(spc, ' ') 
               << "Elsif:\n";
     std::cout << std::string(spc + TAB, ' ') 
@@ -552,6 +574,7 @@ void If::printElsif_(std::pair<IExpr*, Body*> elsif, int spc) const {
 }
 
 void If::printElse_(int spc) const {
+    if (!els_) return;
     std::cout << std::string(spc, ' ') 
               << "Else:\n";
     els_->print(spc + TAB);
@@ -740,6 +763,17 @@ CallOrIndexingOrVarStm::print(int spc) const {
               << "Unresolved Call Or "
                  "Indexing Or Var Statement\n";
     CIV_->print(spc + TAB*2);
+}
+
+// Return 
+Return::Return(IExpr* ret) : ret_(ret) {}
+
+Return::~Return() { delete ret_; }
+
+void Return::print(int spc) const {
+    std::cout << std::string(spc, ' ')
+              << "Return Stm:\n";
+    ret_->print(spc + TAB);
 }
 
 

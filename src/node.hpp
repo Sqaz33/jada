@@ -54,6 +54,8 @@ class IStm : public INode { /* ... */ };
 
 class Body : public INode {
 public:
+    Body(const std::vector<IStm*>& stms);
+    
     ~Body();
 
     void addStm(IStm* stm);
@@ -71,20 +73,20 @@ private:
 // Decls 
 namespace node {
 
-class Decl : public INode { /*...*/ };
+class IDecl : public INode { /*...*/ };
  
 class DeclArea : public INode {
 public:
     ~DeclArea();
 
-    void addDecl(Decl* decl);
+    void addDecl(IDecl* decl);
 
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    std::vector<Decl*> decls_;
+    std::vector<IDecl*> decls_;
 };
 
 struct IType : INode { 
@@ -96,7 +98,7 @@ public:
     virtual bool compareTypes(const IExpr* rhs) const = 0;
 };
 
-class VarDecl : public Decl {
+class VarDecl : public IDecl {
 public:
     VarDecl(const std::string& name, IType* type, IExpr* rval = nullptr);
     
@@ -115,9 +117,9 @@ private:
     IExpr* rval_;
 };
 
-class FuncDecl : public Decl {
+class FuncDecl : public IDecl {
 public:
-    using ParamType = std::pair<ParamMode, VarDecl*>;
+    using ParamType = std::pair<VarDecl*, ParamMode>;
 
     FuncDecl(const std::string& name, 
              const std::vector<ParamType>& params ,
@@ -143,9 +145,9 @@ private:
     Body* body_;
 };
 
-class ProcDecl : public Decl {
+class ProcDecl : public IDecl {
 public:
-    using ParamType = std::pair<ParamMode, VarDecl*>;
+    using ParamType = std::pair<VarDecl*, ParamMode>;
     ProcDecl(const std::string& name, 
              const std::vector<ParamType>& params,
              DeclArea* decls,
@@ -159,18 +161,21 @@ public: // INode interface
 
 private:
     void printParam_(int spc, const ParamType& param) const;
+    // void setIsOver(bool over) noexcept; TODO: do we want it?
 
 private:
     std::string name_;
     std::vector<ParamType> params_;
     DeclArea* decls_;
     Body* body_;
+    // bool over_ = false; TODO
 };
 
-class PackDecl : public Decl {
+class PackDecl : public IDecl {
 public:
     PackDecl(const std::string& name, 
-             DeclArea* decls);
+             DeclArea* decls, 
+             DeclArea* privateDecls = nullptr);
     
     ~PackDecl();
 
@@ -181,9 +186,10 @@ public: // INode interface
 private:
     std::string name_;
     DeclArea* decls_;
+    DeclArea* privateDecls_;
 };
 
-class UseDecl : public Decl {
+class UseDecl : public IDecl {
 public:
     UseDecl(attribute::QualifiedName name);
 
@@ -195,7 +201,7 @@ private:
     attribute::QualifiedName name_;
 };
 
-class WithDecl : public Decl{
+class WithDecl : public IDecl{
 public:
     WithDecl(attribute::QualifiedName name);
 
@@ -207,7 +213,7 @@ private:
     attribute::QualifiedName name_;
 };
 
-class RecordDecl : public Decl {
+class RecordDecl : public IDecl {
 public:
     RecordDecl(const std::string& name, 
                const std::vector<VarDecl*>& decls, 
@@ -228,7 +234,7 @@ private:
     bool isTagged_;
 };
 
-class TypeAliasDecl : public Decl {
+class TypeAliasDecl : public IDecl {
 public:
     TypeAliasDecl(const std::string& name, IType* type); 
 
@@ -435,8 +441,8 @@ class If : public IStm {
 public:
     If(IExpr* cond, 
        Body* body, 
-       Body* els, 
-       const std::vector<std::pair<IExpr*, Body*>>& elsifs);
+       Body* els = nullptr, 
+       const std::vector<std::pair<IExpr*, Body*>>& elsifs = {});
 
     ~If();
 
@@ -524,7 +530,8 @@ private:
 
 // Typeinfo - Other
 namespace node {
-class TypeName : IType {
+class TypeName : public IType {
+public:
     TypeName(attribute::QualifiedName name);
     TypeName(attribute::Attribute attr);
 
@@ -545,7 +552,7 @@ private:
 // Stms - Ops 
 namespace node {
 
-class Assign : IStm {
+class Assign : public IStm {
 public:
     Assign(CallOrIndexingOrVar* lval,
            IExpr* rval);
@@ -561,7 +568,7 @@ private:
     IExpr* rval_;
 };
 
-class CallOrIndexingOrVarStm : IStm {
+class CallOrIndexingOrVarStm : public IStm {
 public:
     CallOrIndexingOrVarStm(CallOrIndexingOrVar* CIV);
     ~CallOrIndexingOrVarStm();
@@ -572,6 +579,19 @@ public: // INode interface
 
 private:
     CallOrIndexingOrVar* CIV_;
+};
+
+class Return : public IStm {
+public:
+    Return(IExpr* ret = nullptr);
+    ~Return();
+
+public: // INode interface
+    void print(int spc) const override;
+    void* codegen() override { return nullptr; } // TODO
+
+private:
+    IExpr* ret_;
 };
 
 } // namespace node

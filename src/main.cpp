@@ -32,6 +32,9 @@ int main(int argc, char** argv) try {
         std::cout << "usage ./jada file.adb" << std::endl;
         return 1;
     }
+
+    // argv = new char*[2];
+    // argv[1] = "../test_data/complex.adb";
     
     std::string_view sv(argv[1]);
     if (!sv.ends_with(".adb")) {
@@ -55,9 +58,9 @@ int main(int argc, char** argv) try {
 
     yyFlexLexer lexer(&ifs);
     yy::parser p(&lexer);
-    p.set_debug_level(1);
+    // p.set_debug_level(1);
     
-    int res = !p.parse();
+    int res = p.parse();
 
     printErrors();
 
