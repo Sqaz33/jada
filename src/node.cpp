@@ -717,7 +717,7 @@ void TypeName::print(int spc) const {
     std::cout << std::string(spc, ' ')
               << "Unresolved Type Name:\n";
     std::cout << std::string(spc + TAB, ' ')
-              << "Name: ";
+              << "Name:\n";
     if (!name_.empty()) {
         name_.print(spc);
         return;

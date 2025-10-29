@@ -36,7 +36,7 @@ void Attribute::print(int spc) const {
     if (left_.empty() || right_.empty()) return;
     std::cout << std::string(spc, ' ')
               << "Attribute: ";
-    left_.print(spc + 4);
+    left_.print(4);                               // ?????????????????
     std::cout << '\'' << right_;
     std::cout << '\n';
 }
