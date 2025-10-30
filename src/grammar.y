@@ -5,12 +5,6 @@
   Volgograd 2025 
 */
 
-/*
-
-// TODO:
-  5. qualified_name ???? a(...).b
-*/
-
 %language "c++"
 
 %skeleton "lalr1.cc"
@@ -32,9 +26,12 @@
   #include "compile_unit.hpp"
 
   class FlexLexer; 
-  using OptionalImports = 
+
+  using OptionalImports = typename 
     std::pair<std::vector<std::shared_ptr<node::With>>, 
                 std::vector<std::shared_ptr<node::IDecl>>>;
+                
+  using ArgsType = typename std::vector<std::shared_ptr<node::IExpr>>;
 }
 
 %code 
@@ -123,6 +120,7 @@
 %nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
 %nterm<std::shared_ptr<node::DeclArea>> decl_area
 %nterm<OptionalImports> optional_imports
+%nterm<node::CallOrIndexingOrVar::NamePart> CIV
 
 %start program
 
@@ -148,9 +146,9 @@ decl:             var_decl
 var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
                 | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
  
-import:           WITH qualified_name SC                                { $$.reset(new node::With(std::move($2))); }
+import:           WITH qualified_name SC                                { $$.reset(new node::With($2)); }
 
-use_decl:         USE qualified_name SC                                 { $$.reset(new node::UseDecl(std::move($2))); }
+use_decl:         USE qualified_name SC                                 { $$.reset(new node::UseDecl($2)); }
 
 optional_imports: import                                                { $$ = OptionalImports({$1}, {}); }
                 | use_decl                                              { $$ = OptionalImports({}, {$1}); }
@@ -215,7 +213,7 @@ param:            NAME COLON type                                       {
 optional_decl_area: %empty                                              { $$ = nullptr; }
                 |   decl_area                                           
 
-type_alias_decl:    TYPE NAME IS type SC                                { $$.reset(new node::TypeAliasDecl($2, $4)); }        
+type_alias_decl:  TYPE NAME IS type SC                                  { $$.reset(new node::TypeAliasDecl($2, $4)); }        
 
 compile_unit:     proc_decl                                             
                 | func_decl                 
@@ -242,7 +240,7 @@ type:             INTEGERTY                                             {
 
 string_type:      STRINGTY LPAR static_range RPAR                       { $$.reset(new node::StringType($3)); }
 
-array_type:       ARRAY array_range OF type                             { $$.reset(new node::ArrayType(std::move($2), $4)); }
+array_type:       ARRAY array_range OF type                             { $$.reset(new node::ArrayType($2, $4)); }
 
 array_range:      LPAR static_ranges RPAR                               { $$ = std::move($2); }              
 
@@ -253,7 +251,7 @@ static_range:     INTEGER DOT_DOT INTEGER                               { $$ = s
 
 /* statements */
 /* ################################################################################ */
-body:             stms                                                  { $$.reset(new node::Body(std::move($1))); }
+body:             stms                                                  { $$.reset(new node::Body($1)); }
 
 stms:             stm                                                   { $$ = std::vector({$1}); }
                 | stms stm                                              { $$ = std::move($1); $$.push_back($2); }
@@ -301,9 +299,32 @@ expr:             expr EQ expr                                          { $$.res
                 | call_or_indexing_or_var                    
                 | literal                                               { $$ = $1; }
 
-call_or_indexing_or_var:   qualified_name LPAR args RPAR                { $$.reset(new node::CallOrIndexingOrVar($1, std::move($3))); }
-                |          getting_attribute LPAR args RPAR             { $$.reset(new node::CallOrIndexingOrVar($1, std::move($3))); }
-                |          qualified_name                               { $$.reset(new node::CallOrIndexingOrVar($1)); }
+call_or_indexing_or_var:   CIV                                          { 
+                                                                          $$.reset(new node::CallOrIndexingOrVar());
+                                                                          std::dynamic_pointer_cast<
+                                                                              node::CallOrIndexingOrVar>($$)->addPart($1);
+                                                                        }
+                |          call_or_indexing_or_var DOT CIV              {  
+                                                                          $$ = std::move($1); 
+                                                                          std::dynamic_pointer_cast<
+                                                                              node::CallOrIndexingOrVar>($$)->addPart($3);
+                                                                        }
+
+CIV:                       NAME LPAR args RPAR                          { 
+                                                                          $$ = node::CallOrIndexingOrVar::NamePart(
+                                                                            $1, attribute::Attribute(), $3
+                                                                          );
+                                                                        }
+                |          GETTING_ATTRIBUTE LPAR args RPAR             { 
+                                                                          attribute::Attribute attr($1.first, $1.second);
+                                                                          $$ = node::CallOrIndexingOrVar::NamePart("", attr, $3);
+                                                                        }
+                |          NAME                                         { $$ = node::CallOrIndexingOrVar::NamePart($1); }
+                |          GETTING_ATTRIBUTE                            { 
+                                                                           attribute::Attribute attr($1.first, $1.second);
+                                                                           $$ = node::CallOrIndexingOrVar::NamePart("", attr); 
+                                                                        }                          
+                                                                           
 
 args:             expr                                                  { $$ = std::vector({$1}); }
                 | args COMMA expr                                       { $$ = std::move($1); $$.push_back($3); }
@@ -353,8 +374,8 @@ literals:         literal  COMMA literal                                { $$ = s
 /* control structures */
 /* ################################################################################ */
 if_stm:          if_head body END IF SC                                 { $$.reset(new node::If($1, $2)); }
-               | if_head body elsifs END IF SC                          { $$.reset(new node::If($1, $2, nullptr, std::move($3))); }
-               | if_head body elsifs else END IF SC                     { $$.reset(new node::If($1, $2, $4, std::move($3))); }
+               | if_head body elsifs END IF SC                          { $$.reset(new node::If($1, $2, nullptr, $3)); }
+               | if_head body elsifs else END IF SC                     { $$.reset(new node::If($1, $2, $4, $3)); }
                | if_head body else END IF SC                            { $$.reset(new node::If($1, $2, $3)); }
 
 elsifs:          elsif                                                  { $$ = std::vector({$1}); }

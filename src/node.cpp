@@ -185,20 +185,10 @@ While::While(std::shared_ptr<IExpr> cond,
 // Stms - Other
 namespace node {
 
-// CallOrIndexingOrVar:
-CallOrIndexingOrVar::CallOrIndexingOrVar(
-    attribute::QualifiedName name, 
-    const std::vector<std::shared_ptr<IExpr>>& args):
-    name_(std::move(name))
-    , args_(args)
-{}
-
-CallOrIndexingOrVar::CallOrIndexingOrVar(
-    attribute::Attribute attr, 
-    const std::vector<std::shared_ptr<IExpr>>& args) :
-    attr_(std::move(attr))
-    , args_(args)
-{}
+// CallOrIndexingOrVar
+void CallOrIndexingOrVar::addPart(const CallOrIndexingOrVar::NamePart& part) {
+    fullName_.push_back(part);
+}
 
 } // namespace node 
 

@@ -467,13 +467,17 @@ private:
 namespace node {
 
 class CallOrIndexingOrVar : public IExpr {
+    using ArgsType = std::vector<std::shared_ptr<IExpr>>;
+
 public:
-    CallOrIndexingOrVar(attribute::QualifiedName name, 
-                        const std::vector<
-                            std::shared_ptr<IExpr>>& args = {});
-    CallOrIndexingOrVar(attribute::Attribute attr, 
-                        const std::vector<
-                            std::shared_ptr<IExpr>>& args = {});
+    struct NamePart {
+        std::string name;       // or
+        attribute::Attribute attribute; 
+        ArgsType args;
+    };
+
+public:
+    void addPart(const NamePart& part);
 
 public: // IExpr interface
     bool 
@@ -484,12 +488,10 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    void printArgs_(int spc) const;
+    void printArgs_(int spc, const ArgsType& args) const;
 
 private:
-    attribute::QualifiedName name_;
-    attribute::Attribute attr_;
-    std::vector<std::shared_ptr<IExpr>> args_;
+    std::vector<NamePart> fullName_;
 };
 
 } // namespace node

@@ -353,16 +353,25 @@ void CallOrIndexingOrVar::print(int spc) const {
                  " Call or Indexing or Variable:\n";
     std::cout << std::string(spc + TAB, ' ')
               << "Name:\n";
-    name_.print(spc + TAB*2);
-    attr_.print(spc + TAB*2);
-    printArgs_(spc + TAB);
+    for (auto&& [name, attr, args] : fullName_) {
+        if (!name.empty()) {
+            std::cout << std::string(spc + TAB, ' ')
+                      << name 
+                      << '\n';
+        } else {
+            attr.print(spc + TAB);
+        }
+        std::cout << std::string(spc + TAB, ' ')
+                  << "Call:\n";
+        printArgs_(spc + TAB*2, args);
+    }
 }
 
-void CallOrIndexingOrVar::printArgs_(int spc) const {
-    if (args_.empty()) return;
+void CallOrIndexingOrVar::printArgs_(int spc, const ArgsType& args) const {
+    if (args.empty()) return;
     std::cout << std::string(spc, ' ')
               << "Args:\n";
-    for (auto arg : args_) {
+    for (auto arg : args) {
         arg->print(spc + TAB);
     }
 }
