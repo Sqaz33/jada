@@ -131,7 +131,7 @@ void UseDecl::print(int spc) const {
     name_.print(spc);
 }
 
-void WithDecl::print(int spc) const {
+void With::print(int spc) const {
     std::cout << std::string(spc, ' ') 
               << "Use Decl: Name: ";
     name_.print(spc);

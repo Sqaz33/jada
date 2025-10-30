@@ -68,7 +68,7 @@ UseDecl::UseDecl(attribute::QualifiedName name) :
 {}
 
 // With Decl 
-WithDecl::WithDecl(attribute::QualifiedName name) :
+With::With(attribute::QualifiedName name) :
     name_(std::move(name))
 {}
 

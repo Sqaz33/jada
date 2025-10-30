@@ -8,7 +8,6 @@
 /*
 
 // TODO:
-  4. import and compile_unit -> one INode
   5. qualified_name ???? a(...).b
 */
 
@@ -30,8 +29,12 @@
   #include "location.hh"
 
   #include "node.hpp"
+  #include "compile_unit.hpp"
 
   class FlexLexer; 
+  using OptionalImports = 
+    std::pair<std::vector<std::shared_ptr<node::With>>, 
+                std::vector<std::shared_ptr<node::IDecl>>>;
 }
 
 %code 
@@ -75,7 +78,7 @@
 
 %nterm<std::shared_ptr<node::IDecl>> decl
 %nterm<std::shared_ptr<node::IDecl>> var_decl
-%nterm<std::shared_ptr<node::IDecl>> import_decl
+%nterm<std::shared_ptr<node::With>> import
 %nterm<std::shared_ptr<node::IDecl>> use_decl
 %nterm<attribute::QualifiedName> qualified_name
 %nterm<attribute::Attribute> getting_attribute
@@ -119,19 +122,15 @@
 %nterm<std::shared_ptr<node::IDecl>> type_alias_decl
 %nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
 %nterm<std::shared_ptr<node::DeclArea>> decl_area
-%nterm<std::vector<std::shared_ptr<node::IDecl>>> optional_imports
+%nterm<OptionalImports> optional_imports
 
 %start program
 
 %%
 
 program: optional_imports compile_unit                                  { 
-                                                                          node::DeclArea root;
-                                                                          for (auto decl : $1) {
-                                                                            root.addDecl(decl);
-                                                                          }
-                                                                          root.addDecl($2);
-                                                                          root.print(0);
+                                                                          compile_unit::CompileUnit CU($2, $1.first, $1.second);
+                                                                          CU.print();
                                                                         }
 
 /* declarations */
@@ -149,14 +148,14 @@ decl:             var_decl
 var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
                 | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
  
-import_decl:      WITH qualified_name SC                                { $$.reset(new node::WithDecl(std::move($2))); }
+import:           WITH qualified_name SC                                { $$.reset(new node::With(std::move($2))); }
 
 use_decl:         USE qualified_name SC                                 { $$.reset(new node::UseDecl(std::move($2))); }
 
-optional_imports: import_decl                                           { $$ = std::vector({$1}); }
-                | use_decl                                              { $$ = std::vector({$1}); }
-                | optional_imports import_decl                          { $$ = std::move($1); $$.push_back($2); }
-                | optional_imports use_decl                             { $$ = std::move($1); $$.push_back($2); }
+optional_imports: import                                                { $$ = OptionalImports({$1}, {}); }
+                | use_decl                                              { $$ = OptionalImports({}, {$1}); }
+                | optional_imports import                               { $$ = std::move($1); $$.first.push_back($2); }
+                | optional_imports use_decl                             { $$ = std::move($1); $$.second.push_back($2); }
 
 qualified_name:   NAME                                                  { $$ = attribute::QualifiedName($1); } 
                 | qualified_name DOT NAME                               { $$ = std::move($1); $$.push($3); }       
@@ -216,7 +215,7 @@ param:            NAME COLON type                                       {
 optional_decl_area: %empty                                              { $$ = nullptr; }
                 |   decl_area                                           
 
-type_alias_decl:    TYPE NAME IS type SC                            { $$.reset(new node::TypeAliasDecl($2, $4)); }        
+type_alias_decl:    TYPE NAME IS type SC                                { $$.reset(new node::TypeAliasDecl($2, $4)); }        
 
 compile_unit:     proc_decl                                             
                 | func_decl                 

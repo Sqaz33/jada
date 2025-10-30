@@ -193,9 +193,9 @@ private:
     attribute::QualifiedName name_;
 };
 
-class WithDecl : public IDecl{
+class With : public INode {
 public:
-    WithDecl(attribute::QualifiedName name);
+    With(attribute::QualifiedName name);
 
 public: // INode interface
     void print(int spc) const override;
