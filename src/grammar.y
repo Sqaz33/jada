@@ -104,7 +104,6 @@
 %nterm<std::shared_ptr<node::IStm>> return_stm
 %nterm<std::shared_ptr<node::IExpr>> expr
 %nterm<std::vector<std::shared_ptr<node::IExpr>>> args
-%nterm<std::vector<std::shared_ptr<node::IExpr>>> optional_args
 %nterm<std::shared_ptr<node::ILiteral>> literal
 %nterm<std::vector<std::shared_ptr<node::ILiteral>>> literals
 %nterm<std::shared_ptr<node::ILiteral>> aggregate
@@ -304,12 +303,9 @@ expr:             expr EQ expr                                          { $$.res
                 | call_or_indexing_or_var                    
                 | literal                                               { $$ = $1; }
 
-call_or_indexing_or_var:   qualified_name LPAR optional_args RPAR       { $$.reset(new node::CallOrIndexingOrVar($1, std::move($3))); }
-                |          getting_attribute LPAR optional_args RPAR    { $$.reset(new node::CallOrIndexingOrVar($1, std::move($3))); }
+call_or_indexing_or_var:   qualified_name LPAR args RPAR                { $$.reset(new node::CallOrIndexingOrVar($1, std::move($3))); }
+                |          getting_attribute LPAR args RPAR             { $$.reset(new node::CallOrIndexingOrVar($1, std::move($3))); }
                 |          qualified_name                               { $$.reset(new node::CallOrIndexingOrVar($1)); }
-
-optional_args:    %empty                                                { $$ = std::vector<std::shared_ptr<node::IExpr>>(); }
-                | args                                                  { $$ = std::move($1); }
 
 args:             expr                                                  { $$ = std::vector({$1}); }
                 | args COMMA expr                                       { $$ = std::move($1); $$.push_back($3); }
