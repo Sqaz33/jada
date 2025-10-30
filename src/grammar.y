@@ -66,56 +66,56 @@
 
 %nonassoc UMINUS
 
-%nterm<node::IDecl*> decl
-%nterm<node::IDecl*> var_decl
-%nterm<node::IDecl*> import_decl
-%nterm<node::IDecl*> use_decl
+%nterm<std::shared_ptr<node::IDecl>> decl
+%nterm<std::shared_ptr<node::IDecl>> var_decl
+%nterm<std::shared_ptr<node::IDecl>> import_decl
+%nterm<std::shared_ptr<node::IDecl>> use_decl
 %nterm<attribute::QualifiedName> qualified_name
 %nterm<attribute::Attribute> getting_attribute
-%nterm<node::IDecl*> proc_decl
-%nterm<node::IDecl*> func_decl
-%nterm<node::IDecl*> pack_decl
-%nterm<node::IDecl*> type_decl
-%nterm<node::IDecl*> record_decl
-%nterm<std::vector<node::VarDecl*>> vars_decl
-%nterm<std::pair<node::VarDecl*, node::ParamMode>> param
-%nterm<std::vector<std::pair<node::VarDecl*, node::ParamMode>>> param_list
-%nterm<node::IType*> string_type
-%nterm<node::IType*> array_type
-%nterm<node::IType*> type
+%nterm<std::shared_ptr<node::IDecl>> proc_decl
+%nterm<std::shared_ptr<node::IDecl>> func_decl
+%nterm<std::shared_ptr<node::IDecl>> pack_decl
+%nterm<std::shared_ptr<node::IDecl>> type_decl
+%nterm<std::shared_ptr<node::IDecl>> record_decl
+%nterm<std::vector<std::shared_ptr<node::VarDecl>>> vars_decl
+%nterm<std::pair<std::shared_ptr<node::VarDecl>, node::ParamMode>> param
+%nterm<std::vector<std::pair<std::shared_ptr<node::VarDecl>, node::ParamMode>>> param_list
+%nterm<std::shared_ptr<node::IType>> string_type
+%nterm<std::shared_ptr<node::IType>> array_type
+%nterm<std::shared_ptr<node::IType>> type
 %nterm<std::vector<std::pair<int, int>>> array_range
 %nterm<std::vector<std::pair<int, int>>> static_ranges
 %nterm<std::pair<int, int>> static_range
-%nterm<node::Body*> body
-%nterm<std::vector<node::IStm*>> stms
-%nterm<node::IStm*> stm
-%nterm<node::IStm*> oper
-%nterm<node::IStm*> assign
-%nterm<node::IExpr*> lval
-%nterm<node::IStm*> return_stm
-%nterm<node::IExpr*> expr
-%nterm<std::vector<node::IExpr*>> args
-%nterm<std::vector<node::IExpr*>> optional_args
-%nterm<node::ILiteral*> literal
-%nterm<std::vector<node::ILiteral*>> literals
-%nterm<node::ILiteral*> aggregate
-%nterm<node::IStm*> if_stm
-%nterm<node::IExpr*> if_head
-%nterm<std::vector<std::pair<node::IExpr*, node::Body*>>> elsifs
-%nterm<std::pair<node::IExpr*, node::Body*>> elsif 
-%nterm<node::Body*> else
-%nterm<node::IStm*> for_stm
-%nterm<node::IStm*> while_stm
-%nterm<std::pair<node::IExpr*, node::IExpr*>> range
-%nterm<node::IStm*> call_or_indexing_or_var_stm
-%nterm<node::IExpr*> call_or_indexing_or_var
-%nterm<node::IDecl*> compile_unit 
-%nterm<node::IDecl*> type_alias_decl
-%nterm<node::DeclArea*> optional_decl_area
-%nterm<node::DeclArea*> decl_area
-%nterm<std::vector<node::IDecl*>> optional_imports
-%nterm<node::IType*> composite_type;
-%nterm<node::IType*> any_type;
+%nterm<std::shared_ptr<node::Body>> body
+%nterm<std::vector<std::shared_ptr<node::IStm>>> stms
+%nterm<std::shared_ptr<node::IStm>> stm
+%nterm<std::shared_ptr<node::IStm>> oper
+%nterm<std::shared_ptr<node::IStm>> assign
+%nterm<std::shared_ptr<node::IExpr>> lval
+%nterm<std::shared_ptr<node::IStm>> return_stm
+%nterm<std::shared_ptr<node::IExpr>> expr
+%nterm<std::vector<std::shared_ptr<node::IExpr>>> args
+%nterm<std::vector<std::shared_ptr<node::IExpr>>> optional_args
+%nterm<std::shared_ptr<node::ILiteral>> literal
+%nterm<std::vector<std::shared_ptr<node::ILiteral>>> literals
+%nterm<std::shared_ptr<node::ILiteral>> aggregate
+%nterm<std::shared_ptr<node::IStm>> if_stm
+%nterm<std::shared_ptr<node::IExpr>> if_head
+%nterm<std::vector<std::pair<std::shared_ptr<node::IExpr>, std::shared_ptr<node::Body>>>> elsifs
+%nterm<std::pair<std::shared_ptr<node::IExpr>, std::shared_ptr<node::Body>>> elsif
+%nterm<std::shared_ptr<node::Body>> else
+%nterm<std::shared_ptr<node::IStm>> for_stm
+%nterm<std::shared_ptr<node::IStm>> while_stm
+%nterm<std::pair<std::shared_ptr<node::IExpr>, std::shared_ptr<node::IExpr>>> range
+%nterm<std::shared_ptr<node::IStm>> call_or_indexing_or_var_stm
+%nterm<std::shared_ptr<node::IExpr>> call_or_indexing_or_var
+%nterm<std::shared_ptr<node::IDecl>> compile_unit
+%nterm<std::shared_ptr<node::IDecl>> type_alias_decl
+%nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
+%nterm<std::shared_ptr<node::DeclArea>> decl_area
+%nterm<std::vector<std::shared_ptr<node::IDecl>>> optional_imports
+%nterm<std::shared_ptr<node::IType>> composite_type
+%nterm<std::shared_ptr<node::IType>> any_type
 
 %start program
 
@@ -123,7 +123,7 @@
 
 program: optional_imports compile_unit                                  { 
                                                                           node::DeclArea root;
-                                                                          for (auto* decl : $1) {
+                                                                          for (auto decl : $1) {
                                                                             root.addDecl(decl);
                                                                           }
                                                                           root.addDecl($2);
@@ -132,7 +132,7 @@ program: optional_imports compile_unit                                  {
 
 /* declarations */
 /* ################################################################################ */
-decl_area:        decl                                                  { $$ = new node::DeclArea(); $$->addDecl($1); }  
+decl_area:        decl                                                  { $$.reset(new node::DeclArea()); $$->addDecl($1); }  
                 | decl_area decl                                        { $$ = $1; $$->addDecl($2); }
  
 decl:             var_decl
@@ -142,14 +142,14 @@ decl:             var_decl
                 | pack_decl  
                 | type_decl
 
-var_decl:         NAME COLON type ASG expr SC                           { $$ = new node::VarDecl($1, $3, $5); }
-                | NAME COLON type SC                                    { $$ = new node::VarDecl($1, $3); }
-                | NAME COLON composite_type SC                          { $$ = new node::VarDecl($1, $3); }
-                | NAME COLON composite_type ASG aggregate SC            { $$ = new node::VarDecl($1, $3, $5); }
+var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
+                | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
+                | NAME COLON composite_type SC                          { $$.reset(new node::VarDecl($1, $3)); }
+                | NAME COLON composite_type ASG aggregate SC            { $$.reset(new node::VarDecl($1, $3, $5)); }
  
-import_decl:      WITH qualified_name SC                                { $$ = new node::WithDecl(std::move($2)); }
+import_decl:      WITH qualified_name SC                                { $$.reset(new node::WithDecl(std::move($2))); }
 
-use_decl:         USE qualified_name SC                                 { $$ = new node::UseDecl(std::move($2)); }
+use_decl:         USE qualified_name SC                                 { $$.reset(new node::UseDecl(std::move($2))); }
 
 optional_imports: import_decl                                           { $$ = std::vector({$1}); }
                 | use_decl                                              { $$ = std::vector({$1}); }
@@ -159,32 +159,34 @@ optional_imports: import_decl                                           { $$ = s
 qualified_name:   NAME                                                  { $$ = attribute::QualifiedName($1); } 
                 | qualified_name DOT NAME                               { $$ = std::move($1); $$.push($3); }       
 
-proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC                                     { $$ = new node::ProcDecl($2, {}, $4, $6); }
-                | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { $$ = new node::ProcDecl($2, $4, $7, $9); }
+proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC                                     { $$.reset(new node::ProcDecl($2, {}, $4, $6)); }
+                | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { $$.reset(new node::ProcDecl($2, $4, $7, $9)); }
                 | OVERRIDING proc_decl                                                                               { $$ = $2; }
 
-func_decl:        FUNCTION NAME RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC                      { $$ = new node::FuncDecl($2, {}, $4, $6, $8); }
-                | FUNCTION NAME LPAR param_list RPAR RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC { $$ = new node::FuncDecl($2, $4, $7, $9, $11); }
+func_decl:        FUNCTION NAME RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC                      { $$.reset(new node::FuncDecl($2, {}, $4, $6, $8)); }
+                | FUNCTION NAME LPAR param_list RPAR RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC { $$.reset(new node::FuncDecl($2, $4, $7, $9, $11)); }
                 | OVERRIDING func_decl                                                                               { $$ = $2; }
 
-pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                       { $$ = new node::PackDecl($2, $4); }
-                | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC                     { $$ = new node::PackDecl($2, $4, $6); }
+pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                       { $$.reset(new node::PackDecl($2, $4)); }
+                | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC                     { $$.reset(new node::PackDecl($2, $4, $6)); }
 
 type_decl:        record_decl                    
                  | type_alias_decl
                   /* enum_decl */ /* TODO */
 
-record_decl:      TYPE NAME IS RECORD vars_decl END RECORD SC                                 { $$ = new node::RecordDecl($2, $5); }
-                | TYPE NAME IS TAGGED RECORD vars_decl END RECORD SC                          { $$ = new node::RecordDecl($2, $6, {}, true); }
-                | TYPE NAME IS NEW qualified_name WITH RECORD vars_decl END RECORD SC         { $$ = new node::RecordDecl($2, std::move($8), $5); }
+record_decl:      TYPE NAME IS RECORD vars_decl END RECORD SC                                 { $$.reset(new node::RecordDecl($2, $5)); }
+                | TYPE NAME IS TAGGED RECORD vars_decl END RECORD SC                          { $$.reset(new node::RecordDecl($2, $6, {}, true)); }
+                | TYPE NAME IS NEW qualified_name WITH RECORD vars_decl END RECORD SC         { $$.reset(new node::RecordDecl($2, std::move($8), $5)); }
 
 vars_decl:        var_decl                                              { 
-                                                                          auto* decl = dynamic_cast<node::VarDecl*>($1);
-                                                                          $$ = std::vector<node::VarDecl*>({decl}); 
+                                                                          auto decl = 
+                                                                            std::dynamic_pointer_cast<node::VarDecl>($1);
+                                                                          $$ = std::vector<std::shared_ptr<node::VarDecl>>({decl}); 
                                                                         }
                 | vars_decl var_decl                                    { 
                                                                           $$ = std::move($1); 
-                                                                          auto* decl = dynamic_cast<node::VarDecl*>($2);
+                                                                          auto decl = 
+                                                                            std::dynamic_pointer_cast<node::VarDecl>($2);
                                                                           $$.push_back(decl); 
                                                                         }
 
@@ -192,26 +194,26 @@ param_list:       param                                                 { $$ = s
                 | param_list SC param                                   { $$ = std::move($1); $$.push_back($3); }
 
 param:            NAME COLON any_type                                   { 
-                                                                          auto* decl = new node::VarDecl($1, $3);
+                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $3));
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN); 
                                                                         }
                 | NAME COLON IN OUT any_type                            { 
-                                                                          auto* decl = new node::VarDecl($1, $5);
+                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $5));
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN_OUT); 
                                                                         }
                 | NAME COLON IN any_type                                { 
-                                                                          auto* decl = new node::VarDecl($1, $4);
+                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN); 
                                                                         }
                 | NAME COLON OUT any_type                               { 
-                                                                          auto* decl = new node::VarDecl($1, $4);
+                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           $$ = std::make_pair(decl, node::ParamMode::OUT); 
                                                                         }
 
 optional_decl_area: %empty                                              { $$ = nullptr; }
                 |   decl_area                                           
 
-type_alias_decl:    TYPE NAME IS any_type SC                            { $$ = new node::TypeAliasDecl($2, $4); }        
+type_alias_decl:    TYPE NAME IS any_type SC                            { $$.reset(new node::TypeAliasDecl($2, $4)); }        
 
 compile_unit:     proc_decl                                             
                 | func_decl                 
@@ -223,26 +225,26 @@ any_type: composite_type
         | type
 
 type:             INTEGERTY                                             { 
-                                                                           $$ = new node::SimpleLiteralType(
-                                                                                   node::SimpleType::INTEGER); 
+                                                                           $$.reset(new node::SimpleLiteralType(
+                                                                                    node::SimpleType::INTEGER)); 
                                                                         }
                 | FLOATTY                                               {
-                                                                           $$ = new node::SimpleLiteralType(
-                                                                                   node::SimpleType::FLOAT); 
+                                                                           $$.reset(new node::SimpleLiteralType(
+                                                                                    node::SimpleType::FLOAT)); 
                                                                         }
                 | CHARACTERTY                                           {
-                                                                           $$ = new node::SimpleLiteralType(
-                                                                                   node::SimpleType::CHAR); 
+                                                                           $$.reset(new node::SimpleLiteralType(
+                                                                                    node::SimpleType::CHAR)); 
                                                                         }
-                | qualified_name                                        { $$ = new node::TypeName($1); }
+                | qualified_name                                        { $$.reset(new node::TypeName($1)); }
                 | string_type                                            
-                | getting_attribute                                     { $$ = new node::TypeName($1); }             
+                | getting_attribute                                     { $$.reset(new node::TypeName($1)); }             
 
 composite_type:   array_type          
 
-string_type:      STRINGTY LPAR static_range RPAR                       { $$ = new node::StringType($3); }
+string_type:      STRINGTY LPAR static_range RPAR                       { $$.reset(new node::StringType($3)); }
 
-array_type:       ARRAY array_range OF type                             { $$ = new node::ArrayType(std::move($2), $4); }
+array_type:       ARRAY array_range OF type                             { $$.reset(new node::ArrayType(std::move($2), $4)); }
 
 array_range:      LPAR static_ranges RPAR                               { $$ = std::move($2); }              
 
@@ -253,7 +255,7 @@ static_range:     INTEGER DOT_DOT INTEGER                               { $$ = s
 
 /* statements */
 /* ################################################################################ */
-body:             stms                                                  { $$ = new node::Body(std::move($1)); }
+body:             stms                                                  { $$.reset(new node::Body(std::move($1))); }
 
 stms:             stm                                                   { $$ = std::vector({$1}); }
                 | stms stm                                              { $$ = std::move($1); $$.push_back($2); }
@@ -268,48 +270,48 @@ oper:             assign
                 | call_or_indexing_or_var_stm                            
 
 call_or_indexing_or_var_stm:  call_or_indexing_or_var SC                { 
-                                                                          auto* CIV = dynamic_cast<
-                                                                            node::CallOrIndexingOrVar*>($1);
-                                                                          $$ = new node::CallOrIndexingOrVarStm(CIV); 
+                                                                          auto CIV = std::dynamic_pointer_cast<
+                                                                              node::CallOrIndexingOrVar>($1);
+                                                                          $$.reset(new node::CallOrIndexingOrVarStm(CIV)); 
                                                                         }
 
 assign:           lval ASG expr SC                                      { 
-                                                                          auto* CIV = dynamic_cast<
-                                                                            node::CallOrIndexingOrVar*>($1);
-                                                                          $$ = new node::Assign(CIV, $3); 
+                                                                          auto CIV = std::dynamic_pointer_cast<
+                                                                              node::CallOrIndexingOrVar>($1);
+                                                                          $$.reset(new node::Assign(CIV, $3)); 
                                                                         }
                                                 
 lval:             call_or_indexing_or_var                                 
 
-return_stm:       RETURN expr SC                                        { $$ = new node::Return($2); } 
-                | RETURN SC                                             { $$ = new node::Return(); }                                        
+return_stm:       RETURN expr SC                                        { $$.reset(new node::Return($2)); } 
+                | RETURN SC                                             { $$.reset(new node::Return()); }                                        
 
-expr:             expr EQ expr                                          { $$ = new node::Op($1, node::OpType::EQ, $3);          }
-                | expr NEQ expr                                         { $$ = new node::Op($1, node::OpType::NEQ, $3);         }
-                | expr MORE expr                                        { $$ = new node::Op($1, node::OpType::MORE, $3);        }
-                | expr LESS expr                                        { $$ = new node::Op($1, node::OpType::LESS, $3);        }
-                | expr GTE expr                                         { $$ = new node::Op($1, node::OpType::GTE, $3);         }
-                | expr LTE expr                                         { $$ = new node::Op($1, node::OpType::LTE, $3);         }
-                | expr AMPER expr                                       { $$ = new node::Op($1, node::OpType::AMPER, $3);       }
-                | expr PLUS expr                                        { $$ = new node::Op($1, node::OpType::PLUS, $3);        }
-                | expr MINUS expr                                       { $$ = new node::Op($1, node::OpType::MINUS, $3);       }
-                | expr MUL expr                                         { $$ = new node::Op($1, node::OpType::MUL, $3);         }
-                | expr DIV expr                                         { $$ = new node::Op($1, node::OpType::DIV, $3);         }
-                | expr MOD expr                                         { $$ = new node::Op($1, node::OpType::MOD, $3);         }
+expr:             expr EQ expr                                          { $$.reset(new node::Op($1, node::OpType::EQ, $3));          }
+                | expr NEQ expr                                         { $$.reset(new node::Op($1, node::OpType::NEQ, $3));         }
+                | expr MORE expr                                        { $$.reset(new node::Op($1, node::OpType::MORE, $3));        }
+                | expr LESS expr                                        { $$.reset(new node::Op($1, node::OpType::LESS, $3));        }
+                | expr GTE expr                                         { $$.reset(new node::Op($1, node::OpType::GTE, $3));         }
+                | expr LTE expr                                         { $$.reset(new node::Op($1, node::OpType::LTE, $3));         }
+                | expr AMPER expr                                       { $$.reset(new node::Op($1, node::OpType::AMPER, $3));       }
+                | expr PLUS expr                                        { $$.reset(new node::Op($1, node::OpType::PLUS, $3));        }
+                | expr MINUS expr                                       { $$.reset(new node::Op($1, node::OpType::MINUS, $3));       }
+                | expr MUL expr                                         { $$.reset(new node::Op($1, node::OpType::MUL, $3));         }
+                | expr DIV expr                                         { $$.reset(new node::Op($1, node::OpType::DIV, $3));         }
+                | expr MOD expr                                         { $$.reset(new node::Op($1, node::OpType::MOD, $3));         }
                 | LPAR expr RPAR                                        { $$ = $2; }
-                | MINUS expr %prec UMINUS                               { $$ = new node::Op(nullptr, node::OpType::UMINUS, $2); }
+                | MINUS expr %prec UMINUS                               { $$.reset(new node::Op(nullptr, node::OpType::UMINUS, $2)); }
                 | call_or_indexing_or_var                    
                 | literal                                               { $$ = $1; }
 
-call_or_indexing_or_var:   qualified_name LPAR optional_args RPAR       { $$ = new node::CallOrIndexingOrVar($1, std::move($3)); }
-                |          getting_attribute LPAR optional_args RPAR    { $$ = new node::CallOrIndexingOrVar($1, std::move($3)); }
-                |          qualified_name                               { $$ = new node::CallOrIndexingOrVar($1); }
+call_or_indexing_or_var:   qualified_name LPAR optional_args RPAR       { $$.reset(new node::CallOrIndexingOrVar($1, std::move($3))); }
+                |          getting_attribute LPAR optional_args RPAR    { $$.reset(new node::CallOrIndexingOrVar($1, std::move($3))); }
+                |          qualified_name                               { $$.reset(new node::CallOrIndexingOrVar($1)); }
 
-optional_args:    %empty                                                { $$ = std::vector<node::IExpr*>(); }
+optional_args:    %empty                                                { $$ = std::vector<std::shared_ptr<node::IExpr>>(); }
                 | args                                                  { $$ = std::move($1); }
 
 args:             expr                                                  { $$ = std::vector({$1}); }
-                | aggregate                                             { $$ = std::vector<node::IExpr*>({$1}); }
+                | aggregate                                             { $$ = std::vector<std::shared_ptr<node::IExpr>>({$1}); }
                 | args COMMA expr                                       { $$ = std::move($1); $$.push_back($3); }
                 | args COMMA aggregate                                  { $$ = std::move($1); $$.push_back($3); }
 
@@ -322,32 +324,32 @@ getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE               {
                                                                         }
 
 literal:          INTEGER                                               { 
-                                                                          auto* type = new node::SimpleLiteralType(
-                                                                                        node::SimpleType::INTEGER);
-                                                                          $$ = new node::SimpleLiteral(type, $1);
+                                                                          std::shared_ptr<node::SimpleLiteralType> type 
+                                                                            (new node::SimpleLiteralType(node::SimpleType::INTEGER));
+                                                                          $$.reset(new node::SimpleLiteral(type, $1));
                                                                         }
                 | BOOL                                                  {
-                                                                          auto* type = new node::SimpleLiteralType(
-                                                                                        node::SimpleType::BOOL);
-                                                                          $$ = new node::SimpleLiteral(type, $1);
+                                                                          std::shared_ptr<node::SimpleLiteralType> type 
+                                                                            (new node::SimpleLiteralType(node::SimpleType::BOOL));
+                                                                          $$.reset(new node::SimpleLiteral(type, $1));
                                                                         }
                 | CHAR                                                  {
-                                                                          auto* type = new node::SimpleLiteralType(
-                                                                                        node::SimpleType::CHAR);
-                                                                          $$ = new node::SimpleLiteral(type, $1);
+                                                                          std::shared_ptr<node::SimpleLiteralType> type 
+                                                                            (new node::SimpleLiteralType(node::SimpleType::CHAR));
+                                                                          $$.reset(new node::SimpleLiteral(type, $1));
                                                                         }
                 | STRING                                                {
-                                                                          auto* type = new node::StringType(
-                                                                              std::make_pair(1, $1.length()));
-                                                                          $$ = new node::StringLiteral(type, $1);
+                                                                          std::shared_ptr<node::StringType> type(
+                                                                              new node::StringType(std::make_pair(1, $1.length())));
+                                                                          $$.reset(new node::StringLiteral(type, $1));
                                                                         }
                 | FLOAT                                                 {
-                                                                          auto* type = new node::SimpleLiteralType(
-                                                                                        node::SimpleType::FLOAT);
-                                                                          $$ = new node::SimpleLiteral(type, $1);
+                                                                          std::shared_ptr<node::SimpleLiteralType> type 
+                                                                            (new node::SimpleLiteralType(node::SimpleType::FLOAT));
+                                                                          $$.reset(new node::SimpleLiteral(type, $1));
                                                                         }
                  
-aggregate:       LPAR literals RPAR                                     { $$ = new node::Aggregate($2); }
+aggregate:       LPAR literals RPAR                                     { $$.reset(new node::Aggregate($2)); }
 
   
 literals:         literal  COMMA literal                                { $$ = std::vector({$1, $3}); }
@@ -358,10 +360,10 @@ literals:         literal  COMMA literal                                { $$ = s
 
 /* control structures */
 /* ################################################################################ */
-if_stm:          if_head body END IF SC                                 { $$ = new node::If($1, $2); }
-               | if_head body elsifs END IF SC                          { $$ = new node::If($1, $2, nullptr, std::move($3)); }
-               | if_head body elsifs else END IF SC                     { $$ = new node::If($1, $2, $4, std::move($3)); }
-               | if_head body else END IF SC                            { $$ = new node::If($1, $2, $3); }
+if_stm:          if_head body END IF SC                                 { $$.reset(new node::If($1, $2)); }
+               | if_head body elsifs END IF SC                          { $$.reset(new node::If($1, $2, nullptr, std::move($3))); }
+               | if_head body elsifs else END IF SC                     { $$.reset(new node::If($1, $2, $4, std::move($3))); }
+               | if_head body else END IF SC                            { $$.reset(new node::If($1, $2, $3)); }
 
 elsifs:          elsif                                                  { $$ = std::vector({$1}); }
                | elsifs elsif                                           { $$ = std::move($1); $$.push_back($2); }
@@ -370,13 +372,13 @@ elsif:           ELSIF expr THEN body                                   { $$ = s
 
 else:            ELSE body                                              { $$ = $2; }
 
-if_head:         IF expr THEN                                           { $$ = $2; }
+if_head:         IF expr THEN                                           { $$ = $2 ; }
 
-for_stm:         FOR NAME IN range LOOP body END LOOP SC                { $$ = new node::For($2, $4, $6); }
+for_stm:         FOR NAME IN range LOOP body END LOOP SC                { $$.reset(new node::For($2, $4, $6)); }
  
 range:           expr DOT_DOT expr                                      { $$ = std::make_pair($1, $3); }
 
-while_stm:       WHILE expr LOOP body END LOOP SC                       { $$ = new node::While($2, $4); }
+while_stm:       WHILE expr LOOP body END LOOP SC                       { $$.reset(new node::While($2, $4)); }
 
 %%
 

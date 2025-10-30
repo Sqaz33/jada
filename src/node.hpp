@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <variant>
+#include <memory>
 
 // enums
 namespace node {
@@ -40,24 +41,25 @@ enum class ParamMode {
 } // namespace node
 
 namespace node {
-    
+
 class IStm : public INode { /* ... */ };
 
 class IDecl : public INode { /*...*/ };
 
 struct IType : INode { 
-    virtual bool compare(const IType* rhs) const = 0;
+    virtual bool compare(
+        const std::shared_ptr<IType> rhs) const = 0;
 };
 
 class IExpr : public INode { 
 public:
-    virtual bool compareTypes(const IExpr* rhs) const = 0;
+    virtual bool compareTypes(
+        const std::shared_ptr<IExpr> rhs) const = 0;
 };
 
 class ILiteral : public IExpr { /*...*/ };
 
 } // namespace node
-
 
 // Stms
 // #########################################
@@ -65,15 +67,14 @@ namespace node {
 
 class Body : public INode {
 public:
-    Body(const std::vector<IStm*>& stms);
+    Body(const std::vector<std::shared_ptr<IStm>>& stms);
     
-    ~Body();
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    std::vector<IStm*> stms_;
+    std::vector<std::shared_ptr<IStm>> stms_;
 };
 
 } // namespace node
@@ -82,26 +83,25 @@ private:
 namespace node { 
 class DeclArea : public INode {
 public:
-    ~DeclArea();
 
-    void addDecl(IDecl* decl);
+    void addDecl(std::shared_ptr<IDecl> decl);
 
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    std::vector<IDecl*> decls_;
+    std::vector<std::shared_ptr<IDecl>> decls_;
 };
 
 class VarDecl : public IDecl {
 public:
-    VarDecl(const std::string& name, IType* type, IExpr* rval = nullptr);
+    VarDecl(const std::string& name, 
+            std::shared_ptr<IType> type, 
+            std::shared_ptr<IExpr> rval = nullptr);
     
-    ~VarDecl();
-
 public:
-    bool compareTypes(IType* rhs) const {};
+    bool compareTypes(std::shared_ptr<IType> rhs) const {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -109,21 +109,20 @@ public: // INode interface
 
 private:
     std::string name_;
-    IType* type_;
-    IExpr* rval_;
+    std::shared_ptr<IType> type_;
+    std::shared_ptr<IExpr> rval_;
 };
 
 class FuncDecl : public IDecl {
 public:
-    using ParamType = std::pair<VarDecl*, ParamMode>;
+    using ParamType = 
+        std::pair<std::shared_ptr<VarDecl>, ParamMode>;
 
     FuncDecl(const std::string& name, 
              const std::vector<ParamType>& params ,
-             IType* retType,
-             DeclArea* decls,
-             Body* body);
-
-    ~FuncDecl();
+             std::shared_ptr<IType> retType,
+             std::shared_ptr<DeclArea> decls,
+             std::shared_ptr<Body> body);
 
 public: // INode interface
     void print(int spc) const override;
@@ -135,20 +134,20 @@ private:
 private:
     std::string name_;
     std::vector<ParamType> params_;
-    IType* retType_;
-    DeclArea* decls_;
-    Body* body_;
+    std::shared_ptr<IType> retType_;
+    std::shared_ptr<DeclArea> decls_;
+    std::shared_ptr<Body> body_;
 };
 
 class ProcDecl : public IDecl {
 public:
-    using ParamType = std::pair<VarDecl*, ParamMode>;
+    using ParamType = 
+        std::pair<std::shared_ptr<VarDecl>, ParamMode>;
+
     ProcDecl(const std::string& name, 
              const std::vector<ParamType>& params,
-             DeclArea* decls,
-             Body* body);
-
-    ~ProcDecl();
+             std::shared_ptr<DeclArea> decls,
+             std::shared_ptr<Body> body);
 
 public: // INode interface
     void print(int spc) const override;
@@ -161,27 +160,25 @@ private:
 private:
     std::string name_;
     std::vector<ParamType> params_;
-    DeclArea* decls_;
-    Body* body_;
+    std::shared_ptr<DeclArea> decls_;
+    std::shared_ptr<Body> body_;
     // bool over_ = false; TODO
 };
 
 class PackDecl : public IDecl {
 public:
     PackDecl(const std::string& name, 
-             DeclArea* decls, 
-             DeclArea* privateDecls = nullptr);
+             std::shared_ptr<DeclArea> decls, 
+             std::shared_ptr<DeclArea> privateDecls = nullptr);
     
-    ~PackDecl();
-
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
     std::string name_;
-    DeclArea* decls_;
-    DeclArea* privateDecls_;
+    std::shared_ptr<DeclArea> decls_;
+    std::shared_ptr<DeclArea> privateDecls_;
 };
 
 class UseDecl : public IDecl {
@@ -211,11 +208,9 @@ private:
 class RecordDecl : public IDecl {
 public:
     RecordDecl(const std::string& name, 
-               const std::vector<VarDecl*>& decls, 
+               const std::vector<std::shared_ptr<VarDecl>>& decls, 
                attribute::QualifiedName base = {}, 
                bool isTagged = false);
-
-    ~RecordDecl();
 
 public: // INode interface
     void print(int spc) const override;
@@ -223,7 +218,7 @@ public: // INode interface
 
 private:
     std::string name_;
-    std::vector<VarDecl*> decls_;
+    std::vector<std::shared_ptr<VarDecl>> decls_;
     attribute::QualifiedName base_;
     bool isInherits_;
     bool isTagged_;
@@ -231,9 +226,8 @@ private:
 
 class TypeAliasDecl : public IDecl {
 public:
-    TypeAliasDecl(const std::string& name, IType* type); 
-
-    ~TypeAliasDecl();
+    TypeAliasDecl(const std::string& name, 
+                  std::shared_ptr<IType> type); 
 
 public: // INode interface
     void print(int spc) const override;
@@ -241,7 +235,7 @@ public: // INode interface
 
 private:
     std::string name_;
-    IType* origin_;
+    std::shared_ptr<IType> origin_;
 };
 
 } // namespace node
@@ -258,7 +252,8 @@ public:
     SimpleType type() const noexcept;
 
 public: // IType interface
-    bool compare(const IType* rhs) const override {};
+    bool 
+    compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -271,12 +266,11 @@ private:
 class ArrayType : public IType {
 public:
     ArrayType(const std::vector<std::pair<int, int>>& ranges, 
-             IType* type);
+              std::shared_ptr<IType> type);
     
-    ~ArrayType();
-
 public: // IType interface
-    bool compare(const IType* rhs) const override {};
+    bool 
+    compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -284,7 +278,7 @@ public: // INode interface
 
 private:
     std::vector<std::pair<int, int>> ranges_; 
-    IType* type_;
+    std::shared_ptr<IType> type_;
 };
 
 class StringType : public IType {
@@ -292,7 +286,8 @@ public:
     StringType(std::pair<int, int> range);
 
 public: // IType interface
-    bool compare(const IType* rhs) const override {};
+    bool 
+    compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -310,20 +305,22 @@ namespace node {
 
 class Op : public IExpr {
 public:
-    Op(IExpr* lhs, OpType opType, IExpr* rhs);
-    ~Op();
+    Op(std::shared_ptr<IExpr> lhs, 
+       OpType opType, 
+       std::shared_ptr<IExpr> rhs);
 
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override {}; 
+    bool 
+    compareTypes(const std::shared_ptr<IExpr> rhs) const override {}; 
 
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    IExpr* lhs_;
+    std::shared_ptr<IExpr> lhs_;
     OpType opType_;
-    IExpr* rhs_;
+    std::shared_ptr<IExpr> rhs_;
 };
 
 } // namespace node
@@ -335,12 +332,10 @@ namespace node {
 class SimpleLiteral : public ILiteral {
 public:
     template <class T>
-    SimpleLiteral(SimpleLiteralType* type, T&& value):
+    SimpleLiteral(std::shared_ptr<SimpleLiteralType> type, T&& value):
         type_(type)
         , value_(std::forward<T>(value))
     {}
-
-    ~SimpleLiteral();
 
     template <class T>
     T get() const {
@@ -350,7 +345,8 @@ public:
     SimpleType type() const noexcept;
 
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override {};
+    bool 
+    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -360,19 +356,18 @@ private:
     void printValue_(int spc) const;
 
 private:
-    SimpleLiteralType* type_;
+    std::shared_ptr<SimpleLiteralType> type_;
     std::variant<int, bool, char, float> value_; 
 };
 
 class StringLiteral : public ILiteral {
 public:
-    StringLiteral(StringType* type, 
-           const std::string& str);
-
-    ~StringLiteral();
+    StringLiteral(std::shared_ptr<StringType> type, 
+                  const std::string& str);
 
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override {};
+    bool 
+    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -380,17 +375,16 @@ public: // INode interface
     
 private:
     std::string str_; 
-    StringType* type_;
+    std::shared_ptr<StringType> type_;
 };
 
 class Aggregate : public ILiteral {
 public:
-    Aggregate(const std::vector<ILiteral*>& inits);
-
-    ~Aggregate();
+    Aggregate(const std::vector<std::shared_ptr<ILiteral>>& inits);
 
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override {};
+    bool 
+    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -400,7 +394,7 @@ private:
     void printInits_(int spc) const;
 
 private:
-    std::vector<ILiteral*> inits_;
+    std::vector<std::shared_ptr<ILiteral>> inits_;
 };
 
 } // namespace node
@@ -410,35 +404,35 @@ private:
 namespace node {
 class If : public IStm {
 public:
-    If(IExpr* cond, 
-       Body* body, 
-       Body* els = nullptr, 
-       const std::vector<std::pair<IExpr*, Body*>>& elsifs = {});
-
-    ~If();
+    If(std::shared_ptr<IExpr> cond, 
+       std::shared_ptr<Body> body, 
+       std::shared_ptr<Body> els = nullptr, 
+       const std::vector<std::pair<std::shared_ptr<IExpr>, 
+                         std::shared_ptr<Body>>>& elsifs = {});
 
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    void printElsif_(std::pair<IExpr*, Body*> elsif, int spc) const;
+    void printElsif_(std::pair<std::shared_ptr<IExpr>, 
+                     std::shared_ptr<Body>> elsif, int spc) const;
     void printElse_(int spc) const; 
 
 private:
-    IExpr* cond_;
-    Body* body_;
-    Body* els_;
-    std::vector<std::pair<IExpr*, Body*>> elsifs_;
+    std::shared_ptr<IExpr> cond_;
+    std::shared_ptr<Body> body_;
+    std::shared_ptr<Body> els_;
+    std::vector<std::pair<std::shared_ptr<IExpr>, 
+                    std::shared_ptr<Body>>> elsifs_;
 };
 
 class For : public IStm {
 public:
     For(const std::string& init, 
-        std::pair<IExpr*, IExpr*> range, 
-        Body* body);
-
-    ~For();
+        std::pair<std::shared_ptr<IExpr>,
+                     std::shared_ptr<IExpr>> range, 
+        std::shared_ptr<Body> body);
 
 public: // INode interface
     void print(int spc) const override;
@@ -446,16 +440,15 @@ public: // INode interface
 
 private:
     std::string init_;
-    std::pair<IExpr*, IExpr*> range_; 
-    Body* body_;
+    std::pair<std::shared_ptr<IExpr>,
+                 std::shared_ptr<IExpr>> range_; 
+    std::shared_ptr<Body> body_;
 };
 
 class While : public IStm {
 public:
-    While(IExpr* cond, 
-          Body* body);
-
-    ~While();
+    While(std::shared_ptr<IExpr> cond, 
+          std::shared_ptr<Body> body);
 
 public: // INode interface
     void print(int spc) const override;
@@ -463,8 +456,8 @@ public: // INode interface
 
 
 private:
-    IExpr* cond_;
-    Body* body_;
+    std::shared_ptr<IExpr> cond_;
+    std::shared_ptr<Body> body_;
 };
 
 } // namespace node
@@ -476,13 +469,15 @@ namespace node {
 class CallOrIndexingOrVar : public IExpr {
 public:
     CallOrIndexingOrVar(attribute::QualifiedName name, 
-                             const std::vector<IExpr*>& args = {});
+                        const std::vector<
+                            std::shared_ptr<IExpr>>& args = {});
     CallOrIndexingOrVar(attribute::Attribute attr, 
-                             const std::vector<IExpr*>& args = {});
-    ~CallOrIndexingOrVar();
-    
+                        const std::vector<
+                            std::shared_ptr<IExpr>>& args = {});
+
 public: // IExpr interface
-    bool compareTypes(const IExpr* rhs) const override {};
+    bool 
+    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -494,7 +489,7 @@ private:
 private:
     attribute::QualifiedName name_;
     attribute::Attribute attr_;
-    std::vector<IExpr*> args_;
+    std::vector<std::shared_ptr<IExpr>> args_;
 };
 
 } // namespace node
@@ -507,7 +502,8 @@ public:
     TypeName(attribute::Attribute attr);
 
 public: // IType interface
-    bool compare(const IType* rhs) const override {};
+    bool 
+    compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
     void print(int spc) const override;
@@ -525,44 +521,40 @@ namespace node {
 
 class Assign : public IStm {
 public:
-    Assign(CallOrIndexingOrVar* lval,
-           IExpr* rval);
+    Assign(std::shared_ptr<CallOrIndexingOrVar> lval,
+           std::shared_ptr<IExpr> rval);
     
-    ~Assign();
-
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    CallOrIndexingOrVar* lval_;
-    IExpr* rval_;
+    std::shared_ptr<CallOrIndexingOrVar> lval_;
+    std::shared_ptr<IExpr> rval_;
 };
 
 class CallOrIndexingOrVarStm : public IStm {
 public:
-    CallOrIndexingOrVarStm(CallOrIndexingOrVar* CIV);
-    ~CallOrIndexingOrVarStm();
+    CallOrIndexingOrVarStm(std::shared_ptr<CallOrIndexingOrVar> CIV);
 
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    CallOrIndexingOrVar* CIV_;
+    std::shared_ptr<CallOrIndexingOrVar> CIV_;
 };
 
 class Return : public IStm {
 public:
-    Return(IExpr* ret = nullptr);
-    ~Return();
+    Return(std::shared_ptr<IExpr> ret = nullptr);
 
 public: // INode interface
     void print(int spc) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    IExpr* ret_;
+    std::shared_ptr<IExpr> ret_;
 };
 
 } // namespace node

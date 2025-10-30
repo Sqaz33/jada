@@ -9,7 +9,7 @@ namespace node {
 void Body::print(int spc) const {
     std::cout << std::string(spc, ' ') 
               << "Body:\n";
-    for (auto* ptr : stms_) {
+    for (auto ptr : stms_) {
         ptr->print(spc + TAB);
         std::cout << '\n';
     }
@@ -18,7 +18,7 @@ void Body::print(int spc) const {
 void DeclArea::print(int spc) const {
     std::cout << std::string(spc, ' ') 
               << "Decl Area:\n";
-    for (auto* ptr : decls_) {
+    for (auto ptr : decls_) {
         ptr->print(spc + TAB);
     }
 }
@@ -150,7 +150,7 @@ void RecordDecl::print(int spc) const {
     base_.print(spc + TAB);
     std::cout << std::string(spc + TAB, ' ') 
             << "Var Decls:\n";
-    for (auto* var : decls_) {
+    for (auto var : decls_) {
         var->print(spc + TAB*2);
     }
 }
@@ -206,7 +206,7 @@ void Aggregate::print(int spc) const {
 }
 
 void Aggregate::printInits_(int spc) const {
-    for (auto* lit : inits_) {
+    for (auto lit : inits_) {
         std::cout << std::string(spc, ' ')
                   << "Value\n";
         lit->print(spc + TAB);
@@ -287,7 +287,9 @@ void StringLiteral::print(int spc) const {
               << '\n';
 }
 
-void If::printElsif_(std::pair<IExpr*, Body*> elsif, int spc) const {
+void If::printElsif_(std::pair<std::shared_ptr<IExpr>, 
+                     std::shared_ptr<Body>> elsif, int spc) const 
+{
     if (elsifs_.empty()) return;
     std::cout << std::string(spc, ' ') 
               << "Elsif:\n";
@@ -358,7 +360,7 @@ void CallOrIndexingOrVar::printArgs_(int spc) const {
     if (args_.empty()) return;
     std::cout << std::string(spc, ' ')
               << "Args:\n";
-    for (auto* arg : args_) {
+    for (auto arg : args_) {
         arg->print(spc + TAB);
     }
 }
