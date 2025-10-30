@@ -8,7 +8,6 @@
 /*
 
 // TODO:
-  1. aggregate -> expr
   2. optional_args 
   3. whole private package 
   4. import and compile_unit -> one INode
@@ -124,8 +123,6 @@
 %nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
 %nterm<std::shared_ptr<node::DeclArea>> decl_area
 %nterm<std::vector<std::shared_ptr<node::IDecl>>> optional_imports
-%nterm<std::shared_ptr<node::IType>> composite_type
-%nterm<std::shared_ptr<node::IType>> any_type
 
 %start program
 
@@ -154,8 +151,6 @@ decl:             var_decl
 
 var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
                 | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
-                | NAME COLON composite_type SC                          { $$.reset(new node::VarDecl($1, $3)); }
-                | NAME COLON composite_type ASG aggregate SC            { $$.reset(new node::VarDecl($1, $3, $5)); }
  
 import_decl:      WITH qualified_name SC                                { $$.reset(new node::WithDecl(std::move($2))); }
 
@@ -173,20 +168,20 @@ proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC
                 | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { $$.reset(new node::ProcDecl($2, $4, $7, $9)); }
                 | OVERRIDING proc_decl                                                                               { $$ = $2; }
 
-func_decl:        FUNCTION NAME RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC                      { $$.reset(new node::FuncDecl($2, {}, $4, $6, $8)); }
-                | FUNCTION NAME LPAR param_list RPAR RETURN any_type IS optional_decl_area BEGIN_KW body END NAME SC { $$.reset(new node::FuncDecl($2, $4, $7, $9, $11)); }
+func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { $$.reset(new node::FuncDecl($2, {}, $4, $6, $8)); }
+                | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC     { $$.reset(new node::FuncDecl($2, $4, $7, $9, $11)); }
                 | OVERRIDING func_decl                                                                               { $$ = $2; }
 
-pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                       { $$.reset(new node::PackDecl($2, $4)); }
-                | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC                     { $$.reset(new node::PackDecl($2, $4, $6)); }
+pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                                              { $$.reset(new node::PackDecl($2, $4)); }
+                | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC                                            { $$.reset(new node::PackDecl($2, $4, $6)); }
 
 type_decl:        record_decl                    
                  | type_alias_decl
                   /* enum_decl */ /* TODO */
 
-record_decl:      TYPE NAME IS RECORD vars_decl END RECORD SC                                 { $$.reset(new node::RecordDecl($2, $5)); }
-                | TYPE NAME IS TAGGED RECORD vars_decl END RECORD SC                          { $$.reset(new node::RecordDecl($2, $6, {}, true)); }
-                | TYPE NAME IS NEW qualified_name WITH RECORD vars_decl END RECORD SC         { $$.reset(new node::RecordDecl($2, std::move($8), $5)); }
+record_decl:      TYPE NAME IS RECORD vars_decl END RECORD SC                                                        { $$.reset(new node::RecordDecl($2, $5)); }
+                | TYPE NAME IS TAGGED RECORD vars_decl END RECORD SC                                                 { $$.reset(new node::RecordDecl($2, $6, {}, true)); }
+                | TYPE NAME IS NEW qualified_name WITH RECORD vars_decl END RECORD SC                                { $$.reset(new node::RecordDecl($2, std::move($8), $5)); }
 
 vars_decl:        var_decl                                              { 
                                                                           auto decl = 
@@ -203,19 +198,19 @@ vars_decl:        var_decl                                              {
 param_list:       param                                                 { $$ = std::vector({$1}); }
                 | param_list SC param                                   { $$ = std::move($1); $$.push_back($3); }
 
-param:            NAME COLON any_type                                   { 
+param:            NAME COLON type                                       { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $3));
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN); 
                                                                         }
-                | NAME COLON IN OUT any_type                            { 
+                | NAME COLON IN OUT type                                { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $5));
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN_OUT); 
                                                                         }
-                | NAME COLON IN any_type                                { 
+                | NAME COLON IN type                                    { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           $$ = std::make_pair(decl, node::ParamMode::IN); 
                                                                         }
-                | NAME COLON OUT any_type                               { 
+                | NAME COLON OUT type                                   { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           $$ = std::make_pair(decl, node::ParamMode::OUT); 
                                                                         }
@@ -223,7 +218,7 @@ param:            NAME COLON any_type                                   {
 optional_decl_area: %empty                                              { $$ = nullptr; }
                 |   decl_area                                           
 
-type_alias_decl:    TYPE NAME IS any_type SC                            { $$.reset(new node::TypeAliasDecl($2, $4)); }        
+type_alias_decl:    TYPE NAME IS type SC                            { $$.reset(new node::TypeAliasDecl($2, $4)); }        
 
 compile_unit:     proc_decl                                             
                 | func_decl                 
@@ -231,9 +226,6 @@ compile_unit:     proc_decl
 
 /* types */
 /* ################################################################################ */
-any_type: composite_type
-        | type
-
 type:             INTEGERTY                                             { 
                                                                            $$.reset(new node::SimpleLiteralType(
                                                                                     node::SimpleType::INTEGER)); 
@@ -248,9 +240,8 @@ type:             INTEGERTY                                             {
                                                                         }
                 | qualified_name                                        { $$.reset(new node::TypeName($1)); }
                 | string_type                                            
-                | getting_attribute                                     { $$.reset(new node::TypeName($1)); }             
-
-composite_type:   array_type          
+                | getting_attribute                                     { $$.reset(new node::TypeName($1)); }   
+                | array_type          
 
 string_type:      STRINGTY LPAR static_range RPAR                       { $$.reset(new node::StringType($3)); }
 
@@ -321,9 +312,7 @@ optional_args:    %empty                                                { $$ = s
                 | args                                                  { $$ = std::move($1); }
 
 args:             expr                                                  { $$ = std::vector({$1}); }
-                | aggregate                                             { $$ = std::vector<std::shared_ptr<node::IExpr>>({$1}); }
                 | args COMMA expr                                       { $$ = std::move($1); $$.push_back($3); }
-                | args COMMA aggregate                                  { $$ = std::move($1); $$.push_back($3); }
 
 getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE               { 
                                                                           $1.push($3.first);
@@ -358,14 +347,13 @@ literal:          INTEGER                                               {
                                                                             (new node::SimpleLiteralType(node::SimpleType::FLOAT));
                                                                           $$.reset(new node::SimpleLiteral(type, $1));
                                                                         }
+                | aggregate
                  
 aggregate:       LPAR literals RPAR                                     { $$.reset(new node::Aggregate($2)); }
 
   
 literals:         literal  COMMA literal                                { $$ = std::vector({$1, $3}); }
                 | literals COMMA literal                                { $$ = std::move($1); $$.push_back($3); }
-                | aggregate COMMA aggregate                             { $$ = std::vector({$1, $3}); }
-                | literals COMMA aggregate                              { $$ = std::move($1); $$.push_back($3); }
 
 
 /* control structures */
