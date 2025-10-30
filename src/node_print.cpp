@@ -113,9 +113,11 @@ void PackDecl::print(int spc) const {
     std::cout << std::string(spc, ' ') 
               << "Pack Decl: Name: "
               << name_ << '\n';
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Public:\n";
-    decls_->print(spc + TAB*2);
+    if (decls_) {
+        std::cout << std::string(spc + TAB, ' ') 
+                << "Public:\n";
+        decls_->print(spc + TAB*2);
+    }
     if (privateDecls_) {
         std::cout << std::string(spc + TAB, ' ') 
                 << "Private:\n";

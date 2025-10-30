@@ -8,8 +8,6 @@
 /*
 
 // TODO:
-  2. optional_args 
-  3. whole private package 
   4. import and compile_unit -> one INode
   5. qualified_name ???? a(...).b
 */
@@ -173,6 +171,7 @@ func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body 
 
 pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                                              { $$.reset(new node::PackDecl($2, $4)); }
                 | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC                                            { $$.reset(new node::PackDecl($2, $4, $6)); }
+                | PACKAGE NAME IS PRIVATE decl_area END NAME SC                                                      { $$.reset(new node::PackDecl($2, nullptr, $5)); }
 
 type_decl:        record_decl                    
                  | type_alias_decl
