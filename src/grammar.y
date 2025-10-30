@@ -5,6 +5,16 @@
   Volgograd 2025 
 */
 
+/*
+
+// TODO:
+  1. aggregate -> expr
+  2. optional_args 
+  3. whole private package 
+  4. import and compile_unit -> one INode
+  5. qualified_name ???? a(...).b
+*/
+
 %language "c++"
 
 %skeleton "lalr1.cc"
