@@ -11,10 +11,9 @@
 
 namespace graphviz {
     
-class GraphViz {
-public:
-    using VertexType = Agnode_t*;
+using VertexType = Agnode_t*;
 
+class GraphViz {
 public:
     GraphViz(bool isTree, bool isDirected, const std::string& name);
 

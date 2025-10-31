@@ -16,7 +16,8 @@ bool QualifiedName::empty() const {
     return fullName_.empty();    
 }
 
-void QualifiedName::print(int spc) const {
+void QualifiedName::print(graphviz::GraphViz& gv, 
+                       VertexType par) const {
     if (empty()) return;
     std::cout << std::string(spc, ' ')
               << "Qualified name: ";
@@ -32,7 +33,8 @@ Attribute::Attribute(QualifiedName left, const std::string& right) :
     , right_(right)
 {}
 
-void Attribute::print(int spc) const {
+void Attribute::print(graphviz::GraphViz& gv, 
+                       VertexType par) const {
     if (left_.empty() || right_.empty()) return;
     std::cout << std::string(spc, ' ')
               << "Attribute:\n";

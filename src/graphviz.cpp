@@ -54,13 +54,15 @@ void GraphViz::printDOT(std::ostream& out) {
         throw std::runtime_error(
             "It is impossible to print a graph");
     }
+
     out.write(res, len);
+    
     gvFreeRenderData(res);
     gvFreeLayout(ctx.get(), graph_.get());
 }
 
-GraphViz::VertexType GraphViz::addVertex(const std::string& name, 
-                                         const std::vector<std::string>& desc) 
+VertexType GraphViz::addVertex(const std::string& name, 
+                               const std::vector<std::string>& desc) 
 {
     std::stringstream ss;
     ss << name << '\n';
@@ -72,9 +74,9 @@ GraphViz::VertexType GraphViz::addVertex(const std::string& name,
 }
 
 
-GraphViz::VertexType GraphViz::addVertex(const std::string& name) {
+VertexType GraphViz::addVertex(const std::string& name) {
     GraphViz::CharCp_ nameCp(strdup(name.c_str()));
-    GraphViz::VertexType v;
+    VertexType v;
     if (!(v = agnode(graph_.get(), nameCp.get(), true))) {
         throw std::runtime_error(
             "It is impossible to create a vertex");
@@ -82,7 +84,7 @@ GraphViz::VertexType GraphViz::addVertex(const std::string& name) {
     return v;
 }
 
-void GraphViz::addEdge(GraphViz::VertexType v, GraphViz::VertexType u) {
+void GraphViz::addEdge(VertexType v, VertexType u) {
     if (!agedge(graph_.get(), v, u, NULL, true)) {
         throw std::runtime_error(
             "It is impossible to create a edge");

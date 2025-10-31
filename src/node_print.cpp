@@ -6,7 +6,9 @@
 
 namespace node {
 
-void Body::print(int spc) const {
+void Body::print(graphviz::GraphViz& gv, 
+                 graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Body:\n";
     for (auto ptr : stms_) {
@@ -15,7 +17,9 @@ void Body::print(int spc) const {
     }
 }
 
-void DeclArea::print(int spc) const {
+void DeclArea::print(graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Decl Area:\n";
     for (auto ptr : decls_) {
@@ -23,7 +27,9 @@ void DeclArea::print(int spc) const {
     }
 }
 
-void VarDecl::print(int spc) const {
+void VarDecl::print(graphviz::GraphViz& gv, 
+                    graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Var Decl: Name: "
               << name_ << '\n';
@@ -54,7 +60,9 @@ void FuncDecl::printParam_(int spc,
     param.first->print(spc + TAB);
 }
 
-void FuncDecl::print(int spc) const {
+void FuncDecl::print(graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Func Decl: Name: "
               << name_ << '\n';
@@ -90,7 +98,8 @@ void ProcDecl::printParam_(int spc,
     param.first->print(spc + TAB);
 }
 
-void ProcDecl::print(int spc) const {
+void ProcDecl::print(graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const {
     std::cout << std::string(spc, ' ') 
               << "Func Decl: Name: "
               << name_ << '\n';
@@ -109,7 +118,9 @@ void ProcDecl::print(int spc) const {
     body_->print(spc + TAB);
 }
 
-void PackDecl::print(int spc) const {
+void PackDecl::print(graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Pack Decl: Name: "
               << name_ << '\n';
@@ -125,19 +136,25 @@ void PackDecl::print(int spc) const {
     }
 }
 
-void UseDecl::print(int spc) const {
+void UseDecl::print(graphviz::GraphViz& gv, 
+                    graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Use Decl: Name: ";
     name_.print(spc);
 }
 
-void With::print(int spc) const {
+void With::print(graphviz::GraphViz& gv, 
+                 graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Use Decl: Name: ";
     name_.print(spc);
 }
 
-void RecordDecl::print(int spc) const {
+void RecordDecl::print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Type Record Decl: Name: "
               << name_ << '\n';
@@ -157,7 +174,9 @@ void RecordDecl::print(int spc) const {
     }
 }
 
-void TypeAliasDecl::print(int spc) const {
+void TypeAliasDecl::print(graphviz::GraphViz& gv, 
+                          graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Type Alias: Name: "
               << name_ << '\n';
@@ -166,7 +185,9 @@ void TypeAliasDecl::print(int spc) const {
     origin_->print(spc + TAB*2);
 }
 
-void SimpleLiteralType::print(int spc) const {
+void SimpleLiteralType::print(graphviz::GraphViz& gv, 
+                              graphviz::VertexType par) const 
+{
     static const std::unordered_map<SimpleType, std::string> types {
         { SimpleType::INTEGER, "Integer" },
         { SimpleType::CHAR, "Character" },
@@ -179,7 +200,9 @@ void SimpleLiteralType::print(int spc) const {
               << '\n';
 }
 
-void ArrayType::print(int spc) const {
+void ArrayType::print(graphviz::GraphViz& gv, 
+                      graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Array Type:\n";
     std::cout << std::string(spc + TAB, ' ')
@@ -190,7 +213,9 @@ void ArrayType::print(int spc) const {
     std::cout << ")\n";
 }
 
-void StringType::print(int spc) const {
+void StringType::print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Array Type:\n";
     std::cout << std::string(spc + TAB, ' ')
@@ -199,7 +224,9 @@ void StringType::print(int spc) const {
               << ")\n";
 }
 
-void Aggregate::print(int spc) const {
+void Aggregate::print(graphviz::GraphViz& gv, 
+                      graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ')
               << "Aggregate: \n";
     std::cout << std::string(spc + TAB, ' ')
@@ -215,7 +242,9 @@ void Aggregate::printInits_(int spc) const {
     }
 }
 
-void Op::print(int spc) const {
+void Op::print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const 
+{
     static const std::unordered_map<OpType, std::string> ops = {
         { OpType::EQ, "EQ" },
         { OpType::NEQ, "NEQ" },
@@ -268,7 +297,9 @@ void SimpleLiteral::printValue_(int spc) const {
     std::cout << '\n';
 }
 
-void SimpleLiteral::print(int spc) const {
+void SimpleLiteral::print(graphviz::GraphViz& gv, 
+                          graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ') 
               << "Simple Literal:\n";
     std::cout << std::string(spc + TAB, ' ')
@@ -277,7 +308,9 @@ void SimpleLiteral::print(int spc) const {
     printValue_(spc + TAB);
 }
 
-void StringLiteral::print(int spc) const {
+void StringLiteral::print(graphviz::GraphViz& gv, 
+                         graphviz::VertexType par) const 
+{                            
     std::cout << std::string(spc, ' ') 
               << "StringLiteral:\n";
     std::cout << std::string(spc + TAB, ' ')
@@ -308,7 +341,9 @@ void If::printElse_(int spc) const {
     els_->print(spc + TAB);
 }
 
-void If::print(int spc) const {
+void If::print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ')
               << "If:\n";
     std::cout << std::string(spc + TAB, ' ') 
@@ -323,7 +358,9 @@ void If::print(int spc) const {
     printElse_(spc + TAB);
 }
 
-void For::print(int spc) const {
+void For::print(graphviz::GraphViz& gv, 
+                graphviz::VertexType par) const 
+{
     std::cout <<  std::string(spc, ' ')
               << "For init: " << init_
               << " in\n";
@@ -338,7 +375,9 @@ void For::print(int spc) const {
     body_->print(spc + TAB*2);
 }
 
-void While::print(int spc) const {
+void While::print(graphviz::GraphViz& gv, 
+                  graphviz::VertexType par) const 
+{
     std::cout <<  std::string(spc, ' ')
               << "While:\n";
     std::cout << std::string(spc + TAB, ' ') 
@@ -347,7 +386,9 @@ void While::print(int spc) const {
     body_->print(spc + TAB);
 }
 
-void CallOrIndexingOrVar::print(int spc) const {
+void CallOrIndexingOrVar::print(graphviz::GraphViz& gv, 
+                                graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ')
               << "Unresolved Subporgram" 
                  " Call or Indexing or Variable:\n";
@@ -376,7 +417,9 @@ void CallOrIndexingOrVar::printArgs_(int spc, const ArgsType& args) const {
     }
 }
 
-void TypeName::print(int spc) const {
+void TypeName::print(graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ')
               << "Unresolved Type Name:\n";
     std::cout << std::string(spc + TAB, ' ')
@@ -388,7 +431,9 @@ void TypeName::print(int spc) const {
     attr_.print(spc + TAB*2);
 } 
 
-void Assign::print(int spc) const {
+void Assign::print(graphviz::GraphViz& gv, 
+                  graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ')
               << "Assign:\n";
     std::cout << std::string(spc + TAB, ' ')
@@ -400,14 +445,18 @@ void Assign::print(int spc) const {
 }
 
 void 
-CallOrIndexingOrVarStm::print(int spc) const {
+CallOrIndexingOrVarStm::print(graphviz::GraphViz& gv, 
+                              graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ')
               << "Unresolved Call Or "
                  "Indexing Or Var Statement\n";
     CIV_->print(spc + TAB*2);
 }
 
-void Return::print(int spc) const {
+void Return::print(graphviz::GraphViz& gv, 
+                   graphviz::VertexType par) const 
+{
     std::cout << std::string(spc, ' ')
               << "Return Stm:\n";
     ret_->print(spc + TAB);

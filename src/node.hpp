@@ -70,7 +70,8 @@ public:
     Body(const std::vector<std::shared_ptr<IStm>>& stms);
     
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -87,7 +88,8 @@ public:
     void addDecl(std::shared_ptr<IDecl> decl);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -104,7 +106,8 @@ public:
     bool compareTypes(std::shared_ptr<IType> rhs) const {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -125,7 +128,8 @@ public:
              std::shared_ptr<Body> body);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
     
 private:
@@ -150,7 +154,8 @@ public:
              std::shared_ptr<Body> body);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -172,7 +177,8 @@ public:
              std::shared_ptr<DeclArea> privateDecls = nullptr);
     
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -186,7 +192,8 @@ public:
     UseDecl(attribute::QualifiedName name);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -198,7 +205,8 @@ public:
     With(attribute::QualifiedName name);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -213,7 +221,8 @@ public:
                bool isTagged = false);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -230,7 +239,8 @@ public:
                   std::shared_ptr<IType> type); 
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -256,7 +266,8 @@ public: // IType interface
     compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -273,7 +284,8 @@ public: // IType interface
     compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -290,7 +302,8 @@ public: // IType interface
     compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -314,7 +327,8 @@ public: // IExpr interface
     compareTypes(const std::shared_ptr<IExpr> rhs) const override {}; 
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -349,7 +363,8 @@ public: // IExpr interface
     compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -370,7 +385,8 @@ public: // IExpr interface
     compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
     
 private:
@@ -387,7 +403,8 @@ public: // IExpr interface
     compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -411,7 +428,8 @@ public:
                          std::shared_ptr<Body>>>& elsifs = {});
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -435,7 +453,8 @@ public:
         std::shared_ptr<Body> body);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -451,7 +470,8 @@ public:
           std::shared_ptr<Body> body);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 
@@ -484,7 +504,8 @@ public: // IExpr interface
     compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -508,7 +529,8 @@ public: // IType interface
     compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -527,7 +549,8 @@ public:
            std::shared_ptr<IExpr> rval);
     
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -540,7 +563,8 @@ public:
     CallOrIndexingOrVarStm(std::shared_ptr<CallOrIndexingOrVar> CIV);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -552,7 +576,8 @@ public:
     Return(std::shared_ptr<IExpr> ret = nullptr);
 
 public: // INode interface
-    void print(int spc) const override;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:

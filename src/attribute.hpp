@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "graphviz.hpp"
 
 namespace attribute {
 
@@ -14,7 +15,8 @@ public:
 public:
     void push(const std::string& name);
     bool empty() const;
-    void print(int spc) const;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const;
     
     auto operator<=>(const QualifiedName&) const = default;
 
@@ -27,7 +29,8 @@ public:
     Attribute(QualifiedName left, const std::string& right);
     Attribute() = default;
     
-    void print(int spc) const;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const;
 private:
     QualifiedName left_; 
     std::string right_;

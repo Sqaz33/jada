@@ -2,11 +2,13 @@
 
 #include "location.hh"
 
+#include "graphviz.hpp"
 
 namespace node {
 
 struct INode {
-    virtual void print(int spc) const = 0;
+    virtual void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const = 0;
     virtual void* codegen() = 0; // TODO
     virtual ~INode() = default;
 
