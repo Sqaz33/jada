@@ -7,6 +7,7 @@
 
 #include "helper.hpp"
 #include "parser.hpp"
+#include "graphviz.hpp"
 
 namespace helper {
     yy::parser::semantic_type* yylval = nullptr;

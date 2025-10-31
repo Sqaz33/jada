@@ -5,8 +5,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 project(jada)
 
+find_package(PkgConfig REQUIRED)
+
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
+
+pkg_check_modules(GVC REQUIRED libgvc)
+pkg_check_modules(LIBCGRAPH REQUIRED libcgraph)
 
 flex_target(
     scanner 
@@ -31,3 +36,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wno-all) # TODO:
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${GVC_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${GVC_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_LIBRARIES})
