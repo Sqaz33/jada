@@ -116,33 +116,6 @@ private:
     std::shared_ptr<IExpr> rval_;
 };
 
-class FuncDecl : public IDecl {
-public:
-    using ParamType = 
-        std::pair<std::shared_ptr<VarDecl>, ParamMode>;
-
-    FuncDecl(const std::string& name, 
-             const std::vector<ParamType>& params ,
-             std::shared_ptr<IType> retType,
-             std::shared_ptr<DeclArea> decls,
-             std::shared_ptr<Body> body);
-
-public: // INode interface
-    void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
-    
-private:
-    void printParam_(int spc, const ParamType& param) const;
-
-private:
-    std::string name_;
-    std::vector<ParamType> params_;
-    std::shared_ptr<IType> retType_;
-    std::shared_ptr<DeclArea> decls_;
-    std::shared_ptr<Body> body_;
-};
-
 class ProcDecl : public IDecl {
 public:
     using ParamType = 
@@ -159,15 +132,37 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    void printParam_(int spc, const ParamType& param) const;
-    // void setIsOver(bool over) noexcept; TODO: do we want it?
+    void printParam_(const ParamType& param, 
+                     graphviz::GraphViz& gv, 
+                     graphviz::VertexType v) const;
 
-private:
+protected:
     std::string name_;
     std::vector<ParamType> params_;
     std::shared_ptr<DeclArea> decls_;
     std::shared_ptr<Body> body_;
-    // bool over_ = false; TODO
+};
+
+class FuncDecl : public ProcDecl {
+public:
+    using ParamType = ProcDecl::ParamType;
+
+    FuncDecl(const std::string& name, 
+             const std::vector<ParamType>& params ,
+             std::shared_ptr<DeclArea> decls,
+             std::shared_ptr<Body> body,
+             std::shared_ptr<IType> retType);
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
+    void* codegen() override { return nullptr; } // TODO
+
+private:
+    std::shared_ptr<IType> retType_;
+
+    friend void ProcDecl::print(graphviz::GraphViz& gv, 
+                                graphviz::VertexType par) const;
 };
 
 class PackDecl : public IDecl {
@@ -178,7 +173,7 @@ public:
     
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -193,7 +188,7 @@ public:
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -206,7 +201,7 @@ public:
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -222,7 +217,7 @@ public:
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -240,7 +235,7 @@ public:
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -267,7 +262,7 @@ public: // IType interface
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -285,7 +280,7 @@ public: // IType interface
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -303,7 +298,7 @@ public: // IType interface
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -328,7 +323,7 @@ public: // IExpr interface
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -364,11 +359,11 @@ public: // IExpr interface
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    void printValue_(int spc) const;
+    std::string stringifyValue_() const;
 
 private:
     std::shared_ptr<SimpleLiteralType> type_;
@@ -386,7 +381,7 @@ public: // IExpr interface
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
     
 private:
@@ -404,11 +399,12 @@ public: // IExpr interface
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    void printInits_(int spc) const;
+    void printInits_(graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const;
 
 private:
     std::vector<std::shared_ptr<ILiteral>> inits_;
@@ -434,8 +430,11 @@ public: // INode interface
 
 private:
     void printElsif_(std::pair<std::shared_ptr<IExpr>, 
-                     std::shared_ptr<Body>> elsif, int spc) const;
-    void printElse_(int spc) const; 
+                               std::shared_ptr<Body>> elsif, 
+                     graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const;
+    void printElse_(graphviz::GraphViz& gv, 
+                    graphviz::VertexType par) const; 
 
 private:
     std::shared_ptr<IExpr> cond_;
@@ -487,13 +486,13 @@ private:
 namespace node {
 
 class CallOrIndexingOrVar : public IExpr {
-    using ArgsType = std::vector<std::shared_ptr<IExpr>>;
+    using ArgsType_ = std::vector<std::shared_ptr<IExpr>>;
 
 public:
     struct NamePart {
         std::string name;       // or
         attribute::Attribute attribute; 
-        ArgsType args;
+        ArgsType_ args;
     };
 
 public:
@@ -509,7 +508,9 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    void printArgs_(int spc, const ArgsType& args) const;
+    void printArgs_(const ArgsType_& args, 
+                    graphviz::GraphViz& gv, 
+                    graphviz::VertexType par) const;
 
 private:
     std::vector<NamePart> fullName_;

@@ -1,6 +1,7 @@
 #include "attribute.hpp"
 
 #include <iostream>
+#include <sstream>
 
 namespace attribute {
 
@@ -16,16 +17,16 @@ bool QualifiedName::empty() const {
     return fullName_.empty();    
 }
 
-void QualifiedName::print(graphviz::GraphViz& gv, 
-                       VertexType par) const {
-    if (empty()) return;
-    std::cout << std::string(spc, ' ')
-              << "Qualified name: ";
+std::string QualifiedName::toSring() const {
+    if (empty()) return "";
+
+    std::stringstream ss;
     for (int i = 0; i < fullName_.size() - 1; ++i) {
-        std::cout << fullName_[i] << '.';
+        ss << fullName_[i] << '.';
     }
-    std::cout << fullName_.back();
-    std::cout << '\n';
+    ss << fullName_.back();
+
+    return ss.str();
 }
 
 Attribute::Attribute(QualifiedName left, const std::string& right) :
@@ -33,16 +34,9 @@ Attribute::Attribute(QualifiedName left, const std::string& right) :
     , right_(right)
 {}
 
-void Attribute::print(graphviz::GraphViz& gv, 
-                       VertexType par) const {
-    if (left_.empty() || right_.empty()) return;
-    std::cout << std::string(spc, ' ')
-              << "Attribute:\n";
-    left_.print(spc + 4);            
-    std::cout << std::string(spc + 4, ' ')
-              << "Attribute Val: "
-              << right_
-              << '\n';
+std::string Attribute::toString() const {
+    if (left_.empty() || right_.empty()) return "";
+    return left_.toSring() + '\'' + right_;
 }
 
 } // namespace attribute

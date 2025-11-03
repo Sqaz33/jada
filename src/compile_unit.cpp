@@ -10,14 +10,16 @@ CompileUnit::CompileUnit(std::shared_ptr<node::IDecl> unit,
     , useDecls_(useDecls)
 {}
 
-void CompileUnit::print() const {
+void CompileUnit::print(graphviz::GraphViz& gv) const {
+    auto v = gv.addVertex("Program");
+
     for (auto imp : imports_) {
-        imp->print(0);
+        imp->print(gv, v);
     }
     for (auto use : useDecls_) {
-        use->print(0);
+        use->print(gv, v);
     }
-    unit_->print(0);
+    unit_->print(gv, v);
 }
 
 

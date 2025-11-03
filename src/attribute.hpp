@@ -15,9 +15,7 @@ public:
 public:
     void push(const std::string& name);
     bool empty() const;
-    void print(graphviz::GraphViz& gv, 
-               graphviz::VertexType par) const;
-    
+    std::string toSring() const;
     auto operator<=>(const QualifiedName&) const = default;
 
 private:
@@ -29,8 +27,8 @@ public:
     Attribute(QualifiedName left, const std::string& right);
     Attribute() = default;
     
-    void print(graphviz::GraphViz& gv, 
-               graphviz::VertexType par) const;
+    std::string toString() const;
+    
 private:
     QualifiedName left_; 
     std::string right_;

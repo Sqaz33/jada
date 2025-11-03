@@ -32,21 +32,18 @@ VarDecl::VarDecl(const std::string& name,
 // FuncDecl
 FuncDecl::FuncDecl(const std::string& name, 
                    const std::vector<FuncDecl::ParamType>& params,
-                   std::shared_ptr<IType> retType,
                    std::shared_ptr<DeclArea> decls,
-                   std::shared_ptr<Body> body):
-    name_(name)
-    , params_(params)
+                   std::shared_ptr<Body> body,
+                   std::shared_ptr<IType> retType) :
+    ProcDecl(name, params, decls, body)
     , retType_(retType)
-    , decls_(decls)
-    , body_(body)
 {}
 
 // ProcDecl
 ProcDecl::ProcDecl(const std::string& name, 
                    const std::vector<ParamType>& params,
                    std::shared_ptr<DeclArea> decls,
-                   std::shared_ptr<Body> body):
+                   std::shared_ptr<Body> body) :
     name_(name)
     , params_(params)
     , decls_(decls)

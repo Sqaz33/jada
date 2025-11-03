@@ -1,6 +1,7 @@
 #include "node.hpp"
 
 #include <unordered_map>
+#include <sstream>
 
 #define TAB 4
 
@@ -9,43 +10,39 @@ namespace node {
 void Body::print(graphviz::GraphViz& gv, 
                  graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ') 
-              << "Body:\n";
-    for (auto ptr : stms_) {
-        ptr->print(spc + TAB);
-        std::cout << '\n';
+    auto v = gv.addVertex("body");
+    gv.addEdge(par, v);
+    for (auto stm : stms_) {
+        stm->print(gv, v);
     }
 }
 
 void DeclArea::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
-{
-    std::cout << std::string(spc, ' ') 
-              << "Decl Area:\n";
-    for (auto ptr : decls_) {
-        ptr->print(spc + TAB);
+{   
+    auto v = gv.addVertex("decl area");
+    gv.addEdge(par, v);
+    for (auto decl : decls_) {
+        decl->print(gv, v);
     }
 }
 
 void VarDecl::print(graphviz::GraphViz& gv, 
                     graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ') 
-              << "Var Decl: Name: "
-              << name_ << '\n';
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Type:\n";
-    type_->print(spc + TAB*2);
+    auto v = gv.addVertex("var decl", 
+                    {"Name:", name_});
+    gv.addEdge(par, v);
+    type_->print(gv, v);
+    gv.nameNextEdge("=");
     if (rval_) {
-        std::cout << std::string(spc + TAB, ' ') 
-                  << "Init Value:\n";
-        rval_->print(spc + TAB*2);
+        rval_->print(gv, v);
     }
 }
 
-
-void FuncDecl::printParam_(int spc, 
-                           const FuncDecl::ParamType& param) const 
+void ProcDecl::printParam_(const FuncDecl::ParamType& param, 
+                           graphviz::GraphViz& gv, 
+                           graphviz::VertexType par) const
 { 
     static const std::unordered_map<ParamMode, std::string> modes {
         { ParamMode::IN, "IN" },
@@ -53,136 +50,97 @@ void FuncDecl::printParam_(int spc,
         { ParamMode::IN_OUT, "IN_OUT" }
     };
 
-    std::cout << std::string(spc, ' ') 
-              << "Param: Mode: "
-              << modes.at(param.second)
-              << '\n';
-    param.first->print(spc + TAB);
+    gv.nameNextEdge(modes.at(param.second));
+    param.first->print(gv, par);
+}
+
+void ProcDecl::print(graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const 
+{
+    auto v = gv.addVertex("Func Decl", 
+                         {"Name: " + name_});
+    gv.addEdge(par, v);
+
+    for (auto&& param: params_) {
+        printParam_(param, gv, v);
+    }
+
+    if (decls_) {
+        decls_->print(gv, v); 
+    }
+
+    body_->print(gv, v);
+
+    if (auto self = 
+            dynamic_cast<const FuncDecl*>(this)) {
+        gv.nameNextEdge("ret");
+        self->retType_->print(gv, v);
+    }
 }
 
 void FuncDecl::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
-{
-    std::cout << std::string(spc, ' ') 
-              << "Func Decl: Name: "
-              << name_ << '\n';
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Return Type:\n";
-    retType_->print(spc + TAB*2);
-    if (!params_.empty()) {
-        std::cout << std::string(spc + TAB, ' ') 
-              << "Param list:\n";
-        for (auto&& param: params_) {
-            printParam_(spc + TAB*2, param);
-        }
-    }
-    if (decls_) {
-        decls_->print(spc + TAB); 
-    }
-    body_->print(spc + TAB);
-}
-
-void ProcDecl::printParam_(int spc, 
-                           const ProcDecl::ParamType& param) const 
-{ 
-    static const std::unordered_map<ParamMode, std::string> modes {
-        { ParamMode::IN, "IN" },
-        { ParamMode::OUT, "OUT" },
-        { ParamMode::IN_OUT, "IN_OUT" }
-    };
-
-    std::cout << std::string(spc, ' ') 
-              << "Param: Mode:"
-              << modes.at(param.second)
-              << '\n';
-    param.first->print(spc + TAB);
-}
-
-void ProcDecl::print(graphviz::GraphViz& gv, 
-                     graphviz::VertexType par) const {
-    std::cout << std::string(spc, ' ') 
-              << "Func Decl: Name: "
-              << name_ << '\n';
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Return Type:\n";
-    if (!params_.empty()) {
-        std::cout << std::string(spc + TAB, ' ') 
-              << "Param list:\n";
-        for (auto&& param: params_) {
-            printParam_(spc + TAB*2, param);
-        }
-    }
-    if (decls_) {
-        decls_->print(spc + TAB); 
-    }
-    body_->print(spc + TAB);
-}
+{ ProcDecl::print(gv, par); }
 
 void PackDecl::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
-{
-    std::cout << std::string(spc, ' ') 
-              << "Pack Decl: Name: "
-              << name_ << '\n';
+{   
+    auto v = gv.addVertex("Pack Decl", 
+                          {"Name: " + name_});
+    gv.addEdge(par, v);
+
     if (decls_) {
-        std::cout << std::string(spc + TAB, ' ') 
-                << "Public:\n";
-        decls_->print(spc + TAB*2);
+        gv.nameNextEdge("public");
+        decls_->print(gv, v);
     }
     if (privateDecls_) {
-        std::cout << std::string(spc + TAB, ' ') 
-                << "Private:\n";
-        privateDecls_->print(spc + TAB*2);
+        gv.nameNextEdge("private");
+        privateDecls_->print(gv, v);
     }
 }
 
 void UseDecl::print(graphviz::GraphViz& gv, 
                     graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ') 
-              << "Use Decl: Name: ";
-    name_.print(spc);
+    auto v = gv.addVertex("Use Decl", 
+                          {"Name: " + name_.toSring()});
+    gv.addEdge(par, v);
 }
 
 void With::print(graphviz::GraphViz& gv, 
                  graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ') 
-              << "Use Decl: Name: ";
-    name_.print(spc);
+    auto v = gv.addVertex("With Decl", 
+                          {"Name: " + name_.toSring()});
+    gv.addEdge(par, v);
 }
 
 void RecordDecl::print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ') 
-              << "Type Record Decl: Name: "
-              << name_ << '\n';
-    std::cout << std::boolalpha;
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Is Tagged: " 
-              << isTagged_ << '\n';
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Is Inherits: "
-              << isInherits_ << '\n';
-    std::cout << std::noboolalpha;
-    base_.print(spc + TAB);
-    std::cout << std::string(spc + TAB, ' ') 
-            << "Var Decls:\n";
+    std::vector<std::string> desc;
+    desc.push_back("Name: " + name_);
+    desc.push_back("Is Tagged: " 
+                    + std::to_string(isTagged_));
+    desc.push_back("Is Inherits: " 
+                    + std::to_string(isInherits_));
+    desc.push_back("Base Name: " 
+                    + base_.toSring());
+    auto v = gv.addVertex("Type Record Decl", desc);
+    gv.addEdge(par, v);
     for (auto var : decls_) {
-        var->print(spc + TAB*2);
+        var->print(gv, v);
     }
 }
 
 void TypeAliasDecl::print(graphviz::GraphViz& gv, 
                           graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ') 
-              << "Type Alias: Name: "
-              << name_ << '\n';
-    std::cout << std::string(spc + TAB, ' ')  
-              << "Origin Type:\n";
-    origin_->print(spc + TAB*2);
+    auto v = gv.addVertex("Type Alias", 
+                          {"Name: " + name_});
+    gv.addEdge(par, v);
+    gv.nameNextEdge("orig");
+    origin_->print(gv, v);
 }
 
 void SimpleLiteralType::print(graphviz::GraphViz& gv, 
@@ -194,51 +152,48 @@ void SimpleLiteralType::print(graphviz::GraphViz& gv,
         { SimpleType::BOOL, "Boolean" },
         { SimpleType::FLOAT, "Float" }
     };
-    std::cout << std::string(spc, ' ') 
-              << "Symple Literal Type: " 
-              << types.at(type_)
-              << '\n';
+    auto v = gv.addVertex(types.at(type_));
+    gv.addEdge(par, v);
 }
 
 void ArrayType::print(graphviz::GraphViz& gv, 
                       graphviz::VertexType par) const 
-{
-    std::cout << std::string(spc, ' ') 
-              << "Array Type:\n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Ranges: ( ";
+{   
+    std::stringstream ss;    
+    ss << "Ranges: ( ";
     for (auto&& [l, r] : ranges_) {
-        std::cout << '(' << l << ", " << r << ") ";
+        ss << '(' << l << ", " << r << ")";
     }
-    std::cout << ")\n";
+    ss << ")";
+    auto v = gv.addVertex("Array Type", {ss.str()});
+    gv.addEdge(par, v);
 }
 
 void StringType::print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ') 
-              << "Array Type:\n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Range: ("
-              << range_.first << ", " << range_.second
-              << ")\n";
+    std::stringstream ss;    
+    ss << "Range: ("
+       << range_.first << ", " << range_.second
+       << ")";
+    auto v = gv.addVertex("String Type", {ss.str()});
+    gv.addEdge(par, v);
 }
 
 void Aggregate::print(graphviz::GraphViz& gv, 
                       graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ')
-              << "Aggregate: \n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Values: \n";
-    printInits_(spc + TAB*2);
+    auto v = gv.addVertex("Aggregate");
+    gv.addEdge(par, v);
+    printInits_(gv, v);
 }
 
-void Aggregate::printInits_(int spc) const {
+void Aggregate::printInits_(graphviz::GraphViz& gv, 
+                            graphviz::VertexType par) const 
+{
     for (auto lit : inits_) {
-        std::cout << std::string(spc, ' ')
-                  << "Value\n";
-        lit->print(spc + TAB);
+        gv.nameNextEdge("val");
+        lit->print(gv, par);
     }
 }
 
@@ -261,205 +216,191 @@ void Op::print(graphviz::GraphViz& gv,
         { OpType::UMINUS, "UMINUS" }
     };
 
-    std::cout << std::string(spc, ' ') 
-              << "Op: Type: " 
-              << ops.at(opType_)
-              << '\n';
+    auto v = gv.addVertex("Op", 
+                {"Type: " + ops.at(opType_)});
+    gv.addEdge(par, v);
+
     if (lhs_) {
-        std::cout << std::string(spc + TAB, ' ')
-                  << "Lhs:\n";
-        lhs_->print(spc + TAB*2);
+        gv.nameNextEdge("lhs");
+        lhs_->print(gv, v);
     }
     if (rhs_) {
-        std::cout << std::string(spc + TAB, ' ')
-                  << "Rhs:\n";
-        rhs_->print(spc + TAB*2);
+        gv.nameNextEdge("rhs");
+        rhs_->print(gv, v);
     }
 }
 
-void SimpleLiteral::printValue_(int spc) const {
-    std::cout << std::string(spc, ' ') 
-              << "Value: ";
+std::string
+SimpleLiteral::stringifyValue_() const 
+{
+    std::stringstream ss;
     switch (type_->type()) {
         case SimpleType::INTEGER: 
-            std::cout << get<int>();
+            ss << get<int>();
             break;
         case SimpleType::BOOL: 
-            std::cout << get<bool>();
+            ss << get<bool>();
             break;
         case SimpleType::CHAR: 
-            std::cout << get<char>();
+            ss << get<char>();
             break;
         case SimpleType::FLOAT: 
-            std::cout << get<float>();
+            ss << get<float>();
             break;
     }
-    std::cout << '\n';
+    return ss.str();
 }
 
 void SimpleLiteral::print(graphviz::GraphViz& gv, 
                           graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ') 
-              << "Simple Literal:\n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Type:\n";
-    type_->print(spc + TAB*2);
-    printValue_(spc + TAB);
+    auto v = gv.addVertex("Literal", 
+                {"Value: " + stringifyValue_()});
+    gv.addEdge(par, v);
+    type_->print(gv, v);
 }
 
 void StringLiteral::print(graphviz::GraphViz& gv, 
-                         graphviz::VertexType par) const 
+                          graphviz::VertexType par) const 
 {                            
-    std::cout << std::string(spc, ' ') 
-              << "StringLiteral:\n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Type:\n";
-    type_->print(spc + TAB*2);
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Value: "
-              << str_ 
-              << '\n';
+    auto v = gv.addVertex("String Liteal", 
+            {"Value: " + str_});
+    gv.addEdge(par, v);
+    type_->print(gv, v);
 }
 
 void If::printElsif_(std::pair<std::shared_ptr<IExpr>, 
-                     std::shared_ptr<Body>> elsif, int spc) const 
+                              std::shared_ptr<Body>> elsif, 
+                     graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const 
 {
-    if (elsifs_.empty()) return;
-    std::cout << std::string(spc, ' ') 
-              << "Elsif:\n";
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Cond:\n"; 
-    elsif.first->print(spc + TAB*2);
-    elsif.second->print(spc + TAB);
+        
+    gv.nameNextEdge("elsif cond");
+    elsif.first->print(gv, par);
+    gv.nameNextEdge("elsif body");
+    elsif.second->print(gv, par);
 }
 
-void If::printElse_(int spc) const {
+void If::printElse_(graphviz::GraphViz& gv, 
+                    graphviz::VertexType par) const 
+{
     if (!els_) return;
-    std::cout << std::string(spc, ' ') 
-              << "Else:\n";
-    els_->print(spc + TAB);
+    gv.nameNextEdge("else");
+    els_->print(gv, par);
 }
 
 void If::print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ')
-              << "If:\n";
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Cond:\n";
-    cond_->print(spc + TAB*2);
-    body_->print(spc + TAB);
+    auto v = gv.addVertex("If");
+    gv.addEdge(par, v);
+
+    gv.nameNextEdge("cond");
+    cond_->print(gv, v);
+    gv.nameNextEdge("body");
+    body_->print(gv, v);
     
     for (auto&& elsif : elsifs_) {
-        printElsif_(elsif, spc);
+        printElsif_(elsif, gv, v);
     }
     
-    printElse_(spc + TAB);
+    printElse_(gv, v);
 }
 
 void For::print(graphviz::GraphViz& gv, 
                 graphviz::VertexType par) const 
 {
-    std::cout <<  std::string(spc, ' ')
-              << "For init: " << init_
-              << " in\n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Range\n";
-    std::cout << std::string(spc + TAB*2, ' ')
-              << "Left:\n";
-    range_.first->print(spc + TAB*3);
-    std::cout << std::string(spc + TAB*2, ' ')
-              << "Right:\n";
-    range_.second->print(spc + TAB*3);
-    body_->print(spc + TAB*2);
+    auto v = gv.addVertex("For", 
+                {"Var: " + init_});
+    gv.addEdge(par, v);
+    gv.nameNextEdge("left");
+    range_.first->print(gv, v);
+    gv.nameNextEdge("right");
+    range_.second->print(gv, v);
+    gv.nameNextEdge("body");
+    body_->print(gv, v);
 }
 
 void While::print(graphviz::GraphViz& gv, 
                   graphviz::VertexType par) const 
 {
-    std::cout <<  std::string(spc, ' ')
-              << "While:\n";
-    std::cout << std::string(spc + TAB, ' ') 
-              << "Cond:\n";
-    cond_->print(spc + TAB*2);
-    body_->print(spc + TAB);
+    auto v = gv.addVertex("While");
+    gv.addEdge(par, v);
+    gv.nameNextEdge("cond");
+    cond_->print(gv, v);
+    gv.nameNextEdge("body");
+    body_->print(gv, v);
 }
 
 void CallOrIndexingOrVar::print(graphviz::GraphViz& gv, 
                                 graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ')
-              << "Unresolved Subporgram" 
-                 " Call or Indexing or Variable:\n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Name:\n";
+    CallOrIndexingOrVar::ArgsType_ arg;
+    std::stringstream ss;
     for (auto&& [name, attr, args] : fullName_) {
         if (!name.empty()) {
-            std::cout << std::string(spc + TAB, ' ')
-                      << name 
-                      << '\n';
+            ss << name;
         } else {
-            attr.print(spc + TAB);
+            ss << attr.toString();
         }
-        std::cout << std::string(spc + TAB, ' ')
-                  << "Call:\n";
-        printArgs_(spc + TAB*2, args);
+        if (!args.empty()) {
+            ss << "(...)";
+        }
+        arg.insert(arg.end(), args.begin(), args.end());
     }
+    auto v = gv.addVertex("Call, idx, var", 
+                { "Name: " + ss.str()});
+    gv.addEdge(par, v);
+    printArgs_(arg, gv, v);
 }
 
-void CallOrIndexingOrVar::printArgs_(int spc, const ArgsType& args) const {
-    if (args.empty()) return;
-    std::cout << std::string(spc, ' ')
-              << "Args:\n";
+void CallOrIndexingOrVar::printArgs_(const ArgsType_& args, 
+                                     graphviz::GraphViz& gv, 
+                                     graphviz::VertexType par) const 
+{
     for (auto arg : args) {
-        arg->print(spc + TAB);
+        gv.nameNextEdge("arg");
+        arg->print(gv, par);
     }
 }
 
 void TypeName::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ')
-              << "Unresolved Type Name:\n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Name:\n";
-    if (!name_.empty()) {
-        name_.print(spc + TAB*2);
-        return;
-    }
-    attr_.print(spc + TAB*2);
+    auto name = name_.empty() ? 
+                  attr_.toString() : 
+                  name_.toSring();
+    auto v = gv.addVertex("Type Name", 
+                    {"Name: " + name});
+    gv.addEdge(par, v);
 } 
 
 void Assign::print(graphviz::GraphViz& gv, 
                   graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ')
-              << "Assign:\n";
-    std::cout << std::string(spc + TAB, ' ')
-              << "Lval:\n";
-    lval_->print(spc + TAB*2);
-    std::cout << std::string(spc + TAB, ' ')
-              << "Rval:\n";
-    rval_->print(spc + TAB*2);
+    auto v = gv.addVertex("Assign");
+    gv.addEdge(par, v);
+    gv.nameNextEdge("lval");
+    lval_->print(gv, v);
+    gv.nameNextEdge("rval");
+    rval_->print(gv, v);
 }
 
 void 
 CallOrIndexingOrVarStm::print(graphviz::GraphViz& gv, 
                               graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ')
-              << "Unresolved Call Or "
-                 "Indexing Or Var Statement\n";
-    CIV_->print(spc + TAB*2);
+    auto v = gv.addVertex("Cal, idx, var - stm");
+    gv.addEdge(par, v);
+    CIV_->print(gv, v);
 }
 
 void Return::print(graphviz::GraphViz& gv, 
                    graphviz::VertexType par) const 
 {
-    std::cout << std::string(spc, ' ')
-              << "Return Stm:\n";
-    ret_->print(spc + TAB);
+    auto v = gv.addVertex("Return stm");
+    gv.addEdge(par, v);
+    ret_->print(gv, v);
 }
 
 } // namespace node

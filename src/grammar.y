@@ -19,11 +19,13 @@
   #include <string>
   #include <utility>
   #include <sstream>
+  #include <iostream>
   
   #include "location.hh"
 
   #include "node.hpp"
   #include "compile_unit.hpp"
+  #include "graphviz.hpp"
 
   class FlexLexer; 
 
@@ -128,7 +130,9 @@
 
 program: optional_imports compile_unit                                  { 
                                                                           compile_unit::CompileUnit CU($2, $1.first, $1.second);
-                                                                          CU.print();
+                                                                          graphviz::GraphViz gv(true, false, "ast");
+                                                                          CU.print(gv);
+                                                                          gv.printDOT(std::cout);
                                                                         }
 
 /* declarations */
@@ -162,8 +166,8 @@ proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC
                 | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { $$.reset(new node::ProcDecl($2, $4, $7, $9)); }
                 | OVERRIDING proc_decl                                                                               { $$ = $2; }
 
-func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { $$.reset(new node::FuncDecl($2, {}, $4, $6, $8)); }
-                | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC     { $$.reset(new node::FuncDecl($2, $4, $7, $9, $11)); }
+func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { $$.reset(new node::FuncDecl($2, {}, $6, $8, $4)); } // TODO new !! interface !! } 
+                | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC     { $$.reset(new node::FuncDecl($2, $4, $9, $11, $7)); }
                 | OVERRIDING func_decl                                                                               { $$ = $2; }
 
 pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                                              { $$.reset(new node::PackDecl($2, $4)); }

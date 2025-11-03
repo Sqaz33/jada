@@ -1,6 +1,7 @@
 #pragma once
 
 #include "node.hpp"
+#include "graphviz.hpp"
 
 namespace compile_unit {
 
@@ -11,7 +12,7 @@ public:
                 std::vector<std::shared_ptr<node::IDecl>> useDecls);  // TODO: file name...
 
 public:
-    void print() const;
+    void print(graphviz::GraphViz& gv) const;
 
 private:
     std::shared_ptr<node::IDecl> unit_;

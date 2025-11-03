@@ -75,20 +75,45 @@ VertexType GraphViz::addVertex(const std::string& name,
 
 
 VertexType GraphViz::addVertex(const std::string& name) {
-    GraphViz::CharCp_ nameCp(strdup(name.c_str()));
     VertexType v;
-    if (!(v = agnode(graph_.get(), nameCp.get(), true))) {
+    auto id = std::to_string(id_++);
+    GraphViz::CharCp_ idCp(strdup(id.c_str()));
+    if (!(v = agnode(graph_.get(), idCp.get(), true))) {
         throw std::runtime_error(
             "It is impossible to create a vertex");
     }
+    GraphViz::CharCp_ nameCp(strdup(name.c_str()));
+    GraphViz::CharCp_ label(strdup("label"));
+    GraphViz::CharCp_ empty(strdup(""));
+    agsafeset(v, label.get(), nameCp.get(), empty.get());
     return v;
 }
 
 void GraphViz::addEdge(VertexType v, VertexType u) {
-    if (!agedge(graph_.get(), v, u, NULL, true)) {
+    GraphViz::CharCp_ nameCp = nullptr;
+    if (edgeName_.size()) {
+        nameCp.reset(strdup(edgeName_.c_str()));
+        edgeName_.clear();
+    }
+    if (!agedge(graph_.get(), v, u, nameCp.get(), true)) {
         throw std::runtime_error(
             "It is impossible to create a edge");
     }
 }
+
+void GraphViz::addEdge(const std::string& name,
+                       VertexType v, VertexType u) 
+{
+    GraphViz::CharCp_ nameCp(strdup(name.c_str()));
+    if (!agedge(graph_.get(), v, u, nameCp.get(), true)) {
+        throw std::runtime_error(
+            "It is impossible to create a edge");
+    }
+}
+
+void GraphViz::nameNextEdge(const std::string& name) {
+    edgeName_ = name;
+}
+
 
 } // namespace graphviz
