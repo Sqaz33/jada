@@ -22,6 +22,11 @@ procedure TestLoops is
 
    arr2: array(1..3) of Pack.Base;
 
+   function Func(X: Integer; Y: out Integer) return Integer is
+   begin
+      return x + Y;
+   end Func;  
+
    procedure Proc is 
    begin 
       Put("Hi from ada");

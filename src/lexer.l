@@ -29,6 +29,7 @@
       ss << std::move(msg);
       ss << ": ";
       ss << std::move(err);
+      std::lock_guard<std::mutex> lk(helper::addErrMut);
       helper::errs.push_back(ss.str());
   }
 %}

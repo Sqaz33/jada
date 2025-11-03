@@ -20,6 +20,7 @@
   #include <utility>
   #include <sstream>
   #include <iostream>
+  #include <mutex>
   
   #include "location.hh"
 
@@ -122,6 +123,7 @@
 %nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
 %nterm<std::shared_ptr<node::DeclArea>> decl_area
 %nterm<OptionalImports> optional_imports
+%nterm<OptionalImports> imports
 %nterm<node::CallOrIndexingOrVar::NamePart> CIV
 
 %start program
@@ -129,10 +131,12 @@
 %%
 
 program: optional_imports compile_unit                                  { 
-                                                                          compile_unit::CompileUnit CU($2, $1.first, $1.second);
-                                                                          graphviz::GraphViz gv(true, false, "ast");
-                                                                          CU.print(gv);
-                                                                          gv.printDOT(std::cout);
+                                                                          auto mod = std::make_shared<mdl::module>(
+                                                                            $2, $1.first, $1.second);
+                                                                          {
+                                                                            std::lock_guard<std::mutex> lk(helper::compMdlMut);
+                                                                            helper::modules.push_back(mod);
+                                                                          }
                                                                         }
 
 /* declarations */
@@ -150,14 +154,26 @@ decl:             var_decl
 var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
                 | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
  
-import:           WITH qualified_name SC                                { $$.reset(new node::With($2)); }
+import:           WITH qualified_name SC                                { 
+                                                                          {
+                                                                            std::lock_guard<std::mutex> lk(
+                                                                                helper::addMdlNameMut);
+                                                                            if (!helper::allModules.contain(
+                                                                              $1.first()))
+                                                                            { helper::modulesForPars.push($1.first); }
+                                                                          }
+                                                                          $$.reset(new node::With($2)); 
+                                                                        }
 
-use_decl:         USE qualified_name SC                                 { $$.reset(new node::UseDecl($2)); }
+use_decl:         USE qualified_name SC                                 { $$.reset(new node::UseDecl($2)); } /* we want it? */
 
-optional_imports: import                                                { $$ = OptionalImports({$1}, {}); }
+optional_imports: imports
+                | %empty                                                { $$ = OptionalImports({}, {}); }
+
+imports:          import                                                { $$ = OptionalImports({$1}, {}); }
                 | use_decl                                              { $$ = OptionalImports({}, {$1}); }
-                | optional_imports import                               { $$ = std::move($1); $$.first.push_back($2); }
-                | optional_imports use_decl                             { $$ = std::move($1); $$.second.push_back($2); }
+                | imports import                                        { $$ = std::move($1); $$.first.push_back($2); }
+                | imports use_decl                                      { $$ = std::move($1); $$.second.push_back($2); }
 
 qualified_name:   NAME                                                  { $$ = attribute::QualifiedName($1); } 
                 | qualified_name DOT NAME                               { $$ = std::move($1); $$.push($3); }       
@@ -421,6 +437,7 @@ namespace yy {
   {
     std::stringstream ss;
     ss << loc << ' ' << msg << std::endl;
+    std::lock_guard<std::mutex> lk(helper::addErrMut);
     helper::errs.push_back(ss.str());
   }
 }

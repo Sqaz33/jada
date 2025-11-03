@@ -14,10 +14,11 @@ public:
 
 public:
     void push(const std::string& name);
-    bool empty() const;
+    bool empty() const noexcept; 
     std::string toSring() const;
+    const std::string& first() const noexcept; 
+    
     auto operator<=>(const QualifiedName&) const = default;
-
 private:
     std::vector<std::string> fullName_;
 };

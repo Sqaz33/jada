@@ -33,14 +33,15 @@ void VarDecl::print(graphviz::GraphViz& gv,
     auto v = gv.addVertex("var decl", 
                     {"Name:", name_});
     gv.addEdge(par, v);
+    gv.nameNextEdge("type");
     type_->print(gv, v);
-    gv.nameNextEdge("=");
     if (rval_) {
+        gv.nameNextEdge("=");
         rval_->print(gv, v);
     }
 }
 
-void ProcDecl::printParam_(const FuncDecl::ParamType& param, 
+void ProcDecl::printParam_(const ProcDecl::ParamType& param, 
                            graphviz::GraphViz& gv, 
                            graphviz::VertexType par) const
 { 
@@ -57,8 +58,12 @@ void ProcDecl::printParam_(const FuncDecl::ParamType& param,
 void ProcDecl::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
 {
-    auto v = gv.addVertex("Func Decl", 
-                         {"Name: " + name_});
+    std::string name = "Proc Decl";
+    if (dynamic_cast<const FuncDecl*>(this)) {
+        name = "Func Decl";
+    }
+
+    auto v = gv.addVertex(name, {"Name: " + name_});
     gv.addEdge(par, v);
 
     for (auto&& param: params_) {
@@ -160,7 +165,7 @@ void ArrayType::print(graphviz::GraphViz& gv,
                       graphviz::VertexType par) const 
 {   
     std::stringstream ss;    
-    ss << "Ranges: ( ";
+    ss << "Ranges: (";
     for (auto&& [l, r] : ranges_) {
         ss << '(' << l << ", " << r << ")";
     }
