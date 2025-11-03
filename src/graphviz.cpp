@@ -90,14 +90,18 @@ VertexType GraphViz::addVertex(const std::string& name) {
 }
 
 void GraphViz::addEdge(VertexType v, VertexType u) {
-    GraphViz::CharCp_ nameCp = nullptr;
-    if (edgeName_.size()) {
-        nameCp.reset(strdup(edgeName_.c_str()));
-        edgeName_.clear();
-    }
-    if (!agedge(graph_.get(), v, u, nameCp.get(), true)) {
+    Agedge_t* e;
+    if (!(e = agedge(graph_.get(), v, u, nullptr, true))) {
         throw std::runtime_error(
             "It is impossible to create a edge");
+    } else {
+        if (edgeName_.size()) {
+            GraphViz::CharCp_ nameCp(strdup(edgeName_.c_str()));
+            edgeName_.clear();
+            GraphViz::CharCp_ label(strdup("label"));
+            GraphViz::CharCp_ empty(strdup(""));
+            agsafeset(e, label.get(), nameCp.get(), empty.get());
+        }
     }
 }
 
