@@ -122,6 +122,7 @@
 %nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
 %nterm<std::shared_ptr<node::DeclArea>> decl_area
 %nterm<OptionalImports> optional_imports
+%nterm<OptionalImports> imports
 %nterm<node::CallOrIndexingOrVar::NamePart> CIV
 
 %start program
@@ -154,10 +155,13 @@ import:           WITH qualified_name SC                                { $$.res
 
 use_decl:         USE qualified_name SC                                 { $$.reset(new node::UseDecl($2)); }
 
-optional_imports: import                                                { $$ = OptionalImports({$1}, {}); }
+optional_imports: imports
+                | %empty                                                { $$ = OptionalImports({}, {}); }
+
+imports:          import                                                { $$ = OptionalImports({$1}, {}); }
                 | use_decl                                              { $$ = OptionalImports({}, {$1}); }
-                | optional_imports import                               { $$ = std::move($1); $$.first.push_back($2); }
-                | optional_imports use_decl                             { $$ = std::move($1); $$.second.push_back($2); }
+                | imports import                                        { $$ = std::move($1); $$.first.push_back($2); }
+                | imports use_decl                                      { $$ = std::move($1); $$.second.push_back($2); }
 
 qualified_name:   NAME                                                  { $$ = attribute::QualifiedName($1); } 
                 | qualified_name DOT NAME                               { $$ = std::move($1); $$.push($3); }       

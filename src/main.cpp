@@ -29,12 +29,12 @@ static void printErrors() {
 int yyFlexLexer::yywrap() { return 1; }
 
 int main(int argc, char** argv) try {
-    // if (argc != 2) {
-    //     std::cout << "usage ./jada file.adb" << std::endl;
-    //     return 1;
-    // }
-    argv = new char*[2];
-    argv[1] = "../test_data/complex.adb";
+    if (argc != 2) {
+        std::cout << "usage ./jada file.adb" << std::endl;
+        return 1;
+    }
+    // argv = new char*[2];
+    // argv[1] = "../test_data/simple.adb";
     
     std::string_view sv(argv[1]);
     if (!sv.ends_with(".adb")) {
