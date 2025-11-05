@@ -13,7 +13,7 @@ void QualifiedName::push(const std::string& name) {
     fullName_.push_back(name);
 }
 
-bool QualifiedName::empty() const {
+bool QualifiedName::empty() const noexcept {
     return fullName_.empty();    
 }
 
@@ -25,7 +25,6 @@ std::string QualifiedName::toSring() const {
         ss << fullName_[i] << '.';
     }
     ss << fullName_.back();
-
     return ss.str();
 }
 

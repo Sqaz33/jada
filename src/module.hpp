@@ -13,7 +13,8 @@ public:
            const std::string& name);
 
 public:
-    void print(graphviz::GraphViz& gv) const;
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const;
 
 private:
     std::shared_ptr<node::IDecl> unit_;

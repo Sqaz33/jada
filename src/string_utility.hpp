@@ -8,4 +8,6 @@ void replaceAll(std::string& str,
                  const std::string& src, 
                  const std::string& dst);
 
+void toLower(std::string& str);
+
 } // namespace utility

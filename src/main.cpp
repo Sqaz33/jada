@@ -2,17 +2,19 @@
 #include <exception>
 #include <fstream>
 #include <string_view>
-#include <atomic>
+#include <algorithm>
+#include <filesystem>
 
 #include <FlexLexer.h>
 
 #include "helper.hpp"
 #include "parser.hpp"
 #include "graphviz.hpp"
+#include "string_utility.hpp"
+#include "graphviz.hpp"
 
 namespace helper {
     yy::parser::semantic_type* yylval = nullptr;
-    std::vector<std::string> moduleFileNames;
     std::vector<std::string> errs;
     int first_line = 1;
     int last_line = 1;
@@ -22,9 +24,8 @@ namespace helper {
         std::shared_ptr<mdl::Module>> modules;
     std::set<std::string> allModules;
     std::queue<std::string> modulesForPars;
-    std::mutex compMdlMut;
-    std::mutex addMdlNameMut;
-    std::mutex addErrMut;
+    std::string curModuleFileName;
+    std::string curModuleName;
 }
 
 namespace {
@@ -36,39 +37,45 @@ void printErrors() {
     }
 }
 
-std::atomic<int> workersWait = 0;
-std::atomic<bool> end = false;
-
-void worker() {
+bool parseProgram(std::filesystem::path path) {
     using namespace helper;
-    while (!end) {
-        std::string mdl;
-        {
-            std::lock_guard<std::mutex> lk(addMdlNameMut); // TODO: try lock
-            if (!modulesForPars.empty()) {
-                mdl.swap(modulesForPars.front());
-                modulesForPars.pop();
-            }
+
+    while (!modulesForPars.empty()) {
+        std::string mdl = modulesForPars.front();
+        modulesForPars.pop();
+        utility::toLower(mdl);
+        path.replace_filename(mdl);
+        path.replace_extension(".adb");
+
+        std::ifstream ifs(path);
+
+        if (!ifs.is_open()) {
+            std::stringstream ss;
+            ss << "Can`t open file ";
+            ss << path;
+            ss << " or file doesn't exist";
+            throw std::runtime_error(ss.str());
         }
 
-        if (!mdl.empty()) {
-            std::ifstream ifs(mdl/*to lower*/+ ".adb");
-            if (!ifs.is_open()) {
-                std::stringstream ss;
-                ss << "Can`t open file ";
-                ss << mdl << ".adb";
-                ss << " or file doesn't exist";
-                throw std::runtime_error(ss.str());
-            }
-            yyFlexLexer lexer(&ifs);
-            yy::parser p(&lexer);
-            p.parse();
+        curModuleName = mdl;
+        curModuleFileName = path;
+
+        yyFlexLexer lexer(&ifs);
+        yy::parser p(&lexer);
+        if(p.parse()) {
+            return false;
         }
-
-
     }
+    return true;
+}
 
-
+void printAst() {
+    graphviz::GraphViz gv(true, false, "ast");
+    auto root = gv.addVertex("Program");
+    for (auto m : helper::modules) {
+        m->print(gv, root);
+    }
+    gv.printDOT(std::cout);
 }
 
 } // namespace
@@ -76,35 +83,37 @@ void worker() {
 int yyFlexLexer::yywrap() { return 1; }
 
 int main(int argc, char** argv) try {
-    if (argc != 2) {
-        std::cout << "usage ./jada file.adb" << std::endl;
-        return 1;
-    }
-    // argv = new char*[2];
-    // argv[1] = "../test_data/simple.adb";
+    namespace fs = std::filesystem;
+
+    // if (argc != 2) {
+    //     std::cout << "usage ./jada file.adb" << std::endl;
+    //     return 1;
+    // }
+
+    argv = new char*[2]; // TODO: delete
+    argv[1] = "../test_data/modules/main.adb"; // TODO: delete
     
-    std::string_view sv(argv[1]);
-    if (!sv.ends_with(".adb")) {
+    fs::path path(argv[1]);
+    if (".adb" != path.extension()) {
         std::cout << "Usage ./jada file.adb" << std::endl;
         return 1;
     } 
+    path.replace_extension("");
+    helper::modulesForPars.push(path.filename());
 
-
-    helper::moduleFileNames.push_back(argv[1]);         
-
-    printErrors();
-    if (!helper::errs.empty()) {
+    if (!parseProgram(path.remove_filename())) {
+        printErrors();
         return 1;
     }
 
+    printAst();
 
     return 0;
-
 } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
     printErrors();
-
     return 1;
+
 } catch (...) {
     std::cerr << "Unknown error\n";
     printErrors();

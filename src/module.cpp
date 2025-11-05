@@ -12,8 +12,11 @@ Module::Module(std::shared_ptr<node::IDecl> unit,
     , name_(name)
 {}
 
-void Module::print(graphviz::GraphViz& gv) const {
+ void Module::print(graphviz::GraphViz& gv, 
+                    graphviz::VertexType par) const 
+{
     auto v = gv.addVertex("Module", {name_ + ".adb"});
+    gv.addEdge(par, v);
 
     for (auto imp : imports_) {
         imp->print(gv, v);

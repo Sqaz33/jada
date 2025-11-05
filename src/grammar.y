@@ -20,13 +20,14 @@
   #include <utility>
   #include <sstream>
   #include <iostream>
-  #include <mutex>
+  #include <set>
+  #include <queue>
   
   #include "location.hh"
 
   #include "node.hpp"
-  #include "compile_unit.hpp"
   #include "graphviz.hpp"
+  #include "module.hpp"
 
   class FlexLexer; 
 
@@ -35,6 +36,15 @@
                 std::vector<std::shared_ptr<node::IDecl>>>;
                 
   using ArgsType = typename std::vector<std::shared_ptr<node::IExpr>>;
+
+  namespace helper {
+      extern std::vector<
+          std::shared_ptr<mdl::Module>> modules;
+      extern std::set<std::string> allModules;
+      extern std::queue<std::string> modulesForPars;
+      extern std::string curModuleFileName;
+      extern std::string curModuleName;
+  } // namespace helper
 }
 
 %code 
@@ -131,12 +141,9 @@
 %%
 
 program: optional_imports compile_unit                                  { 
-                                                                          auto mod = std::make_shared<mdl::module>(
-                                                                            $2, $1.first, $1.second);
-                                                                          {
-                                                                            std::lock_guard<std::mutex> lk(helper::compMdlMut);
-                                                                            helper::modules.push_back(mod);
-                                                                          }
+                                                                          auto mod = std::make_shared<mdl::Module>(
+                                                                            $2, $1.first, $1.second, helper::curModuleName);
+                                                                          helper::modules.push_back(mod);
                                                                         }
 
 /* declarations */
@@ -155,13 +162,9 @@ var_decl:         NAME COLON type ASG expr SC                           { $$.res
                 | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
  
 import:           WITH qualified_name SC                                { 
-                                                                          {
-                                                                            std::lock_guard<std::mutex> lk(
-                                                                                helper::addMdlNameMut);
-                                                                            if (!helper::allModules.contain(
-                                                                              $1.first()))
-                                                                            { helper::modulesForPars.push($1.first); }
-                                                                          }
+                                                                          if (!helper::allModules.contains(
+                                                                            $2.first()))
+                                                                          { helper::modulesForPars.push($2.first()); }
                                                                           $$.reset(new node::With($2)); 
                                                                         }
 
@@ -182,7 +185,7 @@ proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC
                 | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { $$.reset(new node::ProcDecl($2, $4, $7, $9)); }
                 | OVERRIDING proc_decl                                                                               { $$ = $2; }
 
-func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { $$.reset(new node::FuncDecl($2, {}, $6, $8, $4)); } // TODO new !! interface !! } 
+func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { $$.reset(new node::FuncDecl($2, {}, $6, $8, $4)); }  
                 | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC     { $$.reset(new node::FuncDecl($2, $4, $9, $11, $7)); }
                 | OVERRIDING func_decl                                                                               { $$ = $2; }
 
@@ -424,7 +427,7 @@ namespace yy {
   {
     helper::yylval = val; 
     auto tt = static_cast<parser::token_type>(lexer->yylex());
-    loc->initialize(&helper::moduleFileNames.back());
+    loc->initialize(&helper::curModuleFileName);
     loc->begin.line = helper::first_line;
     loc->end.line = helper::last_line;
     loc->begin.column = helper::first_column - 1;
@@ -437,7 +440,6 @@ namespace yy {
   {
     std::stringstream ss;
     ss << loc << ' ' << msg << std::endl;
-    std::lock_guard<std::mutex> lk(helper::addErrMut);
     helper::errs.push_back(ss.str());
   }
 }

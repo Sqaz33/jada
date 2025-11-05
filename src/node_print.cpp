@@ -342,6 +342,7 @@ void CallOrIndexingOrVar::print(graphviz::GraphViz& gv,
 {
     CallOrIndexingOrVar::ArgsType_ arg;
     std::stringstream ss;
+    int i = 0;
     for (auto&& [name, attr, args] : fullName_) {
         if (!name.empty()) {
             ss << name;
@@ -350,6 +351,9 @@ void CallOrIndexingOrVar::print(graphviz::GraphViz& gv,
         }
         if (!args.empty()) {
             ss << "(...)";
+        }
+        if (i < fullName_.size() - 1) {
+            ss << '.';
         }
         arg.insert(arg.end(), args.begin(), args.end());
     }

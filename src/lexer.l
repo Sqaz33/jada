@@ -21,7 +21,7 @@
 
   void handleLexicalError(std::string msg, std::string err = "") {
       std::stringstream ss;
-      ss << helper::moduleFileNames.back()
+      ss << helper::curModuleFileName
          << ':' << helper::first_line 
          << ':' << helper::first_column
          << ':';
@@ -29,7 +29,6 @@
       ss << std::move(msg);
       ss << ": ";
       ss << std::move(err);
-      std::lock_guard<std::mutex> lk(helper::addErrMut);
       helper::errs.push_back(ss.str());
   }
 %}
