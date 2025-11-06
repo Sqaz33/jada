@@ -109,11 +109,8 @@ void GraphViz::addEdge(VertexType v, VertexType u) {
 void GraphViz::addEdge(const std::string& name,
                        VertexType v, VertexType u) 
 {
-    GraphViz::CharCp_ nameCp(strdup(name.c_str()));
-    if (!agedge(graph_.get(), v, u, nameCp.get(), true)) {
-        throw std::runtime_error(
-            "It is impossible to create a edge");
-    }
+    nameNextEdge(name);
+    addEdge(v, u);
 }
 
 void GraphViz::nameNextEdge(const std::string& name) {
