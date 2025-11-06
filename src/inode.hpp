@@ -4,7 +4,7 @@
 
 #include "graphviz.hpp"
 
-namespace node {
+namespace node {    
 
 struct INode {
     virtual void print(graphviz::GraphViz& gv, 
