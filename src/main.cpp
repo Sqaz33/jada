@@ -85,13 +85,13 @@ int yyFlexLexer::yywrap() { return 1; }
 int main(int argc, char** argv) try {
     namespace fs = std::filesystem;
 
-    // if (argc != 2) {
-    //     std::cout << "usage ./jada file.adb" << std::endl;
-    //     return 1;
-    // }
+    if (argc != 2) {
+        std::cout << "usage ./jada file.adb" << std::endl;
+        return 1;
+    }
 
-    argv = new char*[2]; // TODO: delete
-    argv[1] = "../test_data/modules/main.adb"; // TODO: delete
+    // argv = new char*[2]; // TODO: delete
+    // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
     
     fs::path path(argv[1]);
     if (".adb" != path.extension()) {

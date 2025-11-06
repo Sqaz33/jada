@@ -13,7 +13,8 @@ void GraphViz::CpDeleter::operator()(char* cp) {
 
 GraphViz::GraphViz(bool isTree, 
                    bool isDirected,
-                   const std::string& name) {   
+                   const std::string& name) 
+{   
     auto type = isDirected ? 
                    Agstrictdirected 
                 :  Agstrictundirected;
