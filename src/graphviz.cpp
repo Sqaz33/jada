@@ -6,7 +6,6 @@
 
 namespace graphviz {
 
-
 void GraphViz::CpDeleter::operator()(char* cp) {
     free(cp);
 }
