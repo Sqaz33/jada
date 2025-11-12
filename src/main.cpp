@@ -31,7 +31,7 @@ bool parseProgram(std::filesystem::path path) {
         path.replace_filename(mdl);
         path.replace_extension(".adb");
 
-        std::ifstream ifs(path);
+        std::ifstream ifs(path, std::ios::in);
 
         if (!ifs.is_open()) {
             std::stringstream ss;
