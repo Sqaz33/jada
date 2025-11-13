@@ -22,7 +22,7 @@ using Class   = std::shared_ptr<impl__::Class>;
 using Method  = std::shared_ptr<impl__::Method>;
 
 enum class FundamentalTypes {
-    INT,
+    INT = 0,
     FLOAT,
     BOOLEAN
 };

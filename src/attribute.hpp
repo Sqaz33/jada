@@ -15,7 +15,7 @@ public:
 public:
     void push(const std::string& name);
     bool empty() const noexcept; 
-    std::string toSring() const;
+    std::string toSring() const;  // TODO: name/name/name/obj 
     const std::string& first() const noexcept; 
     
     auto operator<=>(const QualifiedName&) const = default;
