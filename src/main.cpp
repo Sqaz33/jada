@@ -28,8 +28,7 @@ bool parseProgram(std::filesystem::path path) {
         std::string mdl = modulesForPars.front();
         modulesForPars.pop();
         utility::toLower(mdl);
-        path.replace_filename(mdl);
-        path.replace_extension(".adb");
+        path.replace_filename(mdl + ".adb");
 
         std::ifstream ifs(path, std::ios::in);
 
@@ -75,7 +74,7 @@ int main(int argc, char** argv) try {
     }
 
     // argv = new char*[2]; // TODO: delete
-    // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
+    // argv[1] = "../test_data/complex.adb"; // TODO: delete
     
     fs::path path(argv[1]);
     if (".adb" != path.extension()) {
@@ -83,8 +82,10 @@ int main(int argc, char** argv) try {
         return 1;
     } 
     
-    path.replace_extension("");
-    helper::modulesForPars.push(path.filename());
+    auto  mdl = path.filename();
+    mdl.replace_extension("");
+    helper::modulesForPars.push(mdl.string());
+    helper::allModules.insert("ada");
 
     if (!parseProgram(path.remove_filename())) {
         printErrors();

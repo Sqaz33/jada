@@ -28,6 +28,7 @@
   #include "node.hpp"
   #include "graphviz.hpp"
   #include "module.hpp"
+  #include "string_utility.hpp"
 
   class FlexLexer; 
 
@@ -162,8 +163,9 @@ var_decl:         NAME COLON type ASG expr SC                           { $$.res
                 | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
  
 import:           WITH qualified_name SC                                { 
-                                                                          if (!helper::allModules.contains(
-                                                                            $2.first()))
+                                                                          auto mdl = $2.first();
+                                                                          utility::toLower(mdl);
+                                                                          if (!helper::allModules.contains(mdl))
                                                                           { helper::modulesForPars.push($2.first()); }
                                                                           $$.reset(new node::With($2)); 
                                                                         }
