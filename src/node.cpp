@@ -207,7 +207,7 @@ TypeName::TypeName(attribute::Attribute attr) :
 namespace node {
 
 // Assign
-Assign::Assign(std::shared_ptr<CallOrIndexingOrVar> lval,
+Assign::Assign(std::shared_ptr<IExpr> lval,
                std::shared_ptr<IExpr> rval) :
     lval_(lval)
     , rval_(rval)

@@ -44,7 +44,7 @@ procedure TestLoops is
                if arr(j) < min then
                   min := j;
                end if;
-            end loop; 
+            end loop;
             buf := arr(i);
             arr(i) := arr(min);
             arr(min) := buf;

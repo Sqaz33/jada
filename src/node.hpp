@@ -546,7 +546,7 @@ namespace node {
 
 class Assign : public IStm {
 public:
-    Assign(std::shared_ptr<CallOrIndexingOrVar> lval,
+    Assign(std::shared_ptr<IExpr> lval,
            std::shared_ptr<IExpr> rval);
     
 public: // INode interface
@@ -555,7 +555,7 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    std::shared_ptr<CallOrIndexingOrVar> lval_;
+    std::shared_ptr<IExpr> lval_;
     std::shared_ptr<IExpr> rval_;
 };
 

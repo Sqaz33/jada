@@ -62,7 +62,7 @@
 
 %defines
 
-%token SC COLON COMMA DOT DOT_DOT LPAR RPAR APOSTR
+%token SC COLON COMMA DOT_DOT APOSTR
 %right ASG
 %token IF THEN ELSE ELSIF WHEN
 %token FOR LOOP WHILE EXIT IN OUT
@@ -82,6 +82,8 @@
 %left EQ NEQ MORE LESS GTE LTE
 %left PLUS MINUS AMPER
 %left MUL DIV MOD
+%left DOT
+%left LPAR RPAR
 
 %token ERR
 
@@ -112,7 +114,7 @@
 %nterm<std::shared_ptr<node::IStm>> stm
 %nterm<std::shared_ptr<node::IStm>> oper
 %nterm<std::shared_ptr<node::IStm>> assign
-%nterm<std::shared_ptr<node::IExpr>> lval
+/* %nterm<std::shared_ptr<node::IExpr>> lval */
 %nterm<std::shared_ptr<node::IStm>> return_stm
 %nterm<std::shared_ptr<node::IExpr>> expr
 %nterm<std::vector<std::shared_ptr<node::IExpr>>> args
@@ -127,15 +129,18 @@
 %nterm<std::shared_ptr<node::IStm>> for_stm
 %nterm<std::shared_ptr<node::IStm>> while_stm
 %nterm<std::pair<std::shared_ptr<node::IExpr>, std::shared_ptr<node::IExpr>>> range
+/*
 %nterm<std::shared_ptr<node::IStm>> call_or_indexing_or_var_stm
 %nterm<std::shared_ptr<node::IExpr>> call_or_indexing_or_var
+*/
 %nterm<std::shared_ptr<node::IDecl>> compile_unit
 %nterm<std::shared_ptr<node::IDecl>> type_alias_decl
 %nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
 %nterm<std::shared_ptr<node::DeclArea>> decl_area
 %nterm<OptionalImports> optional_imports
 %nterm<OptionalImports> imports
-%nterm<node::CallOrIndexingOrVar::NamePart> CIV
+/* %nterm<node::CallOrIndexingOrVar::NamePart> CIV */
+%nterm<std::shared_ptr<node::IStm>> mb_call
 
 %start program
 
@@ -288,41 +293,14 @@ stm:              oper
                 | return_stm                                             
 
 oper:             assign                                                 
-                | call_or_indexing_or_var_stm                            
+                | expr
 
+/*
 call_or_indexing_or_var_stm:  call_or_indexing_or_var SC                { 
                                                                           auto CIV = std::dynamic_pointer_cast<
                                                                               node::CallOrIndexingOrVar>($1);
                                                                           $$.reset(new node::CallOrIndexingOrVarStm(CIV)); 
                                                                         }
-
-assign:           lval ASG expr SC                                      { 
-                                                                          auto CIV = std::dynamic_pointer_cast<
-                                                                              node::CallOrIndexingOrVar>($1);
-                                                                          $$.reset(new node::Assign(CIV, $3)); 
-                                                                        }
-                                                
-lval:             call_or_indexing_or_var                                 
-
-return_stm:       RETURN expr SC                                        { $$.reset(new node::Return($2)); } 
-                | RETURN SC                                             { $$.reset(new node::Return()); }                                        
-
-expr:             expr EQ expr                                          { $$.reset(new node::Op($1, node::OpType::EQ, $3));          }
-                | expr NEQ expr                                         { $$.reset(new node::Op($1, node::OpType::NEQ, $3));         }
-                | expr MORE expr                                        { $$.reset(new node::Op($1, node::OpType::MORE, $3));        }
-                | expr LESS expr                                        { $$.reset(new node::Op($1, node::OpType::LESS, $3));        }
-                | expr GTE expr                                         { $$.reset(new node::Op($1, node::OpType::GTE, $3));         }
-                | expr LTE expr                                         { $$.reset(new node::Op($1, node::OpType::LTE, $3));         }
-                | expr AMPER expr                                       { $$.reset(new node::Op($1, node::OpType::AMPER, $3));       }
-                | expr PLUS expr                                        { $$.reset(new node::Op($1, node::OpType::PLUS, $3));        }
-                | expr MINUS expr                                       { $$.reset(new node::Op($1, node::OpType::MINUS, $3));       }
-                | expr MUL expr                                         { $$.reset(new node::Op($1, node::OpType::MUL, $3));         }
-                | expr DIV expr                                         { $$.reset(new node::Op($1, node::OpType::DIV, $3));         }
-                | expr MOD expr                                         { $$.reset(new node::Op($1, node::OpType::MOD, $3));         }
-                | LPAR expr RPAR                                        { $$ = $2; }
-                | MINUS expr %prec UMINUS                               { $$.reset(new node::Op(nullptr, node::OpType::UMINUS, $2)); }
-                | call_or_indexing_or_var                    
-                | literal                                               { $$ = $1; }
 
 call_or_indexing_or_var:   CIV                                          { 
                                                                           $$.reset(new node::CallOrIndexingOrVar());
@@ -348,8 +326,33 @@ CIV:                       NAME LPAR args RPAR                          {
                 |          GETTING_ATTRIBUTE                            { 
                                                                            attribute::Attribute attr($1.first, $1.second);
                                                                            $$ = node::CallOrIndexingOrVar::NamePart("", attr); 
-                                                                        }                          
-                                                                           
+                                                                        }                                                                                
+*/
+
+assign:           expr ASG expr SC                                      { $$.reset(new node::Assign($1, $3)); }
+                                                                               
+return_stm:       RETURN expr SC                                        { $$.reset(new node::Return($2)); } 
+                | RETURN SC                                             { $$.reset(new node::Return()); }                                        
+
+expr:             expr EQ expr                                          { $$.reset(new node::Op($1, node::OpType::EQ, $3));          }
+                | expr NEQ expr                                         { $$.reset(new node::Op($1, node::OpType::NEQ, $3));         }
+                | expr MORE expr                                        { $$.reset(new node::Op($1, node::OpType::MORE, $3));        }
+                | expr LESS expr                                        { $$.reset(new node::Op($1, node::OpType::LESS, $3));        }
+                | expr GTE expr                                         { $$.reset(new node::Op($1, node::OpType::GTE, $3));         }
+                | expr LTE expr                                         { $$.reset(new node::Op($1, node::OpType::LTE, $3));         }
+                | expr AMPER expr                                       { $$.reset(new node::Op($1, node::OpType::AMPER, $3));       }
+                | expr PLUS expr                                        { $$.reset(new node::Op($1, node::OpType::PLUS, $3));        }
+                | expr MINUS expr                                       { $$.reset(new node::Op($1, node::OpType::MINUS, $3));       }
+                | expr MUL expr                                         { $$.reset(new node::Op($1, node::OpType::MUL, $3));         }
+                | expr DIV expr                                         { $$.reset(new node::Op($1, node::OpType::DIV, $3));         }
+                | expr MOD expr                                         { $$.reset(new node::Op($1, node::OpType::MOD, $3));         }
+                | LPAR expr RPAR                                        { $$ = $2;                                                   }
+                | MINUS expr %prec UMINUS                               { $$.reset(new node::Op(nullptr, node::OpType::UMINUS, $2)); }
+                | expr LPAR args RPAR                                   { $$.reset(new node::CallOrIdxExpr($1, std::move($3)));      }
+                | expr DOT expr                                         { $$.reset(new node::Op($1, node::OpType::DOT, $3));         }
+                | literal                                               { $$ = $1;                                                   }
+                | NAME                                                  { $$.reset(new node::NameExpr($1));                          }
+                | GETTING_ATTRIBUTE                                     { $$.reset(new node::GettingAttrExrp($1));                   }
 
 args:             expr                                                  { $$ = std::vector({$1}); }
                 | args COMMA expr                                       { $$ = std::move($1); $$.push_back($3); }
