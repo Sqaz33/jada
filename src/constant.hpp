@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <ostream>
 
+#include "descriptor.hpp"
+
 namespace constant {
 
 namespace ConstantType {
@@ -146,6 +148,12 @@ public: // IConstant interface
 private:
     std::uint16_t descr_;
 };
+
+class Descriptor : public IConstant {
+public:
+    Descriptor(descriptor::JvmFieldDescriptor fieldType);
+    Descriptor(descriptor::JvmMethodDescriptor methodType);
+}
 
 
 } // namespace constant
