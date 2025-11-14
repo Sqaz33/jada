@@ -158,9 +158,9 @@ decl_area:        decl                                                  { $$.res
                 | decl_area decl                                        { $$ = $1; $$->addDecl($2); }
  
 decl:             var_decl
-                | use_decl 
+                | use_decl
                 | proc_decl  
-                | func_decl  
+                | func_decl
                 | pack_decl  
                 | type_decl
 
@@ -268,6 +268,15 @@ type:             INTEGERTY                                             {
                 | getting_attribute                                     { $$.reset(new node::TypeName($1)); }   
                 | array_type          
 
+
+getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE               { 
+                                                                          $1.push($3.first);
+                                                                          $$ = attribute::Attribute($1, $3.second);
+                                                                        }
+                |    GETTING_ATTRIBUTE                                  {
+                                                                          $$ = attribute::Attribute($1.first, $1.second);
+                                                                        }
+
 string_type:      STRINGTY LPAR static_range RPAR                       { $$.reset(new node::StringType($3)); }
 
 array_type:       ARRAY array_range OF type                             { $$.reset(new node::ArrayType($2, $4)); }
@@ -293,7 +302,9 @@ stm:              oper
                 | return_stm                                             
 
 oper:             assign                                                 
-                | expr
+                | mb_call
+
+mb_call:        expr SC                                                 { $$.reset(new node::MBCall($1)); }
 
 /*
 call_or_indexing_or_var_stm:  call_or_indexing_or_var SC                { 
@@ -348,22 +359,17 @@ expr:             expr EQ expr                                          { $$.res
                 | expr MOD expr                                         { $$.reset(new node::Op($1, node::OpType::MOD, $3));         }
                 | LPAR expr RPAR                                        { $$ = $2;                                                   }
                 | MINUS expr %prec UMINUS                               { $$.reset(new node::Op(nullptr, node::OpType::UMINUS, $2)); }
-                | expr LPAR args RPAR                                   { $$.reset(new node::CallOrIdxExpr($1, std::move($3)));      }
+                | expr LPAR args RPAR                                   { $$.reset(new node::CallOrIdxExpr($1, $3));      }
                 | expr DOT expr                                         { $$.reset(new node::Op($1, node::OpType::DOT, $3));         }
                 | literal                                               { $$ = $1;                                                   }
                 | NAME                                                  { $$.reset(new node::NameExpr($1));                          }
-                | GETTING_ATTRIBUTE                                     { $$.reset(new node::GettingAttrExrp($1));                   }
+                | GETTING_ATTRIBUTE                                     { 
+                                                                          attribute::Attribute attr($1.first, $1.second);
+                                                                          $$.reset(new node::AttributeExpr(attr));                     
+                                                                        }
 
 args:             expr                                                  { $$ = std::vector({$1}); }
                 | args COMMA expr                                       { $$ = std::move($1); $$.push_back($3); }
-
-getting_attribute:   qualified_name DOT GETTING_ATTRIBUTE               { 
-                                                                          $1.push($3.first);
-                                                                          $$ = attribute::Attribute($1, $3.second);
-                                                                        }
-                |    GETTING_ATTRIBUTE                                  {
-                                                                          $$ = attribute::Attribute($1.first, $1.second);
-                                                                        }
 
 literal:          INTEGER                                               { 
                                                                           std::shared_ptr<node::SimpleLiteralType> type 

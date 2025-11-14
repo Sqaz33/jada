@@ -24,7 +24,8 @@ enum class OpType {
     MUL,
     DIV,
     MOD,
-    UMINUS
+    UMINUS,
+    DOT
 };
 
 enum class SimpleType {
@@ -332,6 +333,65 @@ private:
     std::shared_ptr<IExpr> rhs_;
 };
 
+class NameExpr : public IExpr {
+public:
+    NameExpr(const std::string& name);
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override;
+    void* codegen() override { return nullptr; } // TODO
+
+public: // IExpr interface
+    bool 
+    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+
+private:
+    std::string name_;
+};
+
+class AttributeExpr : public IExpr {
+public:
+    AttributeExpr(const attribute::Attribute& attr);
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+                graphviz::VertexType par) const override;
+    void* codegen() override { return nullptr; } // TODO 
+
+public: // IExpr interface
+    bool 
+    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+
+private:
+    attribute::Attribute attr_;
+};
+
+class CallOrIdxExpr : public IExpr {
+    using ArgsType_ = std::vector<std::shared_ptr<IExpr>>;
+
+public:
+    CallOrIdxExpr(std::shared_ptr<IExpr> name, 
+                    const std::vector<std::shared_ptr<node::IExpr>>& args);
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+                graphviz::VertexType par) const override;
+    void* codegen() override { return nullptr; } // TODO  
+
+public: // IExpr interface
+    bool 
+    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+
+private:
+    void printArgs_(graphviz::GraphViz& gv, 
+                    graphviz::VertexType par) const;
+
+private:
+    std::shared_ptr<IExpr> name_;
+    ArgsType_ args_;
+};
+
 } // namespace node
 
 
@@ -485,36 +545,36 @@ private:
 // Stms - Other
 namespace node {
 
-class CallOrIndexingOrVar : public IExpr {
-    using ArgsType_ = std::vector<std::shared_ptr<IExpr>>;
+// class CallOrIndexingOrVar : public IExpr {
+//     using ArgsType_ = std::vector<std::shared_ptr<IExpr>>;
 
-public:
-    struct NamePart {
-        std::string name;       // or
-        attribute::Attribute attribute; 
-        ArgsType_ args;
-    };
+// public:
+//     struct NamePart {
+//         std::string name;       // or
+//         attribute::Attribute attribute; 
+//         ArgsType_ args;
+//     };
 
-public:
-    void addPart(const NamePart& part);
+// public:
+//     void addPart(const NamePart& part);
 
-public: // IExpr interface
-    bool 
-    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+// public: // IExpr interface
+//     bool 
+//     compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
 
-public: // INode interface
-    void print(graphviz::GraphViz& gv, 
-               graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+// public: // INode interface
+//     void print(graphviz::GraphViz& gv, 
+//                graphviz::VertexType par) const override;
+//     void* codegen() override { return nullptr; } // TODO
 
-private:
-    void printArgs_(const ArgsType_& args, 
-                    graphviz::GraphViz& gv, 
-                    graphviz::VertexType par) const;
+// private:
+//     void printArgs_(const ArgsType_& args, 
+//                     graphviz::GraphViz& gv, 
+//                     graphviz::VertexType par) const;
 
-private:
-    std::vector<NamePart> fullName_;
-};
+// private:
+//     std::vector<NamePart> fullName_;
+// };
 
 } // namespace node
 
@@ -559,17 +619,30 @@ private:
     std::shared_ptr<IExpr> rval_;
 };
 
-class CallOrIndexingOrVarStm : public IStm {
-public:
-    CallOrIndexingOrVarStm(std::shared_ptr<CallOrIndexingOrVar> CIV);
+// class CallOrIndexingOrVarStm : public IStm {
+// public:
+//     CallOrIndexingOrVarStm(std::shared_ptr<CallOrIndexingOrVar> CIV);
 
-public: // INode interface
+// public: // INode interface
+//     void print(graphviz::GraphViz& gv, 
+//                graphviz::VertexType par) const override;
+//     void* codegen() override { return nullptr; } // TODO
+
+// private:
+//     std::shared_ptr<CallOrIndexingOrVar> CIV_;
+// };
+
+class MBCall : public IStm {
+public:
+    MBCall(std::shared_ptr<IExpr> call);
+
+public:
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
 private:
-    std::shared_ptr<CallOrIndexingOrVar> CIV_;
+    std::shared_ptr<IExpr> call_;
 };
 
 class Return : public IStm {

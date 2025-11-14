@@ -218,7 +218,8 @@ void Op::print(graphviz::GraphViz& gv,
         { OpType::MUL, "MUL" },
         { OpType::DIV, "DIV" },
         { OpType::MOD, "MOD" },
-        { OpType::UMINUS, "UMINUS" }
+        { OpType::UMINUS, "UMINUS" },
+        { OpType::DOT, "DOT"}
     };
 
     auto v = gv.addVertex("Op", 
@@ -234,6 +235,42 @@ void Op::print(graphviz::GraphViz& gv,
         rhs_->print(gv, v);
     }
 }
+
+void NameExpr::print(graphviz::GraphViz& gv, 
+                     graphviz::VertexType par) const 
+{
+    auto v = gv.addVertex("Name expr", 
+                            {"Name: ", name_});
+    gv.addEdge(par, v);
+}
+
+void AttributeExpr::print(graphviz::GraphViz& gv, 
+                          graphviz::VertexType par) const 
+{
+    auto v = gv.addVertex("Attribute expr", 
+                        {"Attr: ", attr_.toString()});
+    gv.addEdge(par, v);
+}
+
+void CallOrIdxExpr::print(graphviz::GraphViz& gv, 
+                          graphviz::VertexType par) const 
+{
+    auto v = gv.addVertex("Call or idx expr");
+    gv.addEdge(par, v);
+    gv.nameNextEdge("name");
+    name_->print(gv, v);
+    printArgs_(gv, v);
+}
+
+void CallOrIdxExpr::printArgs_(graphviz::GraphViz& gv, 
+                               graphviz::VertexType par) const 
+{
+    for (auto arg : args_) {
+        gv.nameNextEdge("arg");
+        arg->print(gv, par);
+    }
+}
+
 
 std::string
 SimpleLiteral::stringifyValue_() const 
@@ -337,41 +374,41 @@ void While::print(graphviz::GraphViz& gv,
     body_->print(gv, v);
 }
 
-void CallOrIndexingOrVar::print(graphviz::GraphViz& gv, 
-                                graphviz::VertexType par) const 
-{
-    CallOrIndexingOrVar::ArgsType_ arg;
-    std::stringstream ss;
-    int i = 0;
-    for (auto&& [name, attr, args] : fullName_) {
-        if (!name.empty()) {
-            ss << name;
-        } else {
-            ss << attr.toString();
-        }
-        if (!args.empty()) {
-            ss << "(...)";
-        }
-        if (i < fullName_.size() - 1) {
-            ss << '.';
-        }
-        arg.insert(arg.end(), args.begin(), args.end());
-    }
-    auto v = gv.addVertex("Call, idx, var", 
-                { "Name: " + ss.str()});
-    gv.addEdge(par, v);
-    printArgs_(arg, gv, v);
-}
+// void CallOrIndexingOrVar::print(graphviz::GraphViz& gv, 
+//                                 graphviz::VertexType par) const 
+// {
+//     CallOrIndexingOrVar::ArgsType_ arg;
+//     std::stringstream ss;
+//     int i = 0;
+//     for (auto&& [name, attr, args] : fullName_) {
+//         if (!name.empty()) {
+//             ss << name;
+//         } else {
+//             ss << attr.toString();
+//         }
+//         if (!args.empty()) {
+//             ss << "(...)";
+//         }
+//         if (i < fullName_.size() - 1) {
+//             ss << '.';
+//         }
+//         arg.insert(arg.end(), args.begin(), args.end());
+//     }
+//     auto v = gv.addVertex("Call, idx, var", 
+//                 { "Name: " + ss.str()});
+//     gv.addEdge(par, v);
+//     printArgs_(arg, gv, v);
+// }
 
-void CallOrIndexingOrVar::printArgs_(const ArgsType_& args, 
-                                     graphviz::GraphViz& gv, 
-                                     graphviz::VertexType par) const 
-{
-    for (auto arg : args) {
-        gv.nameNextEdge("arg");
-        arg->print(gv, par);
-    }
-}
+// void CallOrIndexingOrVar::printArgs_(const ArgsType_& args, 
+//                                      graphviz::GraphViz& gv, 
+//                                      graphviz::VertexType par) const 
+// {
+//     for (auto arg : args) {
+//         gv.nameNextEdge("arg");
+//         arg->print(gv, par);
+//     }
+// }
 
 void TypeName::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
@@ -395,13 +432,21 @@ void Assign::print(graphviz::GraphViz& gv,
     rval_->print(gv, v);
 }
 
-void 
-CallOrIndexingOrVarStm::print(graphviz::GraphViz& gv, 
-                              graphviz::VertexType par) const 
+// void 
+// CallOrIndexingOrVarStm::print(graphviz::GraphViz& gv, 
+//                               graphviz::VertexType par) const 
+// {
+//     auto v = gv.addVertex("Cal, idx, var - stm");
+//     gv.addEdge(par, v);
+//     CIV_->print(gv, v);
+// }
+
+void MBCall::print(graphviz::GraphViz& gv, 
+                   graphviz::VertexType par) const 
 {
-    auto v = gv.addVertex("Cal, idx, var - stm");
+    auto v = gv.addVertex("MB call");
     gv.addEdge(par, v);
-    CIV_->print(gv, v);
+    call_->print(gv, v);
 }
 
 void Return::print(graphviz::GraphViz& gv, 

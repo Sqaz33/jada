@@ -133,6 +133,21 @@ Op::Op(std::shared_ptr<IExpr> lhs,
     , rhs_(rhs)
 {}
 
+NameExpr::NameExpr(const std::string& name) :
+    name_(name)
+{}
+
+AttributeExpr::AttributeExpr(const attribute::Attribute& attr) :
+    attr_(attr)
+{}
+
+CallOrIdxExpr::CallOrIdxExpr(
+    std::shared_ptr<IExpr> name, 
+    const std::vector<std::shared_ptr<node::IExpr>>& args) :
+    name_(name)
+    , args_(args)
+{}
+
 } // namespace node 
 
 // Exprs - Literals
@@ -182,10 +197,14 @@ While::While(std::shared_ptr<IExpr> cond,
 // Stms - Other
 namespace node {
 
-// CallOrIndexingOrVar
-void CallOrIndexingOrVar::addPart(const CallOrIndexingOrVar::NamePart& part) {
-    fullName_.push_back(part);
-}
+// // CallOrIndexingOrVar
+// void CallOrIndexingOrVar::addPart(const CallOrIndexingOrVar::NamePart& part) {
+//     fullName_.push_back(part);
+// }
+
+MBCall::MBCall(std::shared_ptr<IExpr> call) :
+    call_(call)
+{}
 
 } // namespace node 
 
@@ -213,11 +232,11 @@ Assign::Assign(std::shared_ptr<IExpr> lval,
     , rval_(rval)
 {}
 
-// CallOrIndexingOrVarStm
-CallOrIndexingOrVarStm::
-CallOrIndexingOrVarStm(std::shared_ptr<CallOrIndexingOrVar> CIV):
-    CIV_(CIV)
-{}
+// // CallOrIndexingOrVarStm
+// CallOrIndexingOrVarStm::
+// CallOrIndexingOrVarStm(std::shared_ptr<CallOrIndexingOrVar> CIV):
+//     CIV_(CIV)
+// {}
 
 // Return 
 Return::Return(std::shared_ptr<IExpr> ret) : ret_(ret) {}
