@@ -6,7 +6,7 @@
 #include "graphviz.hpp"
 
 namespace attribute {
-
+    
 class QualifiedName { // TODO: expand interface
 public:
     QualifiedName() = default;

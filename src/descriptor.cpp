@@ -48,8 +48,6 @@ JvmFieldDescriptor::JvmFieldDescriptor(std::string descr) :
     descr_(std::move(descr))
 {}
 
-// JvmMethodDescriptor
-
 namespace {
 
 std::string desrcParams(
@@ -64,8 +62,9 @@ std::string desrcParams(
     return ss.str();
 }
 
-}
+} // namespace
 
+// JvmMethodDescriptor
 JvmMethodDescriptor
 JvmMethodDescriptor::createVoidRetun(
     const std::vector<JvmFieldDescriptor>& params)

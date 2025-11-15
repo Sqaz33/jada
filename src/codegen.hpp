@@ -1,3 +1,6 @@
+// TODO: exception
+// TODO: enum
+
 #pragma once
 
 #include <vector>
@@ -33,12 +36,6 @@ class Method;
 using JVMClassFile  = std::shared_ptr<detail__::JVMClassFile>;
 using Class         = std::shared_ptr<detail__::Class>;
 using Method        = std::shared_ptr<detail__::Method>;
-
-enum class FundamentalTypes {
-    INT = 0,
-    FLOAT,
-    BOOLEAN
-};
 
 class JavaBCCodegen {
 public:

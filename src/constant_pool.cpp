@@ -2,7 +2,7 @@
 
 namespace constant_pool {
 
-JVMConstantPool::JVMConstantPool() : consts_(1, nullptr) {}
+JVMConstantPool::JVMConstantPool() : consts_(1) {}
 
 std::uint16_t JVMConstantPool::addUtf8(const std::string& text) {
     auto c = std::make_unique<constant::Utf8>(text);

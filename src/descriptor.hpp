@@ -3,7 +3,7 @@
 #include <ostream>
 #include <vector>
 
-#include "codegen.hpp"
+#include "codegen_enums.hpp"
 #include "attribute.hpp"
 
 namespace descriptor {
