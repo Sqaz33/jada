@@ -25,7 +25,7 @@ bison_target(parser
 )
 add_flex_bison_dependency(scanner parser)
 
-file(GLOB SRC "src/*.cpp")
+file(GLOB_RECURSE SRC "src/*.cpp")
 
 add_executable(${PROJECT_NAME}  
                ${SRC}

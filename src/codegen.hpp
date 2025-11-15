@@ -5,21 +5,34 @@
 #include <ostream>
 #include <memory>
 
+#include "constant_pool.hpp"
+
 namespace codegen {
-
-namespace impl__ { // don't look here
-
-class Module;   
-class Class;
-class Method;
-
-} // namespace impl__
 
 inline namespace java_bytecode_codegen {
 
-using Module  = std::shared_ptr<impl__::Module>;
-using Class   = std::shared_ptr<impl__::Class>;
-using Method  = std::shared_ptr<impl__::Method>;
+namespace detail__ { // don't look here
+
+class JVMClassFile {
+public:
+
+    void printBytes(std::ostream& out) const;
+
+private:
+    constant_pool::JVMConstantPool jcp_;
+    // TODO: fields 
+    // TODO: methods
+    std::string name_;
+};
+
+class Class;
+class Method;
+
+} // namespace detail__
+
+using JVMClassFile  = std::shared_ptr<detail__::JVMClassFile>;
+using Class         = std::shared_ptr<detail__::Class>;
+using Method        = std::shared_ptr<detail__::Method>;
 
 enum class FundamentalTypes {
     INT = 0,
@@ -29,10 +42,10 @@ enum class FundamentalTypes {
 
 class JavaBCCodegen {
 public:
-    void printClassFile(const Module mdl, std::ostream& out) const;
+    void printClassFile(JVMClassFile mdl, std::ostream& out) const;
 
 private:
-    std::vector<Module> modules;
+    std::vector<JVMClassFile> modules;
 };
 
 } // namespace java_bytecode_codegen

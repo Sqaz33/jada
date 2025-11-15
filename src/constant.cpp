@@ -3,10 +3,10 @@
 namespace constant {
 
 //IConstant
-IConstant::IConstant(std::uint8_t type) : type_(type) {}
+IConstant::IConstant(ConstantType type) : type_(type) {}
 
 void IConstant::printBytes(std::ostream& out) const {
-    out << type_;
+    out << static_cast<std::uint8_t>(type_);
 }
 
 // Utf8
@@ -106,15 +106,26 @@ void Methodref::printBytes(std::ostream& out) const {
     out << nameNType_;
 }
 
-// MethodType
-MethodType::MethodType(std::uint16_t descr) :
-    IConstant(ConstantType::MethodType)
-    , descr_(descr)
+// Descriptor
+Descriptor::Descriptor(std::unique_ptr<
+    descriptor::JvmFieldDescriptor> fieldType) :
+    IConstant(ConstantType::Utf8)
+    , fieldType_(std::move(fieldType))
 {}
 
-void MethodType::printBytes(std::ostream& out) const {
-    IConstant::printBytes(out);
-    out << descr_;
+Descriptor::Descriptor(std::unique_ptr<
+    descriptor::JvmMethodDescriptor> methodType) :
+    IConstant(ConstantType::Utf8)
+    , methodType_(std::move(methodType))
+{}
+
+void Descriptor::printBytes(std::ostream& out) const {
+    if (fieldType_) {
+        fieldType_->printBytes(out);
+    }
+    if (methodType_) {
+        methodType_->printBytes(out);
+    }
 }
 
 } // namespace constant

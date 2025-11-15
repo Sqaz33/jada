@@ -3,22 +3,22 @@
 #include <string>
 #include <cstdint>
 #include <ostream>
+#include <memory>
 
 #include "descriptor.hpp"
 
 namespace constant {
 
-namespace ConstantType {
-    constexpr std::uint8_t Utf8        = 1;
-    constexpr std::uint8_t Integer     = 3;
-    constexpr std::uint8_t Float       = 4;
-    constexpr std::uint8_t String      = 8;
-    constexpr std::uint8_t Class       = 7;
-    constexpr std::uint8_t Fieldref    = 9;
-    constexpr std::uint8_t Methodref   = 10;
-    constexpr std::uint8_t NameAndType = 12;
-    constexpr std::uint8_t MethodType  = 16;
-} // namespace ConstantType
+enum class ConstantType : std::uint8_t {
+    Utf8        = 1,
+    Integer     = 3,
+    Float       = 4,
+    String      = 8,
+    Class       = 7,
+    Fieldref    = 9,
+    Methodref   = 10,
+    NameAndType = 12
+};
 
 } // namespace constant
 
@@ -26,7 +26,7 @@ namespace ConstantType {
 namespace constant {
 
 struct IConstant {
-    IConstant(std::uint8_t type); // ConstantType
+    IConstant(ConstantType type); // ConstantType
     
     virtual ~IConstant() = default;
 
@@ -34,7 +34,7 @@ public:
     virtual void printBytes(std::ostream& out) const = 0; 
 
 protected:
-    std::uint8_t type_; 
+    ConstantType type_; 
 };
 
 } // namespace constant
@@ -105,9 +105,6 @@ public:
 public: // IConstant interface
     void printBytes(std::ostream& out) const override;
 
-public:
-    int name() const noexcept; // utf8
-
 private:
     std::uint16_t name_;
 };
@@ -138,22 +135,21 @@ private:
     std::uint16_t nameNType_;
 };
 
-class MethodType : public IConstant {
+class Descriptor : public IConstant {
 public:
-    MethodType(std::uint16_t descr); // utf8 - constant_pool idx
+    Descriptor(std::unique_ptr<
+        descriptor::JvmFieldDescriptor> fieldType);
+    Descriptor(std::unique_ptr<
+        descriptor::JvmMethodDescriptor> methodType);
 
 public: // IConstant interface
     void printBytes(std::ostream& out) const override;
 
 private:
-    std::uint16_t descr_;
+    std::unique_ptr<
+        descriptor::JvmFieldDescriptor> fieldType_ = nullptr;
+    std::unique_ptr<
+        descriptor::JvmMethodDescriptor> methodType_ = nullptr;
 };
-
-class Descriptor : public IConstant {
-public:
-    Descriptor(descriptor::JvmFieldDescriptor fieldType);
-    Descriptor(descriptor::JvmMethodDescriptor methodType);
-}
-
 
 } // namespace constant
