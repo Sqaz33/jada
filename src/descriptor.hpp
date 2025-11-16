@@ -11,7 +11,7 @@ namespace descriptor {
 class JvmFieldDescriptor {
 public:
     static JvmFieldDescriptor
-    createFundamental(codegen::FundamentalTypes type);
+    createFundamental(codegen::FundamentalType type);
 
     static JvmFieldDescriptor
     createObject(const attribute::QualifiedName& name);

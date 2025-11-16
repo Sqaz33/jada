@@ -6,13 +6,13 @@ namespace codegen {
 
 inline namespace java_bytecode_codegen  {
 
-enum class FundamentalTypes {
+enum class FundamentalType {
     INT,
     FLOAT,
     BOOLEAN
 };
 
-enum class AccessFlags : std::uint16_t {
+enum class AccessFlag : std::uint16_t {
     ACC_PUBLIC    = 0x0001,
     ACC_PRIVATE   = 0x0002,
     ACC_PROTECTED = 0x0004,

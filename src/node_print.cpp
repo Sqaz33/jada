@@ -373,7 +373,7 @@ void While::print(graphviz::GraphViz& gv,
     gv.nameNextEdge("body");
     body_->print(gv, v);
 }
-
+// TODO: delete
 // void CallOrIndexingOrVar::print(graphviz::GraphViz& gv, 
 //                                 graphviz::VertexType par) const 
 // {
@@ -431,7 +431,7 @@ void Assign::print(graphviz::GraphViz& gv,
     gv.nameNextEdge("rval");
     rval_->print(gv, v);
 }
-
+// TODO: delete
 // void 
 // CallOrIndexingOrVarStm::print(graphviz::GraphViz& gv, 
 //                               graphviz::VertexType par) const 

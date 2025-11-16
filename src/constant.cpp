@@ -17,6 +17,7 @@ Utf8::Utf8(const std::string& text) :
 
 void Utf8::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
+    out << static_cast<std::uint16_t>(text_.length());
     out << text_;
 }
 

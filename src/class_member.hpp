@@ -6,11 +6,12 @@
 namespace class_members {
 
 class IJvmClassMember {
+    virtual ~IJvmClassMember() = default;
 
 private:
-    codegen::AccessFlags accf_;
+    codegen::AccessFlag accf_;
     std::uint16_t name_; 
     std::uint16_t desc_;
 };
 
-} // namespace field
+} // namespace jvm_class_members

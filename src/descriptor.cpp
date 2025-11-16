@@ -8,15 +8,15 @@ namespace descriptor {
 // JvmFieldDescriptor
 JvmFieldDescriptor
 JvmFieldDescriptor::createFundamental(
-    codegen::FundamentalTypes type)
+    codegen::FundamentalType type)
 {   
     using namespace codegen;
     static const std::unordered_map<
-        FundamentalTypes, std::string> types =
+        FundamentalType, std::string> types =
     { 
-        {FundamentalTypes::INT, "I"},
-        {FundamentalTypes::FLOAT, "F"},
-        {FundamentalTypes::BOOLEAN, "Z"}
+        {FundamentalType::INT, "I"},
+        {FundamentalType::FLOAT, "F"},
+        {FundamentalType::BOOLEAN, "Z"}
     };
 
     return JvmFieldDescriptor(types.at(type));

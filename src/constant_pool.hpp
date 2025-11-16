@@ -2,8 +2,9 @@
 
 #include "constant.hpp"
 
+#include <utility>
 #include <vector>
-// #include <map>
+#include <map>
 
 namespace constant_pool {
 
@@ -26,12 +27,16 @@ public:
     std::uint16_t addMethodDescriptor(
         const descriptor::JvmMethodDescriptor& descr);
 
+    std::uint16_t addUtf8Name(const std::string& name);
+    std::pair<bool, std::uint16_t> getUtf8NameIdx(
+        const std::string& name);
+
 public:
     void printBytes(std::ostream& out) const;
     
 private:
     std::vector<std::unique_ptr<constant::IConstant>> consts_;
-    // std::map<std::string, std::uint16_t> named_;
+    std::map<std::string, std::uint16_t> named_;
 };
 
 } // namespace constant_pool
