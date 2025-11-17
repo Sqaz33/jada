@@ -24,7 +24,7 @@ public:
     virtual ~IAttribute() = default;
 
 public:
-    void increaseLen(std::uint32_t add);
+    void increaseLen(std::uint32_t add) noexcept;
     
 public:
     virtual void printBytes(std::ostream& out) const = 0;
@@ -45,6 +45,9 @@ public:
 
 public:
     void addInstr(instr::IInstr instr);
+
+    void increaseStack(std::uint32_t add) noexcept;
+    void increaseLocals(std::uint32_t add) noexcept;
 
 public:
     void printBytes(std::ostream& out) const override;

@@ -1,12 +1,18 @@
 #include "constant.hpp"
 
+#include "bits_utility.hpp"
+
 namespace constant {
 
 //IConstant
 IConstant::IConstant(ConstantType type) : type_(type) {}
 
 void IConstant::printBytes(std::ostream& out) const {
-    out << static_cast<std::uint8_t>(type_);
+    utility::printBytes(
+        out,  
+        uility::reverse(
+            static_cast<std::uint8_t>(type_))
+    );
 }
 
 // Utf8
@@ -17,7 +23,8 @@ Utf8::Utf8(const std::string& text) :
 
 void Utf8::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    out << static_cast<std::uint16_t>(text_.length());
+    utility::printBytes(out, utility::reverse(
+        static_cast<std::uint16_t>(text_.length())));
     out << text_;
 }
 
@@ -29,18 +36,20 @@ Integer::Integer(int numb) :
 
 void Integer::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    out << numb_;
+    utility::printBytes(out, 
+        utility::reverse(numb_));
 }
 
 // Float
 Float::Float(float numb) :
     IConstant(ConstantType::Float)
-    , numb_(numb)
+    , f_(numb)
 {}
 
 void Float::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    out << numb_;
+    utility::printBytes(out, 
+        utility::reverse(i_));
 }
 
 // String
@@ -51,7 +60,8 @@ String::String(std::uint16_t utf8) :
 
 void String::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    out << utf8_;
+    utility::printBytes(out, 
+        utility::reverse(utf8_));
 }
 
 // NameAndType
@@ -64,8 +74,10 @@ NameAndType::NameAndType(std::uint16_t name,
 
 void NameAndType::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    out << name_;
-    out << descr_;
+    utility::printBytes(out, 
+        utility::reverse(name_));    
+    utility::printBytes(out, 
+        utility::reverse(descr_));
 }
 
 // Class
@@ -76,7 +88,8 @@ Class::Class(std::uint16_t name) :
 
 void Class::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    out << name_;
+    utility::printBytes(out, 
+        utility::reverse(name_));   
 }
 
 // Fieldref
@@ -89,8 +102,10 @@ Fieldref::Fieldref(std::uint16_t cls,
 
 void Fieldref::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    out << class_;
-    out << nameNType_;
+    utility::printBytes(out, 
+        utility::reverse(class_));    
+    utility::printBytes(out, 
+        utility::reverse(nameNType_));
 }
 
 // Methodref
@@ -103,8 +118,10 @@ Methodref::Methodref(std::uint16_t cls,
 
 void Methodref::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    out << class_;
-    out << nameNType_;
+    utility::printBytes(out, 
+        utility::reverse(class_));    
+    utility::printBytes(out, 
+        utility::reverse(nameNType_));
 }
 
 // Descriptor

@@ -71,7 +71,10 @@ public: // IConstant interface
     void printBytes(std::ostream& out) const override;
 
 private:
-    float numb_;
+    union {
+        float f_;
+        std::uint32_t i_;
+    };
 };
 
 class String : public IConstant {

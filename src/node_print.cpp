@@ -3,8 +3,6 @@
 #include <unordered_map>
 #include <sstream>
 
-#define TAB 4
-
 namespace node {
 
 void Body::print(graphviz::GraphViz& gv, 
