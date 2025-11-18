@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <sstream>
+#include <stdexcept>
 
 namespace descriptor {
 
@@ -32,6 +33,10 @@ JvmFieldDescriptor::createObject(
 }
 
 void JvmFieldDescriptor::addDimension() { 
+    if (++dimens_ > 255) {
+        throw std::logic_error("an array cannot have"
+                               " more than 255 dimensions");
+    }
     descr_ = "[" + descr_; 
 }
 

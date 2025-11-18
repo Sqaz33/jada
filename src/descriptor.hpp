@@ -17,7 +17,8 @@ public:
     createObject(const attribute::QualifiedName& name);
 
 public:
-    void addDimension();
+    // throw exception, if dimensions more then 255
+    void addDimension(); 
     void printBytes(std::ostream& out) const;
     const std::string& toString() const noexcept;
 
@@ -26,6 +27,7 @@ private:
 
 private:
     std::string descr_;
+    int dimens_ = 0;
 };
 
 class JvmMethodDescriptor {
