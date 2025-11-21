@@ -53,12 +53,13 @@ bool parseProgram(std::filesystem::path path) {
 }
 
 void printAst() {
-    graphviz::GraphViz gv(true, false, "ast");
-    auto root = gv.addVertex("Program");
+    auto gv = 
+        graphviz::createGraphViz(true, false, "ast");
+    auto root = gv->addVertex("Program");
     for (auto m : helper::modules) {
-        m->print(gv, root);
+        m->print(*gv, root);
     }
-    gv.printDOT(std::cout);
+    gv->printDOT(std::cout);
 }
 
 } // namespace

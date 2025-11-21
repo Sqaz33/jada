@@ -11,12 +11,23 @@
 
 namespace graphviz {
     
+class GraphViz;
+
+GraphViz* createGraphViz(
+    bool isTree, bool isDirected, const std::string& name);
+
 using VertexType = Agnode_t*;
 
 class GraphViz {
 public:
-    GraphViz(bool isTree, bool isDirected, const std::string& name);
+    GraphViz(const GraphViz&) = delete;
+    GraphViz& operator=(const GraphViz&) = delete;
 
+    friend GraphViz*
+    createGraphViz(
+        bool isTree, bool isDirected, const std::string& name);
+
+public:
     void printDOT(std::ostream& out);
     
     VertexType addVertex(const std::string& name); // auto style
@@ -26,6 +37,10 @@ public:
     void addEdge(const std::string& name, 
                  VertexType v, VertexType u); // auto style
     void nameNextEdge(const std::string& name);
+
+
+private:
+    GraphViz(bool isTree, bool isDirected, const std::string& name);
 
 private:
     struct GraphDeleter {
