@@ -13,8 +13,8 @@ enum class ConstantType : std::uint8_t {
     Utf8        = 1,
     Integer     = 3,
     Float       = 4,
-    String      = 8,
     Class       = 7,
+    String      = 8,
     Fieldref    = 9,
     Methodref   = 10,
     NameAndType = 12

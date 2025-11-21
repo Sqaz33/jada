@@ -19,7 +19,6 @@ public:
 public:
     // throw exception, if dimensions more then 255
     void addDimension(); 
-    void printBytes(std::ostream& out) const;
     const std::string& toString() const noexcept;
 
 private:
@@ -45,7 +44,7 @@ public:
         const JvmFieldDescriptor& ret);
 
 public:
-    void printBytes(std::ostream& out) const;
+    const std::string& toString() const noexcept;
 
 private:
     JvmMethodDescriptor(std::string);

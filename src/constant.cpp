@@ -8,11 +8,7 @@ namespace constant {
 IConstant::IConstant(ConstantType type) : type_(type) {}
 
 void IConstant::printBytes(std::ostream& out) const {
-    utility::printBytes(
-        out,  
-        uility::reverse(
-            static_cast<std::uint8_t>(type_))
-    );
+    utility::printBytes(out,  type_);
 }
 
 // Utf8
@@ -138,12 +134,17 @@ Descriptor::Descriptor(std::unique_ptr<
 {}
 
 void Descriptor::printBytes(std::ostream& out) const {
+    IConstant::printBytes(out);
+    const std::string* type;
     if (fieldType_) {
-        fieldType_->printBytes(out);
+        type = &fieldType_->toString();
     }
     if (methodType_) {
-        methodType_->printBytes(out);
+        type = &methodType_->toString();
     }
+    utility::printBytes(out, utility::reverse(
+        static_cast<std::uint16_t>(type->length())));
+    out << *type;
 }
 
 } // namespace constant

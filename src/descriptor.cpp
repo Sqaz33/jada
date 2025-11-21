@@ -34,15 +34,11 @@ JvmFieldDescriptor::createObject(
 
 void JvmFieldDescriptor::addDimension() { 
     if (++dimens_ > 255) {
-        throw std::logic_error("an array cannot have"
+        throw std::logic_error("An array cannot have"
                                " more than 255 dimensions");
     }
     descr_ = "[" + descr_; 
 }
-
-void JvmFieldDescriptor::printBytes(
-    std::ostream& out) const 
-{ out << descr_; }
 
 const std::string& 
 JvmFieldDescriptor::toString() const noexcept {
@@ -98,13 +94,15 @@ JvmMethodDescriptor::create(
     return JvmMethodDescriptor(std::move(desc));
 }
 
-void JvmMethodDescriptor::printBytes(
-    std::ostream& out) const 
-{ out << descr_; }
-
 JvmMethodDescriptor::
 JvmMethodDescriptor(std::string descr) :
     descr_(descr)
 {}
+
+const std::string& 
+JvmMethodDescriptor::toString() const noexcept {
+    return descr_;
+}
+
 
 } //  namespace descriptor
