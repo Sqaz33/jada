@@ -8,7 +8,8 @@ namespace constant {
 IConstant::IConstant(ConstantType type) : type_(type) {}
 
 void IConstant::printBytes(std::ostream& out) const {
-    utility::printBytes(out,  type_);
+    auto i = static_cast<std::uint8_t>(type_);
+    utility::printBytes(out,  i);
 }
 
 // Utf8

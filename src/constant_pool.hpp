@@ -1,3 +1,5 @@
+// TODO: check for int constant
+
 #pragma once 
 
 #include "constant.hpp"
@@ -5,6 +7,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <memory>
 
 namespace constant_pool {
 
@@ -31,12 +34,13 @@ public:
     std::pair<bool, std::uint16_t> getUtf8NameIdx(
         const std::string& name);
 
-public:
-    void printBytes(std::ostream& out) const;
+public:void printBytes(std::ostream& out) const;
     
 private:
     std::vector<std::unique_ptr<constant::IConstant>> consts_;
     std::map<std::string, std::uint16_t> named_;
 };
+
+using SharedPtrJvmCP = std::shared_ptr<JVMConstantPool>;
 
 } // namespace constant_pool

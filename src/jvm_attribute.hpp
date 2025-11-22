@@ -9,12 +9,12 @@
 #include "codegen_enums.hpp"
 #include "instruction.hpp"
 
-namespace class_member_attribute {
+namespace bb {
+    class BasicBlock;
+    using SharedPtrBB = std::shared_ptr<BasicBlock>;
+}
 
-enum class AttributeName {
-    CODE,
-
-};
+namespace jvm_attribute {
     
 class IAttribute {
 public:
@@ -22,6 +22,8 @@ public:
                constant_pool::JVMConstantPool& jcp); 
 
     virtual ~IAttribute() = default;
+    
+    virtual const std::string& name() const noexcept = 0;
 
 public:
     void increaseLen(std::uint32_t add) noexcept;
@@ -34,17 +36,16 @@ private:
     std::uint16_t name_;
 };
 
-} // namespace class_member_attribute
+} // namespace jvm_attribute
 
-
-namespace class_member_attribute {
+namespace jvm_attribute {
 
 class CodeAttr : public IAttribute {
 public:
     CodeAttr(constant_pool::JVMConstantPool& jcp);
 
 public:
-    void addInstr(instr::IInstr instr);
+    void addInstr(instr::Instr instr);
 
     void increaseStack(std::uint32_t add) noexcept;
     void increaseLocals(std::uint32_t add) noexcept;
@@ -53,9 +54,11 @@ public:
     void printBytes(std::ostream& out) const override;
 
 private:
+    static const std::string name_; // = "Code"; // TODO
+
     std::uint16_t maxStack_;
     std::uint16_t maxLocals_;
-    std::vector<instr::IInstr> code_;
+    std::vector<instr::Instr> code_;
     std::uint16_t exceptionTableLen_ = 0;
     // TODO: exception table 
     std::uint16_t attrCount_ = 0;
@@ -63,4 +66,4 @@ private:
 };
 
 
-} // namespace class_member_attribute
+} // namespace jvm_attribute
