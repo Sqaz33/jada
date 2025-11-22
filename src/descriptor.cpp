@@ -6,9 +6,9 @@
 
 namespace descriptor {
 
-// JvmFieldDescriptor
-JvmFieldDescriptor
-JvmFieldDescriptor::createFundamental(
+// JVMFieldDescriptor
+JVMFieldDescriptor
+JVMFieldDescriptor::createFundamental(
     codegen::FundamentalType type)
 {   
     using namespace codegen;
@@ -20,19 +20,19 @@ JvmFieldDescriptor::createFundamental(
         {FundamentalType::BOOLEAN, "Z"}
     };
 
-    return JvmFieldDescriptor(types.at(type));
+    return JVMFieldDescriptor(types.at(type));
 }
 
-JvmFieldDescriptor
-JvmFieldDescriptor::createObject(
+JVMFieldDescriptor
+JVMFieldDescriptor::createObject(
     const attribute::QualifiedName& name)
 {
     std::string descr("L");
     descr += name.toSring() + ";";
-    return JvmFieldDescriptor(std::move(descr));
+    return JVMFieldDescriptor(std::move(descr));
 }
 
-void JvmFieldDescriptor::addDimension() { 
+void JVMFieldDescriptor::addDimension() { 
     if (++dimens_ > 255) {
         throw std::logic_error("An array cannot have"
                                " more than 255 dimensions");
@@ -41,18 +41,18 @@ void JvmFieldDescriptor::addDimension() {
 }
 
 const std::string& 
-JvmFieldDescriptor::toString() const noexcept {
+JVMFieldDescriptor::toString() const noexcept {
     return descr_;
 }
 
-JvmFieldDescriptor::JvmFieldDescriptor(std::string descr) :
+JVMFieldDescriptor::JVMFieldDescriptor(std::string descr) :
     descr_(std::move(descr))
 {}
 
 namespace {
 
 std::string desrcParams(
-    const std::vector<JvmFieldDescriptor>& params)
+    const std::vector<JVMFieldDescriptor>& params)
 {
     std::stringstream ss;
     ss << '(';
@@ -65,42 +65,42 @@ std::string desrcParams(
 
 } // namespace
 
-// JvmMethodDescriptor
-JvmMethodDescriptor
-JvmMethodDescriptor::createVoidRetun(
-    const std::vector<JvmFieldDescriptor>& params)
+// JVMMethodDescriptor
+JVMMethodDescriptor
+JVMMethodDescriptor::createVoidRetun(
+    const std::vector<JVMFieldDescriptor>& params)
 {
     auto desc = desrcParams(params);
     desc += 'V';
-    return JvmMethodDescriptor(std::move(desc));
+    return JVMMethodDescriptor(std::move(desc));
 }
 
-JvmMethodDescriptor
-JvmMethodDescriptor::createVoidParams(
-    const JvmFieldDescriptor& ret) 
+JVMMethodDescriptor
+JVMMethodDescriptor::createVoidParams(
+    const JVMFieldDescriptor& ret) 
 {
     std::string desc("()");
     desc += ret.toString();
-    return JvmMethodDescriptor(std::move(desc));
+    return JVMMethodDescriptor(std::move(desc));
 }
 
-JvmMethodDescriptor
-JvmMethodDescriptor::create(        
-    const std::vector<JvmFieldDescriptor>& params, 
-    const JvmFieldDescriptor& ret)
+JVMMethodDescriptor
+JVMMethodDescriptor::create(        
+    const std::vector<JVMFieldDescriptor>& params, 
+    const JVMFieldDescriptor& ret)
 {
     auto desc = desrcParams(params);
     desc += ret.toString();
-    return JvmMethodDescriptor(std::move(desc));
+    return JVMMethodDescriptor(std::move(desc));
 }
 
-JvmMethodDescriptor::
-JvmMethodDescriptor(std::string descr) :
+JVMMethodDescriptor::
+JVMMethodDescriptor(std::string descr) :
     descr_(descr)
 {}
 
 const std::string& 
-JvmMethodDescriptor::toString() const noexcept {
+JVMMethodDescriptor::toString() const noexcept {
     return descr_;
 }
 

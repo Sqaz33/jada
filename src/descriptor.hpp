@@ -8,12 +8,12 @@
 
 namespace descriptor {
 
-class JvmFieldDescriptor {
+class JVMFieldDescriptor {
 public:
-    static JvmFieldDescriptor
+    static JVMFieldDescriptor
     createFundamental(codegen::FundamentalType type);
 
-    static JvmFieldDescriptor
+    static JVMFieldDescriptor
     createObject(const attribute::QualifiedName& name);
 
 public:
@@ -22,32 +22,32 @@ public:
     const std::string& toString() const noexcept;
 
 private:
-    JvmFieldDescriptor(std::string);
+    JVMFieldDescriptor(std::string);
 
 private:
     std::string descr_;
     int dimens_ = 0;
 };
 
-class JvmMethodDescriptor {
+class JVMMethodDescriptor {
 public:
-    static JvmMethodDescriptor
+    static JVMMethodDescriptor
     createVoidRetun(
-        const std::vector<JvmFieldDescriptor>& params);
+        const std::vector<JVMFieldDescriptor>& params);
     
-    static JvmMethodDescriptor
-    createVoidParams(const JvmFieldDescriptor& ret);
+    static JVMMethodDescriptor
+    createVoidParams(const JVMFieldDescriptor& ret);
 
-    static JvmMethodDescriptor
+    static JVMMethodDescriptor
     create(        
-        const std::vector<JvmFieldDescriptor>& params, 
-        const JvmFieldDescriptor& ret);
+        const std::vector<JVMFieldDescriptor>& params, 
+        const JVMFieldDescriptor& ret);
 
 public:
     const std::string& toString() const noexcept;
 
 private:
-    JvmMethodDescriptor(std::string);
+    JVMMethodDescriptor(std::string);
 
 private:
     std::string descr_;

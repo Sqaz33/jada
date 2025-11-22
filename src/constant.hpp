@@ -141,18 +141,18 @@ private:
 class Descriptor : public IConstant {
 public:
     Descriptor(std::unique_ptr<
-        descriptor::JvmFieldDescriptor> fieldType);
+        descriptor::JVMFieldDescriptor> fieldType);
     Descriptor(std::unique_ptr<
-        descriptor::JvmMethodDescriptor> methodType);
+        descriptor::JVMMethodDescriptor> methodType);
 
 public: // IConstant interface
     void printBytes(std::ostream& out) const override;
 
 private:
     std::unique_ptr<
-        descriptor::JvmFieldDescriptor> fieldType_ = nullptr;
+        descriptor::JVMFieldDescriptor> fieldType_ = nullptr;
     std::unique_ptr<
-        descriptor::JvmMethodDescriptor> methodType_ = nullptr;
+        descriptor::JVMMethodDescriptor> methodType_ = nullptr;
 };
 
 } // namespace constant

@@ -1,23 +1,24 @@
+#pragma once
+
 #include <ostream>
 
 #include <concepts>
 
 namespace utility {
 
-// template <class Numeric>
-inline void printBytes(std::ostream& out, std::integral v) {
+template <std::integral Integral>
+void printBytes(std::ostream& out, Integral v) {
     out.write(
         reinterpret_cast<char*>(&v),
-        sizeof(v)
+        sizeof(Integral)
     );
 }
 
-template <class Integral>
-    requires std::integral<Integral>
-inline Integral reverse(Integral x) {
+template <std::integral Integral>
+Integral reverse(Integral x) {
     Integral res = 0;
     Integral mask = 0xff;
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < sizeof(Integral); ++i) {
         res <<= 8;
         res |= x & mask;
         x >>= 8;

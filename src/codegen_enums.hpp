@@ -26,6 +26,4 @@ enum class AccessFlag : std::uint16_t {
 
 } // namespace java_bytecode_codegen  
 
-
-
 } // namespace codegen

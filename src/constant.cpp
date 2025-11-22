@@ -8,7 +8,8 @@ namespace constant {
 IConstant::IConstant(ConstantType type) : type_(type) {}
 
 void IConstant::printBytes(std::ostream& out) const {
-    utility::printBytes(out,  type_);
+    auto i = static_cast<std::uint8_t>(type_);
+    utility::printBytes(out,  i);
 }
 
 // Utf8
@@ -122,13 +123,13 @@ void Methodref::printBytes(std::ostream& out) const {
 
 // Descriptor
 Descriptor::Descriptor(std::unique_ptr<
-    descriptor::JvmFieldDescriptor> fieldType) :
+    descriptor::JVMFieldDescriptor> fieldType) :
     IConstant(ConstantType::Utf8)
     , fieldType_(std::move(fieldType))
 {}
 
 Descriptor::Descriptor(std::unique_ptr<
-    descriptor::JvmMethodDescriptor> methodType) :
+    descriptor::JVMMethodDescriptor> methodType) :
     IConstant(ConstantType::Utf8)
     , methodType_(std::move(methodType))
 {}

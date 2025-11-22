@@ -2,30 +2,30 @@
 
 #include <cstdint>
 #include <ostream>
+#include <vector>
+
+#include "opcode.hpp"
 
 namespace instr {
 
-enum class OPCode : std::uint8_t {
-    // ... 
-};
-
-class IInstr {
+class Instr {
 public:
-    IInstr(OPCode op);
-
-    virtual ~IInstr() = default;
+    Instr(OpCode op);
+    Instr() = default;
 
 public:
-    virtual std::uint32_t len() const noexcept = 0;
-    virtual void printBytes(std::ostream& out) const = 0;
+    void printBytes(std::ostream& out) const;
+    std::uint32_t len() const noexcept;
+    OpCode opCode() const noexcept;
 
-public:
-    std::uint32_t setOpCodeIdx() noexcept;
-    std::uint32_t opCodeIdx() const noexcept;
-    
+    void pushByte(std::uint8_t byte);
+    void pushTwoBytes(std::uint16_t bytes);
+    void pushFourBytes(std::uint32_t bytes);
+
 private:
-    const OPCode op_;
-    std::uint32_t opCodeIdx_;
+    // byte structure
+    const OpCode op_;
+    std::vector<std::uint8_t> bytes_;
 };
 
 } // namespace instr
