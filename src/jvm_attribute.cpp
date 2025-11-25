@@ -5,9 +5,15 @@
 namespace jvm_attribute {
 
 IAttribute::IAttribute(const std::string& name, 
-                       constant_pool::SharedPtrJVMCP cp) :
-    name_(cp->addUtf8Name(name))
-{}
+                       constant_pool::SharedPtrJVMCP cp) 
+{
+    auto [f, idx] = cp->getUtf8NameIdx(name);
+    if (f) {
+        name_ = idx;
+    } else {
+        name_ = cp->addUtf8Name(name);
+    }
+}
 
 void IAttribute::setAttrLent(std::uint32_t len) {
     attrLen_ = len;
