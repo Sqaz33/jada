@@ -13,6 +13,8 @@ enum class ConstantType : std::uint8_t {
     Utf8        = 1,
     Integer     = 3,
     Float       = 4,
+    Long        = 5,
+    Double      = 6,
     Class       = 7,
     String      = 8,
     Fieldref    = 9,
@@ -63,6 +65,18 @@ private:
     int numb_;
 };
 
+class Long : public IConstant {
+public:
+    Long(std::int64_t numb);
+
+public: // IConstant interface
+    void printBytes(std::ostream& out) const override;
+
+private:
+    std::int64_t numb_;
+};
+
+
 class Float : public IConstant {
 public:
     Float(float numb);
@@ -74,6 +88,20 @@ private:
     union {
         float f_;
         std::uint32_t i_;
+    };
+};
+
+class Double : public IConstant {
+public:
+    Double(double numb);
+
+public: // IConstant interface
+    void printBytes(std::ostream& out) const override;
+
+private:
+    union {
+        double f_;
+        std::uint64_t i_;
     };
 };
 

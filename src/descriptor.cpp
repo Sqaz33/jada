@@ -15,9 +15,11 @@ JVMFieldDescriptor::createFundamental(
     static const std::unordered_map<
         FundamentalType, std::string> types =
     { 
-        {FundamentalType::INT, "I"},
-        {FundamentalType::FLOAT, "F"},
-        {FundamentalType::BOOLEAN, "Z"}
+        {FundamentalType::INT,     "I"},
+        {FundamentalType::FLOAT,   "F"},
+        {FundamentalType::DOUBLE,  "D"},
+        {FundamentalType::BOOLEAN, "Z"},
+        {FundamentalType::LONG,    "J"}
     };
 
     return JVMFieldDescriptor(types.at(type));

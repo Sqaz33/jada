@@ -37,6 +37,18 @@ void Integer::printBytes(std::ostream& out) const {
         utility::reverse(numb_));
 }
 
+// Long
+Long::Long(std::int64_t numb) :
+    IConstant(ConstantType::Long)
+    , numb_(numb)
+{}
+
+void Long::printBytes(std::ostream& out) const {
+    IConstant::printBytes(out);
+    utility::printBytes(out, 
+        utility::reverse(numb_));
+}
+
 // Float
 Float::Float(float numb) :
     IConstant(ConstantType::Float)
@@ -44,6 +56,18 @@ Float::Float(float numb) :
 {}
 
 void Float::printBytes(std::ostream& out) const {
+    IConstant::printBytes(out);
+    utility::printBytes(out, 
+        utility::reverse(i_));
+}
+
+// Double
+Double::Double(double numb) :
+    IConstant(ConstantType::Double)
+    , f_(numb)
+{}
+
+void Double::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
     utility::printBytes(out, 
         utility::reverse(i_));
