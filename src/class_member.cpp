@@ -77,7 +77,7 @@ void IJVMClassMember::addFlag(codegen::AccessFlag flag) {
 }
 
 void IJVMClassMember::addAttr(
-    IJVMClassMember::UniquePtrAttr attr) // TODO ?? throw if attr exist ??
+    IJVMClassMember::UniquePtrAttr attr) 
 {   
     auto idx = cp_->addUtf8Name(attr->name());
     attrNames_[idx] = attr.get();

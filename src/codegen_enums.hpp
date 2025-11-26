@@ -9,6 +9,8 @@ inline namespace java_bytecode_codegen  {
 enum class FundamentalType {
     INT,
     FLOAT,
+    DOUBLE,
+    LONG,
     BOOLEAN
 };
 

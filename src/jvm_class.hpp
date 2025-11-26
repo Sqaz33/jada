@@ -7,7 +7,7 @@
 
 namespace jvm_class {
 
-class JVMClassFile : std::enable_shared_from_this<JVMClassFile> {
+class JVMClass : std::enable_shared_from_this<JVMClass> {
 public:
 
     void printBytes(std::ostream& out) const;

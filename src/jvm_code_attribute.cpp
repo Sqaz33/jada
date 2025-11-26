@@ -10,7 +10,8 @@ CodeAttr::CodeAttr(constant_pool::SharedPtrJVMCP cp) :
 
 bb::SharedPtrBB CodeAttr::createBB() {
     code_.emplace_back(
-        new bb::BasicBlock(code_.size(), this));
+        new bb::BasicBlock(
+            code_.size(), shared_from_this()));
     return code_.back();
 }
 
@@ -19,9 +20,9 @@ void CodeAttr::insertBranch(
     instr::OpCode op, 
     bb::SharedPtrBB to)
 {   
-    if (to->codeAttr() != from->codeAttr()) {
+    if (to->codeAttr().lock() != from->codeAttr().lock()) {
         throw std::logic_error("Branching is not" 
-                              " within a single function");
+                               " within a single function");
     }
     checBBThenThrow_(from);
     from->insertBranch(op, to);    
@@ -51,21 +52,22 @@ void CodeAttr::instertInstrWithLocal(
             "There is no local variable");
     }
     auto [idx, _] = it->second;
-    instr::Instr ins;
+    std::unique_ptr<instr::Instr> ins;
     if (idx > std::numeric_limits<std::uint8_t>::max()) {
-        ins.pushByte(
-            static_cast<std::uint8_t>(
-                instr::OpCode::wide));
-        ins.pushByte(
+        ins.reset(
+            new instr::Instr(instr::OpCode::wide));
+        ins->pushByte(
             static_cast<std::uint8_t>(op));
-        ins.pushTwoBytes(idx);
+        ins->pushTwoBytes(idx);
     } else {
-        ins.pushByte(
+        ins.reset(
+            new instr::Instr(op));
+        ins->pushByte(
             static_cast<std::uint8_t>(op));
-        ins.pushTwoBytes(
+        ins->pushTwoBytes(
             static_cast<std::uint8_t>(idx));
     }
-    bb->insertInstr(std::move(ins));
+    bb->insertInstr(*ins);
     calcBBAddr_();
     calcSelfLen_();
 }
@@ -135,7 +137,7 @@ std::uint32_t CodeAttr::selfLen_() const {
 }
 
 void CodeAttr::checBBThenThrow_(bb::SharedPtrBB bb) {
-    if (bb->codeAttr() != this) {
+    if (bb->codeAttr().lock() != shared_from_this()) {
         throw std::logic_error("working with bb" 
                                " from another method");
     }

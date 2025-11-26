@@ -14,10 +14,9 @@ public:
     JVMClassMethod(  
         const std::string& name,
         descriptor::JVMMethodDescriptor type,   
-        std::shared_ptr<jvm_class::JVMClassFile> cls);
+        std::weak_ptr<jvm_class::JVMClass> cls);
 
     JVMClassMethod(const JVMClassMethod&) = delete;
-
     JVMClassMethod(JVMClassMethod&&) = default;
 
 public:
@@ -25,15 +24,23 @@ public:
 
 public:
     void addFlag(codegen::AccessFlag flag);
-    void addAttr(UniquePtrAttr attr);
+    using IJVMClassMember::addAttr;
 
 public:
-    void insertInstr(bb::SharedPtrBB bb, instr::Instr instr);
     bb::SharedPtrBB createBB();
-    void insertBranch(
-        bb::SharedPtrBB from, 
-        instr::Instr instr, 
-        bb::SharedPtrBB to);
+
+    void createLocalInt(const std::string& name);
+    void createLocalBoolean(const std::string& name);
+    void createLocalDouble(const std::string& name);
+    void createLocalFloat(const std::string& name);
+    // void create
+
+
+    // void insertInstr(bb::SharedPtrBB bb, instr::Instr instr);
+    // void insertBranch(
+    //     bb::SharedPtrBB from, 
+    //     instr::Instr instr, 
+    //     bb::SharedPtrBB to);
 
     // TODO insert virtual/static call clone method ref on call in other class 
     // TODO insert (static) get/set field  
@@ -43,7 +50,10 @@ public:
 private:
     std::shared_ptr<jvm_attribute::CodeAttr> code_;
     std::uint16_t selfMethodRef_;
-    std::shared_ptr<jvm_class::JVMClassFile> class_;
+    std::weak_ptr<jvm_class::JVMClass> selfClass_;
+    std::vector<std::weak_ptr<jvm_class::JVMClass>> classes_;
+
+    bool isStatic_ = false;
 };
 
 } // namespace class_member

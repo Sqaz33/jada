@@ -14,16 +14,16 @@ namespace codegen {
 
 inline namespace java_bytecode_codegen {
 
-using JVMClassFile  = std::shared_ptr<detail__::JVMClassFile>;
+using JVMClass  = std::shared_ptr<detail__::JVMClass>;
 using Class         = std::shared_ptr<detail__::Class>;
 using Method        = std::shared_ptr<detail__::Method>;
 
 class JavaBCCodegen {
 public:
-    void printClassFile(JVMClassFile mdl, std::ostream& out) const;
+    void printClassFile(JVMClass mdl, std::ostream& out) const;
 
 private:
-    std::vector<JVMClassFile> modules;
+    std::vector<JVMClass> modules;
 };
 
 } // namespace java_bytecode_codegen

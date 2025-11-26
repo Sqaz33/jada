@@ -64,7 +64,7 @@ namespace bb {
 
 BasicBlock::BasicBlock(        
         int id, 
-        const jvm_attribute::CodeAttr* code) :
+        std::weak_ptr<jvm_attribute::CodeAttr> code) :
     id_(id)
     , code_(code)
 {}
@@ -91,7 +91,7 @@ void BasicBlock::printBytes(std::ostream& out) const {
                 if (std::abs(offset) >= 
                     std::numeric_limits<std::int16_t>::max())
                 {
-                    throw std::logic_error("For a four-byte opcode index," 
+                    throw std::logic_error("For a four-byte opcode offset," 
                                            " an instruction that" 
                                            " accepts two bytes is used");
                 }
@@ -124,8 +124,8 @@ void BasicBlock::setStartOpCodeIdx(
     std::uint32_t idx) noexcept 
 { startOpCodeIdx_ = idx; }
 
-const jvm_attribute::CodeAttr* 
-BasicBlock::codeAttr() const noexcept {
+std::weak_ptr<jvm_attribute::CodeAttr>
+BasicBlock::codeAttr() {
     return code_;
 }
 

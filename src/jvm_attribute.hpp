@@ -37,8 +37,10 @@ private:
 namespace jvm_attribute {
 
 // TODO: delete: следит за локальными переменными, перерасчитывает адреса бб
-
-class CodeAttr : public IAttribute { 
+class CodeAttr : 
+    public IAttribute 
+    , public std::enable_shared_from_this<CodeAttr>
+{ 
 public:
     CodeAttr(constant_pool::SharedPtrJVMCP cp);
 

@@ -11,8 +11,7 @@ namespace instr {
 class Instr {
 public:
     Instr(OpCode op);
-    Instr() = default;
-
+    
 public:
     void printBytes(std::ostream& out) const;
     std::uint32_t len() const noexcept;

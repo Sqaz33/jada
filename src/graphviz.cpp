@@ -132,5 +132,4 @@ void GraphViz::nameNextEdge(const std::string& name) {
     edgeName_ = name;
 }
 
-
 } // namespace graphviz

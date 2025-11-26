@@ -4,14 +4,14 @@
 #include <memory>
 
 #include "instruction.hpp"
-#include "jvm_attribute.hpp"
 
 namespace jvm_attribute {
     class CodeAttr;
 }
-// TODO: delete: следит за бренчами и стеком
+
 namespace bb {
 
+// TODO: delete: следит за бренчами и стеком
 class BasicBlock {
 public:
     friend class jvm_attribute::CodeAttr;
@@ -19,17 +19,19 @@ public:
 private:
     BasicBlock(
         int id, 
-        const jvm_attribute::CodeAttr* codeAttr);
+        std::weak_ptr<jvm_attribute::CodeAttr> code);
 
     void printBytes(std::ostream& out) const;
 
     void insertInstr(instr::Instr instr);
-    void insertBranch(instr::OpCode op, bb::SharedPtrBB to); 
+    void insertBranch(
+        instr::OpCode op, 
+        std::shared_ptr<BasicBlock> to); 
 
     std::uint32_t startOpCodeIdx() const noexcept;
     void setStartOpCodeIdx(std::uint32_t idx) noexcept;
 
-    const jvm_attribute::CodeAttr* codeAttr() const noexcept;
+    std::weak_ptr<jvm_attribute::CodeAttr> codeAttr();
 
     std::uint32_t len() const;
     std::uint16_t stackSize() const;
@@ -39,9 +41,10 @@ private:
 private:
     std::uint32_t startOpCodeIdx_;
     std::vector<std::unique_ptr<instr::Instr>> instrs_;
-    const jvm_attribute::CodeAttr* const code_;
+    std::weak_ptr<jvm_attribute::CodeAttr> code_;
     std::vector<std::pair<
-            instr::OpCode, bb::SharedPtrBB>> branches_;
+                        instr::OpCode, 
+                        std::shared_ptr<BasicBlock>>> branches_;
     int id_;
 };
 
