@@ -15,6 +15,8 @@ namespace bb {
 class BasicBlock {
 public:
     friend class jvm_attribute::CodeAttr;
+
+    std::uint32_t startOpCodeIdx() const noexcept;
     
 private:
     BasicBlock(
@@ -28,7 +30,6 @@ private:
         instr::OpCode op, 
         std::shared_ptr<BasicBlock> to); 
 
-    std::uint32_t startOpCodeIdx() const noexcept;
     void setStartOpCodeIdx(std::uint32_t idx) noexcept;
 
     std::weak_ptr<jvm_attribute::CodeAttr> codeAttr();

@@ -26,6 +26,17 @@ enum class AccessFlag : std::uint16_t {
     ACC_ENUM      = 0x4000
 };
 
+enum class ArrayType : std::uint8_t {
+    BOOLEAN = 4,
+    CHAR	= 5,
+    FLOAT	= 6,
+    DOUBLE	= 7,
+    BYTE	= 8,
+    SHORT	= 9,
+    INT	    = 10,
+    LONG	= 11,
+};
+
 } // namespace java_bytecode_codegen  
 
 } // namespace codegen
