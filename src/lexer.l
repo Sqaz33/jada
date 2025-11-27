@@ -33,7 +33,7 @@
   }
 %}
 
-NAME          [a-zA-Z_][a-zA-Z0-9_]*
+NAME          (?i:[a-zA-Z_][a-zA-Z0-9_]*)
 DIGIT         [0-9]
 HEXDIGIT      [0-9A-Fa-f]
 INTEGER       {DIGIT}(_?{DIGIT})*
@@ -59,7 +59,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 
 %%
 
-"--"                  { BEGIN(COMMENT); }   /* вошли в состояние COMMENT */
+"--"                  { BEGIN(COMMENT); }   /* вошли в со стояние COMMENT */
  
 <COMMENT>.*           { BEGIN(INITIAL); }
 
@@ -77,46 +77,46 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 "'"                   { return yy::parser::token_type::APOSTR; }
 ","                   { return yy::parser::token_type::COMMA; }
 
-"if"                  { return yy::parser::token_type::IF; }
-"then"                { return yy::parser::token_type::THEN; }
-"else"                { return yy::parser::token_type::ELSE; }
-"elsif"               { return yy::parser::token_type::ELSIF; }
+(?i:"if")             { return yy::parser::token_type::IF; }
+(?i:"then")           { return yy::parser::token_type::THEN; }
+(?i:"else")           { return yy::parser::token_type::ELSE; }
+(?i:"elsif")          { return yy::parser::token_type::ELSIF; }
 
-"array"               { return yy::parser::token_type::ARRAY; } 
-"in"                  { return yy::parser::token_type::IN; } 
-"out"                 { return yy::parser::token_type::OUT; } 
-"of"                  { return yy::parser::token_type::OF; } 
-"for"                 { return yy::parser::token_type::FOR; }
-"loop"                { return yy::parser::token_type::LOOP; }
-"exit"                { return yy::parser::token_type::EXIT; }
-"when"                { return yy::parser::token_type::WHEN; }
-"while"               { return yy::parser::token_type::WHILE; }
+(?i:"array")          { return yy::parser::token_type::ARRAY; } 
+(?i:"in")             { return yy::parser::token_type::IN; } 
+(?i:"out")            { return yy::parser::token_type::OUT; } 
+(?i:"of")             { return yy::parser::token_type::OF; } 
+(?i:"for")            { return yy::parser::token_type::FOR; }
+(?i:"loop")           { return yy::parser::token_type::LOOP; }
+(?i:"exit")           { return yy::parser::token_type::EXIT; }
+(?i:"when")           { return yy::parser::token_type::WHEN; }
+(?i:"while")          { return yy::parser::token_type::WHILE; }
 
-"with"                { return yy::parser::token_type::WITH; }
-"use"                 { return yy::parser::token_type::USE; }
+(?i:"with")           { return yy::parser::token_type::WITH; }
+(?i:"use")            { return yy::parser::token_type::USE; }
 
-"procedure"           { return yy::parser::token_type::PROCEDURE; }
-"function"            { return yy::parser::token_type::FUNCTION; }
-"begin"               { return yy::parser::token_type::BEGIN_KW; }
-"private"             { return yy::parser::token_type::PRIVATE; }
-"is"                  { return yy::parser::token_type::IS; }
-"end"                 { return yy::parser::token_type::END; }
-"return"              { return yy::parser::token_type::RETURN; }
+(?i:"procedure")      { return yy::parser::token_type::PROCEDURE; }
+(?i:"function")       { return yy::parser::token_type::FUNCTION; }
+(?i:"begin")          { return yy::parser::token_type::BEGIN_KW; }
+(?i:"private")        { return yy::parser::token_type::PRIVATE; }
+(?i:"is")             { return yy::parser::token_type::IS; }
+(?i:"end")            { return yy::parser::token_type::END; }
+(?i:"return")         { return yy::parser::token_type::RETURN; }
 
-"package"             { return yy::parser::token_type::PACKAGE; } 
-"body"                { return yy::parser::token_type::BODY; } 
-"type"                { return yy::parser::token_type::TYPE; } 
-"tagged"              { return yy::parser::token_type::TAGGED; } 
-"record"              { return yy::parser::token_type::RECORD; } 
-"overriding"          { return yy::parser::token_type::OVERRIDING; } 
-"new"                 { return yy::parser::token_type::NEW; } 
+(?i:"package")        { return yy::parser::token_type::PACKAGE; } 
+(?i:"body")           { return yy::parser::token_type::BODY; } 
+(?i:"type")           { return yy::parser::token_type::TYPE; } 
+(?i:"tagged")         { return yy::parser::token_type::TAGGED; } 
+(?i:"record")         { return yy::parser::token_type::RECORD; } 
+(?i:"overriding")     { return yy::parser::token_type::OVERRIDING; } 
+(?i:"new")            { return yy::parser::token_type::NEW; } 
 
-"Integer"             { return yy::parser::token_type::INTEGERTY; } 
-"String"              { return yy::parser::token_type::STRINGTY; } 
-"Character"           { return yy::parser::token_type::CHARACTERTY; }
-"Float"               { return yy::parser::token_type::FLOATTY; } 
-"Boolean"             { return yy::parser::token_type::BOOLTY; } 
-      
+(?i:"Integer")        { return yy::parser::token_type::INTEGERTY; } 
+(?i:"String")         { return yy::parser::token_type::STRINGTY; } 
+(?i:"Character")      { return yy::parser::token_type::CHARACTERTY; }
+(?i:"Float")          { return yy::parser::token_type::FLOATTY; } 
+(?i:"Boolean")        { return yy::parser::token_type::BOOLTY; } 
+    
 {INTEGER}             { 
                         std::string text(yytext, yyleng);
                         utility::replaceAll(text, "_", "");
@@ -175,15 +175,15 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         return yy::parser::token_type::STRING;
                       }
                       
-"False"               { 
+(?i:"False")          { 
                         yylval->emplace<bool>(false); 
                         return yy::parser::token_type::BOOL; 
                       }
-"True"                { 
+(?i:"True")           { 
                         yylval->emplace<bool>(true); 
                         return yy::parser::token_type::BOOL;
                       }
-"null"                { return yy::parser::token_type::NULL_KW; }
+(?i:"null")           { return yy::parser::token_type::NULL_KW; }
 
 "+"                   { return yy::parser::token_type::PLUS;} 
 "-"                   { return yy::parser::token_type::MINUS;} 
@@ -197,9 +197,9 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 "<="                  { return yy::parser::token_type::LTE; }
 
 
-"or"                  { return yy::parser::token_type::OR; } 
-"not"                 { return yy::parser::token_type::NOT; } 
-"and"                 { return yy::parser::token_type::AND; } 
+(?i:"or")             { return yy::parser::token_type::OR; } 
+(?i:"not")            { return yy::parser::token_type::NOT; } 
+(?i:"and")            { return yy::parser::token_type::AND; } 
 
       
 {NAME}                { 
