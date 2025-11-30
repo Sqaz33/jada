@@ -15,6 +15,31 @@ bb::SharedPtrBB CodeAttr::createBB() {
     return code_.back();
 }
 
+void CodeAttr::createLocal(
+    const std::string& name, std::uint16_t size) 
+{
+    auto [preIdx, preSz] 
+        = locals_.rbegin()->second;
+    locals_[name] 
+        = std::make_pair(preIdx + preSz, size);
+    calcSelfLen_();
+}
+
+std::uint16_t CodeAttr::localIdx(const std::string& name) {
+    auto it = locals_.find(name);
+    if (it == locals_.end()) {
+        throw std::logic_error(
+            "There is no local variable");
+    }
+    return (it->second).first;
+}
+
+void CodeAttr::insertInstr(
+    bb::SharedPtrBB bb, instr::Instr instr)
+{  
+    bb->insertInstr(std::move(instr));
+}
+
 void CodeAttr::insertBranch(
     bb::SharedPtrBB from, 
     instr::OpCode op, 
@@ -30,20 +55,11 @@ void CodeAttr::insertBranch(
     calcBBAddr_(); 
 }
 
-void CodeAttr::createLocal(
-    const std::string& name, std::uint16_t size) 
-{
-    auto [preIdx, preSz] 
-        = locals_.rbegin()->second;
-    locals_[name] 
-        = std::make_pair(preIdx + preSz, size);
-    calcSelfLen_();
-}
-
 void CodeAttr::instertInstrWithLocal(
     bb::SharedPtrBB bb, 
     instr::OpCode op, 
-    const std::string& name)
+    const std::string& name,
+    const std::vector<std::uint8_t>& bytes)
 {
     checBBThenThrow_(bb);
     auto it = locals_.find(name);
@@ -67,9 +83,16 @@ void CodeAttr::instertInstrWithLocal(
         ins->pushTwoBytes(
             static_cast<std::uint8_t>(idx));
     }
+    for (auto b : bytes) {
+        ins->pushByte(b);
+    }
     bb->insertInstr(*ins);
     calcBBAddr_();
     calcSelfLen_();
+}
+
+const std::string& CodeAttr::name() const noexcept {
+    return name_;
 }
 
 void CodeAttr::printBytes(std::ostream& out) const {

@@ -73,15 +73,28 @@ void IJVMClassMember::addFlag(codegen::AccessFlag flag) {
     auto accf = static_cast<codegen::AccessFlag>(accf_);
     checkFlagsThenThrow(accf, flag, isMethod_);
     auto intFlag = static_cast<std::uint16_t>(flag);
+    isStatic_ = isStatic_ || 
+        codegen::AccessFlag::ACC_STATIC == flag;
     accf_ |= intFlag;
 }
 
 void IJVMClassMember::addAttr(
-    IJVMClassMember::UniquePtrAttr attr) 
+    IJVMClassMember::SharedPtrAttr attr) 
 {   
     auto idx = cp_->addUtf8Name(attr->name());
-    attrNames_[idx] = attr.get();
-    attrs_.emplace_back(std::move(attr));
+    attrs_.emplace_back(attr);
+}
+
+bool IJVMClassMember::isStatic() const noexcept {
+    return isStatic_;
+}
+
+std::uint16_t IJVMClassMember::name() const noexcept {
+    return name_;
+}
+
+std::uint16_t IJVMClassMember::type() const noexcept {
+    return desc_;
 }
 
 IJVMClassMember::IJVMClassMember(

@@ -10,26 +10,22 @@
 
 namespace class_member {
 
-class JVMClassField;
-class JVMClassMethod;
-
 class IJVMClassMember {
-public:
-    using UniquePtrAttr = 
-        std::unique_ptr<jvm_attribute::IAttribute>;
-
-    using AttrPtr = jvm_attribute::IAttribute*;
-
-public:
-    friend class JVMClassField;
-    friend class JVMClassMethod;
+    using SharedPtrAttr = 
+        std::shared_ptr<jvm_attribute::IAttribute>;
 
 public:
     void printBytes(std::ostream& out) const;
-    void addFlag(codegen::AccessFlag flag);
-    void addAttr(UniquePtrAttr attr);
 
-private:
+public: 
+    void addFlag(codegen::AccessFlag flag);
+    void addAttr(SharedPtrAttr attr);
+    bool isStatic() const noexcept;
+
+    std::uint16_t name() const noexcept;
+    std::uint16_t type() const noexcept;
+
+protected:
     // utf8, utf8 - constant_pool idx 
     IJVMClassMember(
         std::uint16_t name, 
@@ -43,12 +39,12 @@ private:
     std::uint16_t accf_;
     std::uint16_t name_; 
     std::uint16_t desc_;
-    std::vector<UniquePtrAttr> attrs_;
+    std::vector<SharedPtrAttr> attrs_;
     
     // class internal
-    std::map<std::uint16_t, AttrPtr> attrNames_;
     constant_pool::SharedPtrJVMCP cp_;
     bool isMethod_;
+    bool isStatic_ = false;
 };
 
 } // namespace class_member

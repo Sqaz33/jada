@@ -17,15 +17,21 @@ public:
     // TODO: add field
     // TODO: add method
 
+    const std::string& name() const noexcept;
+    std::uint16_t nameIdx() const noexcept;
+
     auto slf() { 
         return shared_from_this(); 
     }
+
+    // has method ...
 
 private:
     constant_pool::SharedPtrJVMCP jcp_;
     // TODO: fields 
     std::vector<class_member::JVMClassMethod> methods_;
     std::string name_;
+    std::uint16_t nameIdx_;
 };
 
 } // namespace jvm_class

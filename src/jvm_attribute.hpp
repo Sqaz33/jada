@@ -22,10 +22,11 @@ public:
     
     virtual const std::string& name() const noexcept = 0;
 
-    void setAttrLent(std::uint32_t len);
-    
 public:
     virtual void printBytes(std::ostream& out) const = 0;
+
+protected:
+    void setAttrLent(std::uint32_t len);
 
 private:
     std::uint16_t name_;
@@ -36,7 +37,6 @@ private:
 
 namespace jvm_attribute {
 
-// TODO: delete: следит за локальными переменными, перерасчитывает адреса бб
 class CodeAttr : 
     public IAttribute 
     , public std::enable_shared_from_this<CodeAttr>
@@ -47,17 +47,22 @@ public:
 public:
     bb::SharedPtrBB createBB();
 
-    void insertInstr(instr::Instr instr);
+    void createLocal(const std::string& name, 
+        std::uint16_t size);
+    std::uint16_t localIdx(const std::string& name);
+
+    void insertInstr(bb::SharedPtrBB bb, instr::Instr instr);
     void insertBranch(
         bb::SharedPtrBB from, 
         instr::OpCode op, 
         bb::SharedPtrBB to); 
-    void createLocal(const std::string& name, 
-        std::uint16_t size = 1);
     void instertInstrWithLocal(
         bb::SharedPtrBB bb, 
         instr::OpCode op, 
-        const std::string& name);
+        const std::string& name,
+        const std::vector<std::uint8_t>& bytes = {});
+
+    const std::string& name() const noexcept override;
 
 public:
     void printBytes(std::ostream& out) const override;
@@ -73,7 +78,6 @@ private:
 
     void checBBThenThrow_(bb::SharedPtrBB bb);
     
-
 private:
     std::vector<bb::SharedPtrBB> code_;
     // TODO: exception table 

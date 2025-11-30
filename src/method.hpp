@@ -24,13 +24,13 @@ public:
     void printBytes(std::ostream& out) const;
 
 public:
-    void addFlag(codegen::AccessFlag flag);
+    using IJVMClassMember::addFlag;
     using IJVMClassMember::addAttr;
 
 public:
     bb::SharedPtrBB createBB();
 
-public: // instruction
+public: 
     // stack
     void createPop(bb::SharedPtrBB bb);
     void createPop2(bb::SharedPtrBB bb);
@@ -43,6 +43,8 @@ public: // instruction
 
     void createBipush(bb::SharedPtrBB bb, std::int8_t byte);
 
+    void createSwap(bb::SharedPtrBB bb);
+
     // == 0.0 or == 1.0
     void createDconst(bb::SharedPtrBB bb, std::int8_t const_); 
     // == 0.0 or == 1.0 or == 2.0
@@ -53,10 +55,11 @@ public: // instruction
     void createLconst(bb::SharedPtrBB bb, std::int8_t const_); 
 
     // load, store
-    void createLocalInt(bb::SharedPtrBB bb, const std::string& name);     // for bool, char ...
-    void createLocalDouble(bb::SharedPtrBB bb, const std::string& name);
-    void createLocalFloat(bb::SharedPtrBB bb, const std::string& name);
-    void createLocalRef(bb::SharedPtrBB bb, const std::string& name);
+    void createLocalDouble(const std::string& name);
+    void createLocalFloat(const std::string& name);
+    void createLocalInt(const std::string& name);     // for bool, char ...
+    void createLocalLong(const std::string& name);
+    void createLocalRef(const std::string& name);
 
     void createAload(bb::SharedPtrBB bb, const std::string& local);
     void createDload(bb::SharedPtrBB bb, const std::string& local);
@@ -101,7 +104,10 @@ public: // instruction
     void createIrem(bb::SharedPtrBB bb);
     void createLrem(bb::SharedPtrBB bb);
 
-    void createIinc(bb::SharedPtrBB bb, std::int8_t const_);
+    void createIinc(
+        bb::SharedPtrBB bb, 
+        const std::string& local, 
+        std::int8_t const_);
 
     // logic
     void createIand(bb::SharedPtrBB bb);
@@ -153,13 +159,15 @@ public: // instruction
     void createIfacmpeq(bb::SharedPtrBB from, bb::SharedPtrBB to);
     void createIfacmpne(bb::SharedPtrBB from, bb::SharedPtrBB to);
 
-    void createGoto(bb::SharedPtrBB from, bb::SharedPtrBB to); // TODO: auto goto_w
+    void createGoto(bb::SharedPtrBB from, bb::SharedPtrBB to); 
 
     // array
-    void createAnewarray(std::uint16_t type);
-    void createNewarray(codegen::ArrayType atype);
+    void createAnewarray(bb::SharedPtrBB bb, std::uint16_t type);
+    void createNewarray(bb::SharedPtrBB bb, codegen::ArrayType atype);
     void createMultianewarray(
-        std::uint16_t type, std::uint8_t demensions);
+        bb::SharedPtrBB bb, 
+        std::uint16_t type, 
+        std::uint8_t demensions);
 
     void createAaload(bb::SharedPtrBB bb); 
     void createbaload(bb::SharedPtrBB bb);
@@ -180,22 +188,40 @@ public: // instruction
     void createSastore(bb::SharedPtrBB bb);
 
     // object
-    void createSastore(bb::SharedPtrBB bb);
+    void createNew(bb::SharedPtrBB bb, std::uint16_t type);
 
+    void createGetfield(bb::SharedPtrBB bb, std::uint16_t field);
+    void createGetstatic(bb::SharedPtrBB bb, std::uint16_t field);
+    
+    void createPutfield(bb::SharedPtrBB bb, std::uint16_t field);
+    void createPutstatic(bb::SharedPtrBB bb, std::uint16_t field);
+    
+    void createInvokespecial(
+        bb::SharedPtrBB bb, 
+        std::shared_ptr<JVMClassMethod> method);
 
+    void createInvokestatic(
+        bb::SharedPtrBB bb, 
+        std::shared_ptr<JVMClassMethod> method);
 
-    // TODO insert virtual/static call clone method ref on call in other class 
-    // TODO insert (static) get/set field  
-    // TODO: следит за вызовами в разных класса
-    // TODO: правильная вставка интсрукции (куча методов)
+    void createInvokevirtual(
+        bb::SharedPtrBB bb, 
+        std::shared_ptr<JVMClassMethod> method);
+
+private:
+    void linkMethodNClass_(
+        std::shared_ptr<JVMClassMethod> method);
 
 private:
     std::shared_ptr<jvm_attribute::CodeAttr> code_;
     std::uint16_t selfMethodRef_;
     std::weak_ptr<jvm_class::JVMClass> selfClass_;
-    std::vector<std::weak_ptr<jvm_class::JVMClass>> classes_;
-
-    bool isStatic_ = false;
+    std::uint16_t methodRef_;
+    std::map<jvm_class::JVMClass*, 
+        std::uint16_t> classes_;
+    
+    std::string name__;
+    descriptor::JVMMethodDescriptor type__;
 };
 
 } // namespace class_member

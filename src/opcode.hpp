@@ -101,14 +101,14 @@ enum class OpCode : std::uint8_t {
       
 // Stack      
     pop               = 0x57,    
-    op2               = 0x58,    
+    pop2               = 0x58,    
     dup               = 0x59,    
-    du_x1             = 0x5a,    
-    du_x2             = 0x5b,    
+    dup_x1             = 0x5a,    
+    dup_x2             = 0x5b,    
     dup2               = 0x5c,    
-    dup_x1            = 0x5d,    
-    dup_x2            = 0x5e,    
-    wap               = 0x5f,    
+    dup2_x1            = 0x5d,    
+    dup2_x2            = 0x5e,    
+    swap               = 0x5f,    
       
 // Math      
     iadd              = 0x60,    

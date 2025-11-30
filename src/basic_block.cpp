@@ -104,7 +104,6 @@ void BasicBlock::printBytes(std::ostream& out) const {
 }
 
 void BasicBlock::insertInstr(instr::Instr instr) {
-
     instrs_.emplace_back(new instr::Instr(instr));
 }
 
