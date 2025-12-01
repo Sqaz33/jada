@@ -27,10 +27,6 @@ JVMClassMethod::JVMClassMethod(
         cls.lock()->nameIdx(), nameNType);
 }
 
-void JVMClassMethod::printBytes(std::ostream& out) const {
-    IJVMClassMember::printBytes(out);
-}
-
 bb::SharedPtrBB JVMClassMethod::createBB() {
     return code_->createBB();
 }
@@ -682,34 +678,42 @@ void JVMClassMethod::createNew(
 } 
 
 void JVMClassMethod::createGetfield(
-    bb::SharedPtrBB bb, std::uint16_t field) 
+    bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
 {
-    instr::Instr ins(OpCode::new_);
-    ins.pushTwoBytes(field);
+    auto f = field->ref(selfClass_);
+    instr::Instr ins(OpCode::getfield);
+    ins.pushTwoBytes(f);
     code_->insertInstr(bb, std::move(ins));
 }
 
 void JVMClassMethod::createGetstatic(
-    bb::SharedPtrBB bb, std::uint16_t field) 
-{
-    instr::Instr ins(OpCode::new_);
-    ins.pushTwoBytes(field);
+    bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
+{   
+    if (!field->isStatic()) {
+        throw std::logic_error("static getfield" 
+                               " of a non-static field");
+    }
+    auto f = field->ref(selfClass_);
+    instr::Instr ins(OpCode::getstatic);
+    ins.pushTwoBytes(f);
     code_->insertInstr(bb, std::move(ins));
 }
 
 void JVMClassMethod::createPutfield(
-    bb::SharedPtrBB bb, std::uint16_t field) 
+    bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
 {
-    instr::Instr ins(OpCode::new_);
-    ins.pushTwoBytes(field);
+    auto f = field->ref(selfClass_);
+    instr::Instr ins(OpCode::putfield);
+    ins.pushTwoBytes(f);
     code_->insertInstr(bb, std::move(ins));
 }
 
 void JVMClassMethod::createPutstatic(
-    bb::SharedPtrBB bb, std::uint16_t field) 
+    bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
 {   
-    instr::Instr ins(OpCode::new_);
-    ins.pushTwoBytes(field);
+    auto f = field->ref(selfClass_);
+    instr::Instr ins(OpCode::putstatic);
+    ins.pushTwoBytes(f);
     code_->insertInstr(bb, std::move(ins));
 }
 
@@ -757,7 +761,7 @@ void JVMClassMethod::createInvokevirtual(
 {
     if (!isStatic()) {
         throw std::logic_error("static invocation" 
-            " of a non-static method");
+                               " of a non-static method");
     }
 
     linkMethodNClass_(method);

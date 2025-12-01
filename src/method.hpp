@@ -7,6 +7,7 @@
 #include "descriptor.hpp"
 #include "jvm_class.hpp"
 #include "basic_block.hpp"
+#include "field.hpp"
 
 namespace class_member {
 
@@ -21,11 +22,10 @@ public:
     JVMClassMethod(JVMClassMethod&&) = default;
 
 public:
-    void printBytes(std::ostream& out) const;
-
-public:
     using IJVMClassMember::addFlag;
     using IJVMClassMember::addAttr;
+    using IJVMClassMember::isStatic;
+    using IJVMClassMember::printBytes;
 
 public:
     bb::SharedPtrBB createBB();
@@ -190,11 +190,17 @@ public:
     // object
     void createNew(bb::SharedPtrBB bb, std::uint16_t type);
 
-    void createGetfield(bb::SharedPtrBB bb, std::uint16_t field);
-    void createGetstatic(bb::SharedPtrBB bb, std::uint16_t field);
+    void createGetfield(bb::SharedPtrBB bb, 
+                        std::shared_ptr<JVMClassField> field);
+
+    void createGetstatic(bb::SharedPtrBB bb,                         
+                         std::shared_ptr<JVMClassField> field);
     
-    void createPutfield(bb::SharedPtrBB bb, std::uint16_t field);
-    void createPutstatic(bb::SharedPtrBB bb, std::uint16_t field);
+    void createPutfield(bb::SharedPtrBB bb,                         
+                        std::shared_ptr<JVMClassField> field);
+
+    void createPutstatic(bb::SharedPtrBB bb,                         
+                         std::shared_ptr<JVMClassField> field);
     
     void createInvokespecial(
         bb::SharedPtrBB bb, 
@@ -214,7 +220,6 @@ private:
 
 private:
     std::shared_ptr<jvm_attribute::CodeAttr> code_;
-    std::uint16_t selfMethodRef_;
     std::weak_ptr<jvm_class::JVMClass> selfClass_;
     std::uint16_t methodRef_;
     std::map<jvm_class::JVMClass*, 
