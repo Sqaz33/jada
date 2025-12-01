@@ -73,9 +73,11 @@ public:
     void createIstore(bb::SharedPtrBB bb, const std::string& local);
     void createLstore(bb::SharedPtrBB bb, const std::string& local);
 
-    void createLdc(bb::SharedPtrBB bb, std::uint8_t idx);
-    void createLdcW(bb::SharedPtrBB bb, std::uint16_t idx);
-    void createLdc2W(bb::SharedPtrBB bb, std::uint16_t idx);
+    void createLdc(bb::SharedPtrBB bb, double numb);       //    auto ldc, ldc_w, ldc2_w and cp interaction
+    void createLdc(bb::SharedPtrBB bb, float numb);        //   /
+    void createLdc(bb::SharedPtrBB bb, int numb);          //  /
+    void createLdc(bb::SharedPtrBB bb, std::int64_t numb); // /
+
 
     // math
     void createDadd(bb::SharedPtrBB bb);

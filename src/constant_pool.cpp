@@ -116,7 +116,7 @@ JVMConstantPool::getUtf8NameIdx(const std::string& name) {
 }
 
 std::pair<bool, std::uint16_t>
-JVMConstantPool::getNumbConst(double numb) {
+JVMConstantPool::getNumbConstIdx(double numb) {
     decltype(doubleCnst_.begin()) it;
     if ((it = doubleCnst_.find(numb)) != doubleCnst_.end()) {
         return {true, it->second};
@@ -126,7 +126,7 @@ JVMConstantPool::getNumbConst(double numb) {
 }
 
 std::pair<bool, std::uint16_t>
-JVMConstantPool::getNumbConst(float numb) {
+JVMConstantPool::getNumbConstIdx(float numb) {
     decltype(floatCnst_.begin()) it;
     if ((it = floatCnst_.find(numb)) != floatCnst_.end()) {
         return {true, it->second};
@@ -136,7 +136,7 @@ JVMConstantPool::getNumbConst(float numb) {
 }
 
 std::pair<bool, std::uint16_t>
-JVMConstantPool::getNumbConst(int numb) {
+JVMConstantPool::getNumbConstIdx(int numb) {
     decltype(intCnst_.begin()) it;
     if ((it = intCnst_.find(numb)) != intCnst_.end()) {
         return {true, it->second};
@@ -146,7 +146,7 @@ JVMConstantPool::getNumbConst(int numb) {
 }
 
 std::pair<bool, std::uint16_t>
-JVMConstantPool::getNumbConst(std::int64_t numb) {
+JVMConstantPool::getNumbConstIdx(std::int64_t numb) {
     decltype(longCnst_.begin()) it;
     if ((it = longCnst_.find(numb)) != longCnst_.end()) {
         return {true, it->second};

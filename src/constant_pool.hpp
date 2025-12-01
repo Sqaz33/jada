@@ -36,10 +36,10 @@ public:
     std::pair<bool, std::uint16_t> getUtf8NameIdx(
         const std::string& name);
 
-    std::pair<bool, std::uint16_t> getNumbConst(double numb);
-    std::pair<bool, std::uint16_t> getNumbConst(float numb);
-    std::pair<bool, std::uint16_t> getNumbConst(int numb);
-    std::pair<bool, std::uint16_t> getNumbConst(std::int64_t numb);
+    std::pair<bool, std::uint16_t> getNumbConstIdx(double numb);
+    std::pair<bool, std::uint16_t> getNumbConstIdx(float numb);
+    std::pair<bool, std::uint16_t> getNumbConstIdx(int numb);
+    std::pair<bool, std::uint16_t> getNumbConstIdx(std::int64_t numb);
 
 public:
     void printBytes(std::ostream& out) const;

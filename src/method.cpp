@@ -288,24 +288,66 @@ void JVMClassMethod::createLstore(
 }
 
 void JVMClassMethod::createLdc(
-    bb::SharedPtrBB bb, std::uint8_t idx) 
-{
-    instr::Instr ins(OpCode::ldc);
-    ins.pushByte(idx);
-    code_->insertInstr(bb, std::move(ins));
-}
-
-void JVMClassMethod::createLdcW(
-    bb::SharedPtrBB bb, std::uint16_t idx) 
-{
-    instr::Instr ins(OpCode::ldc_w);
+    bb::SharedPtrBB bb, double numb) 
+{   
+    auto cp = selfClass_.lock()->cp();
+    auto [ok, idx] = cp->getNumbConstIdx(numb);
+    if (!ok) {
+        idx = cp->addDouble(numb);
+    }
+    instr::Instr ins(OpCode::ldc2_w);
     ins.pushTwoBytes(idx);
     code_->insertInstr(bb, std::move(ins));
-}
+} 
 
-void JVMClassMethod::createLdc2W(
-    bb::SharedPtrBB bb, std::uint16_t idx) 
+void JVMClassMethod::createLdc(
+    bb::SharedPtrBB bb, float numb) 
 {
+    auto cp = selfClass_.lock()->cp();
+    auto [ok, idx] = cp->getNumbConstIdx(numb);
+    if (!ok) {
+        idx = cp->addFloat(numb);
+    }
+    std::unique_ptr<instr::Instr> ins;
+    if (idx > std::numeric_limits<std::uint8_t>::max()) {
+        ins.reset(new instr::Instr(OpCode::ldc_w));
+        ins->pushTwoBytes(idx);
+    } else {
+        ins.reset(new instr::Instr(OpCode::ldc));
+        ins->pushByte(
+            static_cast<std::uint8_t>(idx));
+    }
+    code_->insertInstr(bb, *ins);
+}   
+
+void JVMClassMethod::createLdc(
+    bb::SharedPtrBB bb, int numb) 
+{
+    auto cp = selfClass_.lock()->cp();
+    auto [ok, idx] = cp->getNumbConstIdx(numb);
+    if (!ok) {
+        idx = cp->addInteger(numb);
+    }
+    std::unique_ptr<instr::Instr> ins;
+    if (idx > std::numeric_limits<std::uint8_t>::max()) {
+        ins.reset(new instr::Instr(OpCode::ldc_w));
+        ins->pushTwoBytes(idx);
+    } else {
+        ins.reset(new instr::Instr(OpCode::ldc));
+        ins->pushByte(
+            static_cast<std::uint8_t>(idx));
+    }
+    code_->insertInstr(bb, *ins);
+}   
+
+void JVMClassMethod::createLdc(
+    bb::SharedPtrBB bb, std::int64_t numb) 
+{
+    auto cp = selfClass_.lock()->cp();
+    auto [ok, idx] = cp->getNumbConstIdx(numb);
+    if (!ok) {
+        idx = cp->addLong(numb);
+    }
     instr::Instr ins(OpCode::ldc2_w);
     ins.pushTwoBytes(idx);
     code_->insertInstr(bb, std::move(ins));
