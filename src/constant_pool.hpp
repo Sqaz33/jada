@@ -44,6 +44,9 @@ public:
 public:
     void printBytes(std::ostream& out) const;
     
+public:
+    std::uint16_t size() const noexcept;
+
 private:
     std::vector<std::unique_ptr<constant::IConstant>> consts_;
     std::map<std::string, std::uint16_t> named_;

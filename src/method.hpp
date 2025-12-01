@@ -73,11 +73,10 @@ public:
     void createIstore(bb::SharedPtrBB bb, const std::string& local);
     void createLstore(bb::SharedPtrBB bb, const std::string& local);
 
-    void createLdc(bb::SharedPtrBB bb, double numb);       //    auto ldc, ldc_w, ldc2_w and cp interaction
+    void createLdc(bb::SharedPtrBB bb, double numb);       //   \ auto ldc, ldc_w, ldc2_w and cp interaction
     void createLdc(bb::SharedPtrBB bb, float numb);        //   /
     void createLdc(bb::SharedPtrBB bb, int numb);          //  /
     void createLdc(bb::SharedPtrBB bb, std::int64_t numb); // /
-
 
     // math
     void createDadd(bb::SharedPtrBB bb);
@@ -236,5 +235,7 @@ private:
     std::string name__;
     descriptor::JVMMethodDescriptor type__;
 };
+
+using SharedPtrMethod = std::shared_ptr<JVMClassMethod>;
 
 } // namespace class_member

@@ -31,6 +31,9 @@ std::string QualifiedName::toSring() const {
 const std::string& QualifiedName::first() const noexcept {
     return fullName_.front();
 }
+const std::string& QualifiedName::last() const noexcept {
+    return fullName_.back();
+}
 
 Attribute::Attribute(QualifiedName left, const std::string& right) :
     left_(std::move(left))

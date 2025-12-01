@@ -106,8 +106,8 @@ void CodeAttr::printBytes(std::ostream& out) const {
     for (auto bb : code_) {
         bb->printBytes(out);
     }
-    utility::printBytes(out, 0); // TODO: exception_table
-    utility::printBytes(out, 0); // TODO: attribute_count
+    utility::printBytes(out, std::uint16_t(0)); // TODO: exception_table
+    utility::printBytes(out, std::uint16_t(0)); // TODO: attribute_count
 }
 
 void CodeAttr::calcBBAddr_() {

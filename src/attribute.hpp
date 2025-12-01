@@ -17,6 +17,7 @@ public:
     bool empty() const noexcept; 
     std::string toSring() const;  // TODO: name/name/name/obj 
     const std::string& first() const noexcept; 
+    const std::string& last() const noexcept;
     
     auto operator<=>(const QualifiedName&) const = default;
 private:

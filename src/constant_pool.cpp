@@ -163,4 +163,9 @@ void JVMConstantPool::printBytes(
     }
 }
 
+std::uint16_t JVMConstantPool::size() const noexcept {
+    return static_cast<std::uint16_t>(
+        consts_.size());
+}
+
 } // namespace constant_pool

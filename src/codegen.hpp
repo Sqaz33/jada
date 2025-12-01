@@ -8,22 +8,29 @@
 #include <ostream>
 #include <memory>
 
-#include "constant_pool.hpp"
+#include "jvm_class.hpp"
 
 namespace codegen {
 
 inline namespace java_bytecode_codegen {
 
-using JVMClass  = std::shared_ptr<detail__::JVMClass>;
-using Class         = std::shared_ptr<detail__::Class>;
-using Method        = std::shared_ptr<detail__::Method>;
-
 class JavaBCCodegen {
 public:
-    void printClassFile(JVMClass mdl, std::ostream& out) const;
+    JavaBCCodegen(
+        std::uint16_t majorV,
+        std::uint16_t minorV);
 
+public:
+    void printClass( // -> cls_name.class file 
+        jvm_class::SharedPtrJVMClass cls) const;
+
+    void createClass(
+        const attribute::QualifiedName& name);
+    
 private:
-    std::vector<JVMClass> modules;
+    std::vector<jvm_class::SharedPtrJVMClass> cls;
+    std::uint16_t majorV_;
+    std::uint16_t minorV_;
 };
 
 } // namespace java_bytecode_codegen

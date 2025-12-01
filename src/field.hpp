@@ -37,4 +37,6 @@ private:
     descriptor::JVMFieldDescriptor type__;
 };
 
+using SharedPtrField = std::shared_ptr<JVMClassField>;
+
 } // namespace class_member
