@@ -73,6 +73,10 @@ public:
     void createIstore(bb::SharedPtrBB bb, const std::string& local);
     void createLstore(bb::SharedPtrBB bb, const std::string& local);
 
+    void createLdc(bb::SharedPtrBB bb, std::uint8_t idx);
+    void createLdcW(bb::SharedPtrBB bb, std::uint16_t idx);
+    void createLdc2W(bb::SharedPtrBB bb, std::uint16_t idx);
+
     // math
     void createDadd(bb::SharedPtrBB bb);
     void createFadd(bb::SharedPtrBB bb);
@@ -168,6 +172,8 @@ public:
         bb::SharedPtrBB bb, 
         std::uint16_t type, 
         std::uint8_t demensions);
+
+    void createArraylength(bb::SharedPtrBB bb);
 
     void createAaload(bb::SharedPtrBB bb); 
     void createbaload(bb::SharedPtrBB bb);

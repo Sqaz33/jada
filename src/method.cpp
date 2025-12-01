@@ -287,6 +287,30 @@ void JVMClassMethod::createLstore(
     );
 }
 
+void JVMClassMethod::createLdc(
+    bb::SharedPtrBB bb, std::uint8_t idx) 
+{
+    instr::Instr ins(OpCode::ldc);
+    ins.pushByte(idx);
+    code_->insertInstr(bb, std::move(ins));
+}
+
+void JVMClassMethod::createLdcW(
+    bb::SharedPtrBB bb, std::uint16_t idx) 
+{
+    instr::Instr ins(OpCode::ldc_w);
+    ins.pushTwoBytes(idx);
+    code_->insertInstr(bb, std::move(ins));
+}
+
+void JVMClassMethod::createLdc2W(
+    bb::SharedPtrBB bb, std::uint16_t idx) 
+{
+    instr::Instr ins(OpCode::ldc2_w);
+    ins.pushTwoBytes(idx);
+    code_->insertInstr(bb, std::move(ins));
+}
+
 void JVMClassMethod::createDadd(bb::SharedPtrBB bb) {
     code_->insertInstr(bb, OpCode::dadd);
 }
@@ -603,6 +627,10 @@ void JVMClassMethod::createMultianewarray(
     ins.pushTwoBytes(type);
     ins.pushByte(demensions);
     code_->insertInstr(bb, std::move(ins));
+}
+
+void JVMClassMethod::createArraylength(bb::SharedPtrBB bb) {
+    code_->insertInstr(bb, OpCode::arraylength);
 }
 
 void JVMClassMethod::createAaload(bb::SharedPtrBB bb) {
