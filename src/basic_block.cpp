@@ -53,6 +53,11 @@ std::uint16_t opStackSize(instr::OpCode op) {
         case O::invokeinterface:
             return 2;
 
+        case O::ldc: case O::ldc_w: 
+            return 1;
+        case O::ldc2_w:
+            return 2;
+
         default:
             return 0;
     }
@@ -104,7 +109,7 @@ void BasicBlock::printBytes(std::ostream& out) const {
 }
 
 void BasicBlock::insertInstr(instr::Instr instr) {
-    instrs_.emplace_back(new instr::Instr(instr));
+    instrs_.emplace_back(new instr::Instr(std::move(instr)));
 }
 
 void BasicBlock::insertBranch(

@@ -8,7 +8,7 @@
 namespace jvm_class {
 
 class JVMClass : 
-    std::enable_shared_from_this<JVMClass> 
+    public std::enable_shared_from_this<JVMClass> 
 {
 public:
     JVMClass(

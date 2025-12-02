@@ -81,7 +81,6 @@ void IJVMClassMember::addFlag(codegen::AccessFlag flag) {
 void IJVMClassMember::addAttr(
     IJVMClassMember::SharedPtrAttr attr) 
 {   
-    auto idx = cp_->addUtf8Name(attr->name());
     attrs_.emplace_back(attr);
 }
 

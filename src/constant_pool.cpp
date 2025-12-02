@@ -2,7 +2,9 @@
 
 namespace constant_pool {
 
-JVMConstantPool::JVMConstantPool() : consts_(1) {}
+JVMConstantPool::JVMConstantPool() : consts_(1) { 
+    consts_[0].reset(nullptr);
+}
 
 std::uint16_t JVMConstantPool::addUtf8(const std::string& text) {
     auto c = std::make_unique<constant::Utf8>(text);
@@ -12,7 +14,7 @@ std::uint16_t JVMConstantPool::addUtf8(const std::string& text) {
 }
 
 std::uint16_t JVMConstantPool::addInteger(int numb) {
-    if (intCnst_.contains(numb)) return;
+    if (intCnst_.contains(numb)) return intCnst_[numb];
     auto c = std::make_unique<constant::Integer>(numb);
     consts_.emplace_back(std::move(c));
     int sz = static_cast<int>(consts_.size());
@@ -22,7 +24,7 @@ std::uint16_t JVMConstantPool::addInteger(int numb) {
 }
 
 std::uint16_t JVMConstantPool::addFloat(float numb) {
-    if (floatCnst_.contains(numb)) return;
+    if (floatCnst_.contains(numb)) return floatCnst_[numb];
     auto c = std::make_unique<constant::Float>(numb);
     consts_.emplace_back(std::move(c));
     int sz = static_cast<int>(consts_.size());
@@ -32,7 +34,7 @@ std::uint16_t JVMConstantPool::addFloat(float numb) {
 }
 
 std::uint16_t JVMConstantPool::addDouble(double numb) {
-    if (doubleCnst_.contains(numb)) return;
+    if (doubleCnst_.contains(numb)) return doubleCnst_[numb];
     auto c = std::make_unique<constant::Double>(numb);
     consts_.emplace_back(std::move(c));
     int sz = static_cast<int>(consts_.size());
@@ -42,7 +44,7 @@ std::uint16_t JVMConstantPool::addDouble(double numb) {
 }
 
 std::uint16_t JVMConstantPool::addLong(std::int64_t numb) {
-    if (longCnst_.contains(numb)) return;
+    if (longCnst_.contains(numb)) return longCnst_[numb];
     auto c = std::make_unique<constant::Long>(numb);
     consts_.emplace_back(std::move(c));
     int sz = static_cast<int>(consts_.size());
@@ -51,18 +53,30 @@ std::uint16_t JVMConstantPool::addLong(std::int64_t numb) {
     return idx;
 }
 
-std::uint16_t JVMConstantPool::addString(std::uint16_t utf8) {
-    auto c = std::make_unique<constant::String>(utf8);
+std::uint16_t JVMConstantPool::addString(const std::string& string) {
+    if (stringCnst_.contains(string)) return stringCnst_[string];
+    auto c = std::make_unique<constant::String>(
+        addUtf8(string));
     consts_.emplace_back(std::move(c));
     int sz = static_cast<int>(consts_.size());
-    return static_cast<std::uint16_t>(sz - 1);
+    int idx = static_cast<std::uint16_t>(sz - 1);
+    stringCnst_[string] = idx;
+    return idx;
 }
 
-std::uint16_t JVMConstantPool::addClass(std::uint16_t name) {
-    auto c = std::make_unique<constant::Class>(name);
+std::uint16_t JVMConstantPool::addClass(
+    const std::string& name) 
+{   if (classesCnst_.contains(name)) return classesCnst_[name];
+    auto [ok, utf8Idx] = getUtf8NameIdx(name);
+    if (!ok) {
+        utf8Idx = addUtf8(name);
+    }
+    auto c = std::make_unique<constant::Class>(utf8Idx);
     consts_.emplace_back(std::move(c));
     int sz = static_cast<int>(consts_.size());
-    return static_cast<std::uint16_t>(sz - 1);
+    auto idx = static_cast<std::uint16_t>(sz - 1);
+    classesCnst_[name] = idx;
+    return idx;
 }
 
 std::uint16_t JVMConstantPool::addFieldRef(
@@ -103,6 +117,20 @@ JVMConstantPool::addUtf8Name(const std::string& name) {
     int idx = static_cast<std::uint16_t>(sz - 1);
     named_[name] = idx;
     return idx;
+}
+
+std::uint16_t 
+JVMConstantPool::addFieldDescriptor(
+    const descriptor::JVMFieldDescriptor& descr) 
+{
+    return addUtf8(descr.toString());
+}
+
+std::uint16_t 
+JVMConstantPool::addMethodDescriptor(
+    const descriptor::JVMMethodDescriptor& descr) 
+{
+    return addUtf8(descr.toString());
 }
 
 std::pair<bool, std::uint16_t>
@@ -155,11 +183,38 @@ JVMConstantPool::getNumbConstIdx(std::int64_t numb) {
     return {false, 0};
 }
 
+std::pair<bool, std::uint16_t> 
+JVMConstantPool::getStringIdx(
+    const std::string& string) 
+{
+    decltype(stringCnst_.begin()) it;
+    if ((it = stringCnst_.find(string)) != stringCnst_.end()) {
+        return {true, it->second};
+    }
+
+    return {false, 0};
+}
+
+
+std::pair<bool, std::uint16_t>
+JVMConstantPool::getClassIdx(
+        const std::string& name) 
+{
+    decltype(classesCnst_.begin()) it;
+    if ((it = classesCnst_.find(name)) != classesCnst_.end()) {
+        return {true, it->second};
+    }
+
+    return {false, 0};
+}
+
 void JVMConstantPool::printBytes(
     std::ostream& out) const 
 {
     for (auto&& c : consts_) {
-        c->printBytes(out);
+        if (c) {
+            c->printBytes(out);
+        }
     }
 }
 

@@ -1,13 +1,16 @@
 #include "method.hpp"
 
+#include "jvm_class.hpp"
+
 namespace class_member {
 
 using instr::OpCode;
 
 JVMClassMethod::JVMClassMethod(  
     const std::string& name,
-    descriptor::JVMMethodDescriptor type,   
-    std::weak_ptr<jvm_class::JVMClass> cls) :
+    const descriptor::JVMMethodDescriptor& type,   
+    std::weak_ptr<jvm_class::JVMClass> cls,
+    bool isStatic) :
     IJVMClassMember(
         cls.lock()->cp()->addUtf8Name(name), 
         cls.lock()->cp()->addMethodDescriptor(std::move(type)),
@@ -17,6 +20,10 @@ JVMClassMethod::JVMClassMethod(
     , name__(name)
     , type__(type)
 {   
+    if (isStatic) {
+        addFlag(codegen::AccessFlag::ACC_STATIC);
+    } 
+
     auto cp = cls.lock()->cp();
     code_.reset(
         new jvm_attribute::CodeAttr(cp));
@@ -25,6 +32,13 @@ JVMClassMethod::JVMClassMethod(
         this->name(), this->type());
     methodRef_ = cp->addMehodRef(
         cls.lock()->nameIdx(), nameNType);
+
+    if (!isStatic) {
+        createLocalRef("this");
+    }
+    for (auto [name, sz] : type__.params()) {
+        code_->createLocal(name, sz);
+    }
 }
 
 bb::SharedPtrBB JVMClassMethod::createBB() {
@@ -156,9 +170,14 @@ void JVMClassMethod::createAload(
                 : idx == 2 ? OpCode::aload_2
                 : idx == 3 ? OpCode::aload_3
                 : OpCode::aload; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+
+    if (OpCode::aload == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createDload(
@@ -170,9 +189,14 @@ void JVMClassMethod::createDload(
                 : idx == 2 ? OpCode::dload_2
                 : idx == 3 ? OpCode::dload_3
                 : OpCode::dload; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+
+    if (OpCode::dload == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createFload(
@@ -183,10 +207,15 @@ void JVMClassMethod::createFload(
                 : idx == 1 ? OpCode::fload_1 
                 : idx == 2 ? OpCode::fload_2
                 : idx == 3 ? OpCode::fload_3
-                : OpCode::aload; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+                : OpCode::fload; 
+
+    if (OpCode::fload == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createIload(
@@ -198,9 +227,14 @@ void JVMClassMethod::createIload(
                 : idx == 2 ? OpCode::iload_2
                 : idx == 3 ? OpCode::iload_3
                 : OpCode::iload; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+
+    if (OpCode::iload == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createLload(
@@ -211,10 +245,15 @@ void JVMClassMethod::createLload(
                 : idx == 1 ? OpCode::lload_1 
                 : idx == 2 ? OpCode::lload_2
                 : idx == 3 ? OpCode::lload_3
-                : OpCode::lload; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+                : OpCode::lload;
+
+    if (OpCode::lload == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createAstore(
@@ -226,9 +265,14 @@ void JVMClassMethod::createAstore(
                 : idx == 2 ? OpCode::astore_2
                 : idx == 3 ? OpCode::astore_3
                 : OpCode::astore; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+
+    if (OpCode::astore == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createDstore(
@@ -240,9 +284,14 @@ void JVMClassMethod::createDstore(
                 : idx == 2 ? OpCode::dstore_2
                 : idx == 3 ? OpCode::dstore_3
                 : OpCode::dstore; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+
+    if (OpCode::dstore == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createFstore(
@@ -253,10 +302,15 @@ void JVMClassMethod::createFstore(
                 : idx == 1 ? OpCode::fstore_1 
                 : idx == 2 ? OpCode::fstore_2
                 : idx == 3 ? OpCode::fstore_3
-                : OpCode::astore; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+                : OpCode::fstore; 
+
+    if (OpCode::fstore == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createIstore(
@@ -268,9 +322,14 @@ void JVMClassMethod::createIstore(
                 : idx == 2 ? OpCode::istore_2
                 : idx == 3 ? OpCode::istore_3
                 : OpCode::istore; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+
+    if (OpCode::istore == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createLstore(
@@ -282,9 +341,14 @@ void JVMClassMethod::createLstore(
                 : idx == 2 ? OpCode::lstore_2
                 : idx == 3 ? OpCode::lstore_3
                 : OpCode::lstore; 
-    code_->instertInstrWithLocal(
-        bb, op, local
-    );
+
+    if (OpCode::lstore == op) {
+        code_->instertInstrWithLocal(
+            bb, op, local
+        );
+    } else {
+        code_->insertInstr(bb, op);
+    }
 }
 
 void JVMClassMethod::createLdc(
@@ -352,6 +416,26 @@ void JVMClassMethod::createLdc(
     ins.pushTwoBytes(idx);
     code_->insertInstr(bb, std::move(ins));
 }
+
+void JVMClassMethod::createLdc(bb::SharedPtrBB bb, 
+    const std::string& string)
+{
+    auto cp = selfClass_.lock()->cp();
+    auto [ok, idx] = cp->getStringIdx(string);
+    if (!ok) {
+        idx = cp->addString(string);
+    }
+    std::unique_ptr<instr::Instr> ins;
+    if (idx > std::numeric_limits<std::uint8_t>::max()) {
+        ins.reset(new instr::Instr(OpCode::ldc_w));
+        ins->pushTwoBytes(idx);
+    } else {
+        ins.reset(new instr::Instr(OpCode::ldc));
+        ins->pushByte(
+            static_cast<std::uint8_t>(idx));
+    }
+    code_->insertInstr(bb, *ins);
+}   
 
 void JVMClassMethod::createDadd(bb::SharedPtrBB bb) {
     code_->insertInstr(bb, OpCode::dadd);
@@ -825,7 +909,7 @@ void JVMClassMethod::createInvokevirtual(
     code_->insertInstr(bb, std::move(ins));
 }
 
-void JVMClassMethod::createInvokevirtual(
+void JVMClassMethod::createInvokestatic(
     bb::SharedPtrBB bb, 
     std::shared_ptr<JVMClassMethod> method) 
 {
@@ -865,11 +949,11 @@ void JVMClassMethod::linkMethodNClass_(
         auto type = cp->addMethodDescriptor(method->type__);
         auto nameNType = cp->addNameAndType(name, type);
 
-        auto [ok, otherClsName] = cp->getUtf8NameIdx(
+        auto [ok, otherClsName] = cp->getClassIdx(
                                     otherClsLock->name());
         if (!ok) {
             otherClsName = 
-                cp->addUtf8Name(otherClsLock->name());
+                cp->addClass(otherClsLock->name());
         }
 
         classes_[otherClsLock.get()] = 

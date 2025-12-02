@@ -14,7 +14,11 @@ JavaBCCodegen::JavaBCCodegen(
 void JavaBCCodegen::printClass( 
     jvm_class::SharedPtrJVMClass cls) const 
 {
-    std::fstream f(cls->simpleName() + ".class");
+    std::fstream f(cls->simpleName() + ".class", 
+        std::ios::out | std::ios::trunc);
+    if (!f.is_open()) {
+        throw std::runtime_error("The file cannot be opened");
+    }
     cls->printBytes(f);
 }
 

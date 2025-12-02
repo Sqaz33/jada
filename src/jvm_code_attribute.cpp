@@ -18,8 +18,15 @@ bb::SharedPtrBB CodeAttr::createBB() {
 void CodeAttr::createLocal(
     const std::string& name, std::uint16_t size) 
 {
-    auto [preIdx, preSz] 
-        = locals_.rbegin()->second;
+    std::uint16_t preIdx = 0;
+    std::uint16_t preSz = 0;
+    if (!locals_.empty()) {
+        preIdx =
+            locals_.rbegin()->second.first;
+        preSz = 
+            locals_.rbegin()->second.second;
+    }
+
     locals_[name] 
         = std::make_pair(preIdx + preSz, size);
     calcSelfLen_();
@@ -38,6 +45,8 @@ void CodeAttr::insertInstr(
     bb::SharedPtrBB bb, instr::Instr instr)
 {  
     bb->insertInstr(std::move(instr));
+    calcBBAddr_(); 
+    calcSelfLen_();
 }
 
 void CodeAttr::insertBranch(
@@ -51,8 +60,8 @@ void CodeAttr::insertBranch(
     }
     checBBThenThrow_(from);
     from->insertBranch(op, to);    
-    calcSelfLen_();
     calcBBAddr_(); 
+    calcSelfLen_();
 }
 
 void CodeAttr::instertInstrWithLocal(
@@ -79,8 +88,6 @@ void CodeAttr::instertInstrWithLocal(
         ins.reset(
             new instr::Instr(op));
         ins->pushByte(
-            static_cast<std::uint8_t>(op));
-        ins->pushTwoBytes(
             static_cast<std::uint8_t>(idx));
     }
     for (auto b : bytes) {
@@ -149,14 +156,13 @@ std::uint32_t CodeAttr::codeLen_() const {
 
 std::uint32_t CodeAttr::selfLen_() const {
     return 
-        6   // init      
-        + 2 // max_stack
-        + 2 // max_locals
-        + 4 // code_len
-        + codeLen_()
-        + 0  // exception_table
-        + 0  // attribute_count
-        + 0; // attribute_info
+        6    // init      
+        + 2  // max_stack
+        + 2  // max_locals
+        // + 4  // code_length
+        + codeLen_()  // codeLen
+        // + 2  // exception_table_length
+        + 2; // attribute_count
 }
 
 void CodeAttr::checBBThenThrow_(bb::SharedPtrBB bb) {

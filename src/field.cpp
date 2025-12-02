@@ -1,5 +1,7 @@
 #include "field.hpp"
 
+#include "jvm_class.hpp"
+
 namespace class_member {
 
 JVMClassField::JVMClassField(
@@ -46,20 +48,20 @@ void JVMClassField::linkWithClass_(
     }
 
     if (!classes_.contains(otherClsLock.get())) {   
-        auto cp = clsLock->cp();
+        auto cp = otherClsLock->cp();
         auto name = cp->addUtf8Name(name__);
         auto type = cp->addFieldDescriptor(type__);
         auto nameNType = cp->addNameAndType(name, type);
 
-        auto [ok, otherClsName] = cp->getUtf8NameIdx(
-                                    otherClsLock->name());
+        auto [ok, clsName] = cp->getClassIdx(
+                                    clsLock->name());
         if (!ok) {
-            otherClsName = 
-                cp->addUtf8Name(otherClsLock->name());
+            clsName = 
+                cp->addClass(clsLock->name());
         }
 
         classes_[otherClsLock.get()] = 
-            cp->addMehodRef(otherClsName, nameNType);
+            cp->addFieldRef(clsName, nameNType);
     }
 }
 

@@ -13,7 +13,7 @@ JVMClass::JVMClass(
     , majorV_(majorV)
     , minorV_(minorV)
     , cp_(new constant_pool::JVMConstantPool)
-    , nameIdx_(cp_->addUtf8Name(name_))
+    , nameIdx_(cp_->addClass(name.toSring()))
 {}
 
 void JVMClass::printBytes(std::ostream& out) const {
@@ -27,6 +27,7 @@ void JVMClass::printBytes(std::ostream& out) const {
 
     utility::printBytes(out, 
         utility::reverse(cp_->size()));
+    cp_->printBytes(out);
     
     utility::printBytes(out, 
         utility::reverse(accf_));
@@ -36,6 +37,8 @@ void JVMClass::printBytes(std::ostream& out) const {
 
     utility::printBytes(out, 
         utility::reverse(parentIdx_));
+
+    utility::printBytes(out, std::uint16_t(0)); // interface count
 
     auto fieldsCount =
          static_cast<std::uint16_t>(fields_.size()); 
@@ -82,9 +85,9 @@ void JVMClass::setParent(
 {
     auto lock = par.lock();
     auto [ok, idx] = 
-        cp_->getUtf8NameIdx(lock->name());    
+        cp_->getClassIdx(lock->name());    
     if (!ok) {
-        idx = cp_->addUtf8Name(lock->name());
+        idx = cp_->addClass(lock->name());
     }
     parentIdx_ = idx;
     parent_ = par;

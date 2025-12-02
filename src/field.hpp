@@ -1,10 +1,16 @@
+#pragma once
+
 #include "class_member.hpp"
 
-#include "jvm_class.hpp"
+namespace jvm_class {
+
+class JVMClass; 
+
+} //namespace jvm_class 
 
 namespace class_member {
 
-class JVMClassField : private IJVMClassMember {
+class JVMClassField : private IJVMClassMember  {
 public:
     JVMClassField(
         const std::string& name,

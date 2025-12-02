@@ -5,18 +5,24 @@
 #include "class_member.hpp"
 #include "jvm_attribute.hpp"
 #include "descriptor.hpp"
-#include "jvm_class.hpp"
 #include "basic_block.hpp"
 #include "field.hpp"
+
+namespace jvm_class {
+
+class JVMClass;
+
+} // namespace jvm_class 
 
 namespace class_member {
 
 class JVMClassMethod : private IJVMClassMember {
-public:
+public: 
     JVMClassMethod(  
         const std::string& name,
-        descriptor::JVMMethodDescriptor type,   
-        std::weak_ptr<jvm_class::JVMClass> cls);
+        const descriptor::JVMMethodDescriptor& type,   
+        std::weak_ptr<jvm_class::JVMClass> cls,
+        bool isStatic = false);
 
     JVMClassMethod(const JVMClassMethod&) = delete;
     JVMClassMethod(JVMClassMethod&&) = default;
@@ -73,10 +79,11 @@ public:
     void createIstore(bb::SharedPtrBB bb, const std::string& local);
     void createLstore(bb::SharedPtrBB bb, const std::string& local);
 
-    void createLdc(bb::SharedPtrBB bb, double numb);       //   \ auto ldc, ldc_w, ldc2_w and cp interaction
-    void createLdc(bb::SharedPtrBB bb, float numb);        //   /
-    void createLdc(bb::SharedPtrBB bb, int numb);          //  /
-    void createLdc(bb::SharedPtrBB bb, std::int64_t numb); // /
+    void createLdc(bb::SharedPtrBB bb, double numb);                //    \ auto ldc, ldc_w, ldc2_w and cp interaction
+    void createLdc(bb::SharedPtrBB bb, float numb);                 //    /
+    void createLdc(bb::SharedPtrBB bb, int numb);                   //   /
+    void createLdc(bb::SharedPtrBB bb, std::int64_t numb);          //  /
+    void createLdc(bb::SharedPtrBB bb, const std::string& string);  // /
 
     // math
     void createDadd(bb::SharedPtrBB bb);

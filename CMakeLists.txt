@@ -41,3 +41,25 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${GVC_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GVC_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_LIBRARIES})
+
+set(CD_CORE "src/graphviz.cpp" 
+            "src/attribute.cpp"
+            "src/method.cpp"
+            "src/jvm_code_attribute.cpp"
+            "src/jvm_class.cpp"
+            "src/instruction.cpp"
+            "src/field.cpp"
+            "src/descriptor.cpp"
+            "src/constant.cpp"
+            "src/constant_pool.cpp"
+            "src/codegen.cpp"
+            "src/class_member.cpp"
+            "src/basic_block.cpp"
+            "src/jvm_attribute.cpp")
+
+add_executable(cd_test test/cd_test.cpp ${CD_CORE})
+target_include_directories(cd_test PRIVATE ${GVC_INCLUDE_DIRS})
+target_link_libraries(cd_test PRIVATE ${GVC_LIBRARIES})
+target_include_directories(cd_test PRIVATE ${LIBCGRAPH_INCLUDE_DIRS})
+target_link_libraries(cd_test PRIVATE ${LIBCGRAPH_LIBRARIES})
+target_include_directories(cd_test PRIVATE src)

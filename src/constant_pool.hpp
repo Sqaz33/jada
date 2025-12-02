@@ -1,5 +1,3 @@
-// TODO: check for int constant
-
 #pragma once 
 
 #include "constant.hpp"
@@ -21,8 +19,8 @@ public:
     std::uint16_t addFloat(float numb);
     std::uint16_t addDouble(double numb);
     std::uint16_t addLong(std::int64_t numb);
-    std::uint16_t addString(std::uint16_t utf8);
-    std::uint16_t addClass(std::uint16_t name);
+    std::uint16_t addString(const std::string& string);
+    std::uint16_t addClass(const std::string& name);
     std::uint16_t addFieldRef(std::uint16_t cls, std::uint16_t nameNType);
     std::uint16_t addMehodRef(std::uint16_t cls, std::uint16_t nameNType);
     std::uint16_t addNameAndType(std::uint16_t name, std::uint16_t descr); 
@@ -40,6 +38,10 @@ public:
     std::pair<bool, std::uint16_t> getNumbConstIdx(float numb);
     std::pair<bool, std::uint16_t> getNumbConstIdx(int numb);
     std::pair<bool, std::uint16_t> getNumbConstIdx(std::int64_t numb);
+    std::pair<bool, std::uint16_t> getStringIdx(const std::string& string);
+
+    std::pair<bool, std::uint16_t> getClassIdx(
+        const std::string& name);
 
 public:
     void printBytes(std::ostream& out) const;
@@ -55,6 +57,8 @@ private:
     std::map<float, std::uint16_t> floatCnst_;
     std::map<int, std::uint16_t> intCnst_;
     std::map<std::int64_t, std::uint16_t> longCnst_;
+    std::map<std::string, std::uint16_t> classesCnst_;
+    std::map<std::string, std::uint16_t> stringCnst_;
 };
 
 using SharedPtrJVMCP = std::shared_ptr<JVMConstantPool>;

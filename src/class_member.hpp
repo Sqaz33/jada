@@ -36,7 +36,7 @@ protected:
 
 private:
     // byte structure
-    std::uint16_t accf_;
+    std::uint16_t accf_ = 0;
     std::uint16_t name_; 
     std::uint16_t desc_;
     std::vector<SharedPtrAttr> attrs_;

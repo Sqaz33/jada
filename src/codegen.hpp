@@ -24,11 +24,11 @@ public:
     void printClass( // -> cls_name.class file 
         jvm_class::SharedPtrJVMClass cls) const;
 
-    void createClass(
+    jvm_class::SharedPtrJVMClass createClass(
         const attribute::QualifiedName& name);
     
 private:
-    std::vector<jvm_class::SharedPtrJVMClass> cls;
+    std::vector<jvm_class::SharedPtrJVMClass> clss_;
     std::uint16_t majorV_;
     std::uint16_t minorV_;
 };
