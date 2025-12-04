@@ -77,33 +77,34 @@ BasicBlock::BasicBlock(
 void BasicBlock::printBytes(std::ostream& out) const {
     int brIdx = 0;
     for (auto&& i : instrs_) {
-        if (i) {
+        if (!i->isBranch()) {
             i->printBytes(out);
         } else {
-            auto&& [op, bb] = branches_[brIdx++];
-            instr::Instr ins(op);
+            auto&& bb = branches_[brIdx++];
             auto idxOld 
-                = static_cast<std::int64_t>(startOpCodeIdx_);
+                = static_cast<std::int64_t>(i->idx());
             auto offset = static_cast<std::int32_t>(
                 bb->startOpCodeIdx() - idxOld);
+            auto op = i->opCode();
+            auto insCp = *i;
             if (instr::OpCode::goto_w == op ||
                 instr::OpCode::jsr_w == op)
             {
-                ins.pushFourBytes(offset);
+                insCp.pushFourBytes(offset);
             } 
             else 
             {
                 if (std::abs(offset) >= 
-                    std::numeric_limits<std::int16_t>::max())
+                    std::numeric_limits<std::uint16_t>::max())
                 {
                     throw std::logic_error("For a four-byte opcode offset," 
                                            " an instruction that" 
                                            " accepts two bytes is used");
                 }
-                ins.pushTwoBytes(
-                    static_cast<std::int16_t>(offset));
+                insCp.pushTwoBytes(
+                    static_cast<std::uint16_t>(offset));
             }
-            ins.printBytes(out); 
+            insCp.printBytes(out); 
         }
     }
 }
@@ -115,8 +116,8 @@ void BasicBlock::insertInstr(instr::Instr instr) {
 void BasicBlock::insertBranch(
     instr::OpCode op, bb::SharedPtrBB to)
 {
-    instrs_.emplace_back(nullptr);
-    branches_.emplace_back(op, to);
+    instrs_.emplace_back(new instr::Instr(op, true));
+    branches_.emplace_back(to);
 }
 
 std::uint32_t 
@@ -125,8 +126,27 @@ BasicBlock::startOpCodeIdx() const noexcept {
 }
 
 void BasicBlock::setStartOpCodeIdx(
-    std::uint32_t idx) noexcept 
-{ startOpCodeIdx_ = idx; }
+    std::uint32_t idx)  
+{ 
+    startOpCodeIdx_ = idx; 
+    int brIdx = 0;
+    for (auto&& i : instrs_) {
+        i->setIdx(idx);
+        if (i->isBranch()) {
+            if (i->opCode() == instr::OpCode::goto_w ||
+                i->opCode() == instr::OpCode::jsr_w) 
+            {
+                idx += 5;
+            } 
+            else 
+            {
+                idx += 3;
+            }
+        } else {
+            idx += i->len();
+        }
+    }
+}
 
 std::weak_ptr<jvm_attribute::CodeAttr>
 BasicBlock::codeAttr() {
@@ -136,15 +156,19 @@ BasicBlock::codeAttr() {
 std::uint32_t BasicBlock::len() const {
     std::uint32_t len = 0;
     for (auto&& i : instrs_) {
-        if (i) {
+        if (i->isBranch()) {
+            if (i->opCode() == instr::OpCode::goto_w ||
+                i->opCode() == instr::OpCode::jsr_w) 
+            {
+                len += 5;
+            } 
+            else 
+            {
+                len += 3;
+            }
+        } else {
             len += i->len();
         }
-    } 
-    for (auto [_, bb] : branches_) {
-        auto b4 = bb->startOpCodeIdx();
-        len += 1 + (b4 > std::numeric_limits<std::uint16_t>::max() 
-                    ? 4 
-                    : 2);
     }
     return len;
 }
@@ -155,9 +179,6 @@ std::uint16_t BasicBlock::stackSize() const {
         if (i) {
             stack += opStackSize(i->opCode());
         }
-    } 
-    for (auto&& [op, _] : branches_) {
-        stack += opStackSize(op);
     } 
     return stack;
 }

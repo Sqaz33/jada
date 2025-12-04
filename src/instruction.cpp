@@ -4,7 +4,18 @@
 
 namespace instr {
 
-Instr::Instr(OpCode op) : op_(op) {}
+Instr::Instr(OpCode op, bool isBranch) : 
+    op_(op)
+    , isBranch_(isBranch) 
+{}
+
+std::uint32_t Instr::idx() const noexcept {
+    return idx_;
+}
+
+void Instr::setIdx(std::uint32_t idx) noexcept {
+    idx_ = idx;
+}
 
 void Instr::printBytes(std::ostream& out) const {
     auto op = static_cast<std::uint8_t>(op_);
@@ -23,6 +34,10 @@ std::uint32_t Instr::len() const noexcept {
 
 OpCode Instr::opCode() const noexcept {
     return op_;
+}
+
+bool Instr::isBranch() const noexcept {
+    return isBranch_;
 }
 
 void Instr::pushByte(std::uint8_t byte) {

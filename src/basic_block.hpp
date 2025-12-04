@@ -11,7 +11,6 @@ namespace jvm_attribute {
 
 namespace bb {
 
-// TODO: delete: следит за бренчами и стеком
 class BasicBlock {
 public:
     friend class jvm_attribute::CodeAttr;
@@ -30,7 +29,7 @@ private:
         instr::OpCode op, 
         std::shared_ptr<BasicBlock> to); 
 
-    void setStartOpCodeIdx(std::uint32_t idx) noexcept;
+    void setStartOpCodeIdx(std::uint32_t idx);
 
     std::weak_ptr<jvm_attribute::CodeAttr> codeAttr();
 
@@ -43,9 +42,7 @@ private:
     std::uint32_t startOpCodeIdx_;
     std::vector<std::unique_ptr<instr::Instr>> instrs_;
     std::weak_ptr<jvm_attribute::CodeAttr> code_;
-    std::vector<std::pair<
-                        instr::OpCode, 
-                        std::shared_ptr<BasicBlock>>> branches_;
+    std::vector<std::shared_ptr<BasicBlock>> branches_;
     int id_;
 };
 

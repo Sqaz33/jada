@@ -3,3 +3,4 @@ build/
 *.o
 main
 .vscode/
+*.class

@@ -1,7 +1,7 @@
 #include "codegen.hpp"
 
 int main() {
-    codegen::JavaBCCodegen cd(55, 0);
+    codegen::JavaBCCodegen cd(49, 0);
     attribute::QualifiedName name("Main");
     auto cls = cd.createClass(name);
     cls->addAccesFlag(codegen::AccessFlag::ACC_PUBLIC);
@@ -22,7 +22,7 @@ int main() {
     init->createReturn(initBB);
     
     
-    auto strName = attribute::QualifiedName("java/lang/String");
+    attribute::QualifiedName strName("java/lang/String");
     auto strArrType = descriptor::JVMFieldDescriptor::createObject(strName);
     strArrType.addDimension();
     std::pair<std::string, descriptor::JVMFieldDescriptor> p(std::string("F"), strArrType);
@@ -62,6 +62,7 @@ int main() {
     func->createGetstatic(bb1, outField);
     func->createLdc(bb1, "Hello, World!");
     func->createInvokevirtual(bb1, printLn);
+    func->createGoto(bb1, bb1);
     
     func->createReturn(bb1);
 
