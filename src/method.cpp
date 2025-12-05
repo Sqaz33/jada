@@ -103,21 +103,21 @@ void JVMClassMethod::createFconst(
     bb::SharedPtrBB bb, std::int8_t const_) 
 {
     switch (const_) {
-        case 0: code_->insertInstr(bb, OpCode::fconst_0);
-        case 1: code_->insertInstr(bb, OpCode::fconst_1);
-        case 2: code_->insertInstr(bb, OpCode::fconst_2);
+        case 0: code_->insertInstr(bb, OpCode::fconst_0); break;
+        case 1: code_->insertInstr(bb, OpCode::fconst_1); break;
+        case 2: code_->insertInstr(bb, OpCode::fconst_2); break;
     }
 }
 
 void JVMClassMethod::createIconst(bb::SharedPtrBB bb, std::int8_t const_) {
     switch (const_) {
-        case -1: code_->insertInstr(bb, OpCode::iconst_m1);
-        case 0:  code_->insertInstr(bb, OpCode::iconst_0);
-        case 1:  code_->insertInstr(bb, OpCode::iconst_1);
-        case 2:  code_->insertInstr(bb, OpCode::iconst_2);
-        case 3:  code_->insertInstr(bb, OpCode::iconst_3);
-        case 4:  code_->insertInstr(bb, OpCode::iconst_4);
-        case 5:  code_->insertInstr(bb, OpCode::iconst_5);
+        case -1: code_->insertInstr(bb, OpCode::iconst_m1); break;
+        case 0:  code_->insertInstr(bb, OpCode::iconst_0); break;
+        case 1:  code_->insertInstr(bb, OpCode::iconst_1); break;
+        case 2:  code_->insertInstr(bb, OpCode::iconst_2); break;
+        case 3:  code_->insertInstr(bb, OpCode::iconst_3); break;
+        case 4:  code_->insertInstr(bb, OpCode::iconst_4); break;
+        case 5:  code_->insertInstr(bb, OpCode::iconst_5); break;
     }
 }
 

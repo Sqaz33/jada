@@ -34,16 +34,16 @@ int main() {
     auto myField = cls->addField("myField", I);
     myField->addFlag(codegen::AccessFlag::ACC_STATIC);
 
-    func->createLocalInt("x");
+    // func->createLocalInt("x");
     auto bb1 = func->createBB();
     
     func->addFlag(codegen::AccessFlag::ACC_PUBLIC);
     func->addFlag(codegen::AccessFlag::ACC_STATIC);
 
-    func->createLdc(bb1, 1024);
-    func->createDup(bb1);
-    func->createPutstatic(bb1, myField);
-    func->createIstore(bb1, "x");
+    // func->createLdc(bb1, 1024);
+    // func->createDup(bb1);
+    // func->createPutstatic(bb1, myField);
+    // func->createIstore(bb1, "x");
 
     attribute::QualifiedName sysName("java/lang/System");
     auto sysClass = cd.createClass(sysName);
@@ -59,12 +59,24 @@ int main() {
     auto printLnType = descriptor::JVMMethodDescriptor::createVoidRetun({p1});
     auto printLn = printClass->addMethod("println", printLnType);
 
-    func->createGetstatic(bb1, outField);
-    func->createLdc(bb1, "Hello, World!");
-    func->createInvokevirtual(bb1, printLn);
-    func->createGoto(bb1, bb1);
+
+    // func->createGoto(bb1, bb1);
+
+    func->createLocalInt("i");
+    func->createIconst(bb1, 0);
+    func->createIstore(bb1, "i");
+
+    auto bb2 = func->createBB();
+    func->createGetstatic(bb2, outField);
+    func->createLdc(bb2, "Hello, World!");
+    func->createInvokevirtual(bb2, printLn);
+
+    func->createIinc(bb2, "i", 1);
+    func->createBipush(bb2, 10);
+    func->createIload(bb2, "i");
+    func->createIficmpne(bb2, bb2);
     
-    func->createReturn(bb1);
+    func->createReturn(bb2);
 
     cd.printClass(cls);
 }
