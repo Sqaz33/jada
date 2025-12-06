@@ -2,6 +2,9 @@
 
 #include "bits_utility.hpp"
 
+#include <limits>
+#include <cstdint>
+
 namespace jvm_attribute {
 
 CodeAttr::CodeAttr(constant_pool::SharedPtrJVMCP cp) : 

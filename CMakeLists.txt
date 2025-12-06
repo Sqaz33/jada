@@ -42,8 +42,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GVC_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_LIBRARIES})
 
-set(CD_CORE "src/graphviz.cpp" 
-            "src/attribute.cpp"
+set(CD_CORE "src/attribute.cpp"
             "src/method.cpp"
             "src/jvm_code_attribute.cpp"
             "src/jvm_class.cpp"

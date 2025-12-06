@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-#include "graphviz.hpp"
-
 namespace attribute {
     
 class QualifiedName { // TODO: expand interface

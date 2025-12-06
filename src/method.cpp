@@ -2,6 +2,9 @@
 
 #include "jvm_class.hpp"
 
+#include <limits>
+#include <cstdint>
+
 namespace class_member {
 
 using instr::OpCode;
