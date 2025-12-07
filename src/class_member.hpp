@@ -42,8 +42,8 @@ private:
     std::vector<SharedPtrAttr> attrs_;
     
     // class internal
-    constant_pool::SharedPtrJVMCP cp_;
     bool isMethod_;
+    constant_pool::SharedPtrJVMCP cp_;
     bool isStatic_ = false;
 };
 

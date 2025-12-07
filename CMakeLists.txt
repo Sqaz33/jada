@@ -32,7 +32,7 @@ add_executable(${PROJECT_NAME}
                ${BISON_parser_OUTPUTS}
                ${FLEX_scanner_OUTPUTS}
 )
-target_compile_options(${PROJECT_NAME} PRIVATE -Wno-all) # TODO:
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall) 
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -42,6 +42,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GVC_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_LIBRARIES})
 
+
+######################################################################
+######################### codegen test ###############################
 set(CD_CORE "src/attribute.cpp"
             "src/method.cpp"
             "src/jvm_code_attribute.cpp"
@@ -62,3 +65,5 @@ target_link_libraries(cd_test PRIVATE ${GVC_LIBRARIES})
 target_include_directories(cd_test PRIVATE ${LIBCGRAPH_INCLUDE_DIRS})
 target_link_libraries(cd_test PRIVATE ${LIBCGRAPH_LIBRARIES})
 target_include_directories(cd_test PRIVATE src)
+
+target_compile_options(cd_test PRIVATE -Wall) 

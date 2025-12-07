@@ -5,7 +5,7 @@
 
 namespace attribute {
     
-class QualifiedName { // TODO: expand interface
+class QualifiedName {
 public:
     QualifiedName() = default;
     QualifiedName(const std::string& base);
@@ -13,7 +13,7 @@ public:
 public:
     void push(const std::string& name);
     bool empty() const noexcept; 
-    std::string toSring() const;  // TODO: name/name/name/obj 
+    std::string toSring() const;
     const std::string& first() const noexcept; 
     const std::string& last() const noexcept;
     

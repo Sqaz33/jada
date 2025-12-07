@@ -18,7 +18,7 @@ template <std::integral Integral>
 Integral reverse(Integral x) {
     Integral res = 0;
     Integral mask = 0xff;
-    for (int i = 0; i < sizeof(Integral); ++i) {
+    for (std::uint64_t i = 0; i < sizeof(Integral); ++i) {
         res <<= 8;
         res |= x & mask;
         x >>= 8;

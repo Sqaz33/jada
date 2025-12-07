@@ -10,8 +10,8 @@ JVMClass::JVMClass(
     std::uint16_t minorV) :
     name_(name.toSring())
     , simpleName_(name.last())
-    , majorV_(majorV)
     , minorV_(minorV)
+    , majorV_(majorV)
     , cp_(new constant_pool::JVMConstantPool)
     , nameIdx_(cp_->addClass(name.toSring()))
 {}

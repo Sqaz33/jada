@@ -21,8 +21,10 @@ std::string QualifiedName::toSring() const {
     if (empty()) return "";
 
     std::stringstream ss;
-    for (int i = 0; i < fullName_.size() - 1; ++i) {
-        ss << fullName_[i] << '.';
+    std::size_t lim = fullName_.empty() ? 
+                        0 : fullName_.size() - 1;
+    for (std::size_t i = 0; i < lim; ++i) {
+        ss << fullName_[i] << '/';
     }
     ss << fullName_.back();
     return ss.str();

@@ -39,11 +39,11 @@ private:
     int id() const noexcept;
 
 private:
+    int id_;
     std::uint32_t startOpCodeIdx_;
     std::vector<std::unique_ptr<instr::Instr>> instrs_;
     std::weak_ptr<jvm_attribute::CodeAttr> code_;
     std::vector<std::shared_ptr<BasicBlock>> branches_;
-    int id_;
 };
 
 using SharedPtrBB = std::shared_ptr<BasicBlock>;

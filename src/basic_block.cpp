@@ -129,7 +129,6 @@ void BasicBlock::setStartOpCodeIdx(
     std::uint32_t idx)  
 { 
     startOpCodeIdx_ = idx; 
-    int brIdx = 0;
     for (auto&& i : instrs_) {
         i->setIdx(idx);
         if (i->isBranch()) {
