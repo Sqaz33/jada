@@ -162,7 +162,10 @@ protected:
     std::shared_ptr<Body> body_;
 };
 
-class FuncDecl : public ProcDecl {
+class FuncDecl : 
+    private ProcDecl 
+    , public IDecl
+{
 public:
     using ParamType = ProcDecl::ParamType;
 

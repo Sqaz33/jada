@@ -27,5 +27,10 @@ Module::Module(std::shared_ptr<node::IDecl> unit,
     unit_->print(gv, v);
 }
 
+std::weak_ptr<node::IDecl> Module::unit() {
+    return unit_;
+}
+
+
 
 } // namespace mdl

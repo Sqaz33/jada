@@ -16,7 +16,9 @@ public:
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const;
 
-private:
+    std::weak_ptr<node::IDecl> unit();
+
+ private:
     std::shared_ptr<node::IDecl> unit_;
     std::vector<std::shared_ptr<node::With>> imports_;
     std::vector<std::shared_ptr<node::IDecl>> useDecls_;
