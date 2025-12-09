@@ -30,8 +30,8 @@ file(GLOB_RECURSE SRC "src/*.cpp")
 add_executable(${PROJECT_NAME}  
                ${SRC}
                ${BISON_parser_OUTPUTS}
-               ${FLEX_scanner_OUTPUTS}
-)
+               ${FLEX_scanner_OUTPUTS})
+               
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall) 
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
@@ -44,7 +44,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBCGRAPH_LIBRARIES})
 
 
 ######################################################################
-######################### codegen test ###############################
+######################### codegen test bin############################
 set(CD_CORE "src/attribute.cpp"
             "src/method.cpp"
             "src/jvm_code_attribute.cpp"

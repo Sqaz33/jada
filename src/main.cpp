@@ -83,7 +83,7 @@ int main(int argc, char** argv) try {
         return 1;
     } 
     
-    auto  mdl = path.filename();
+    auto mdl = path.filename();
     mdl.replace_extension("");
     helper::modulesForPars.push(mdl.string());
     helper::allModules.insert("ada");
