@@ -10,4 +10,6 @@ void replaceAll(std::string& str,
 
 void toLower(std::string& str);
 
+std::string toLower(const std::string& str, bool);
+
 } // namespace utility

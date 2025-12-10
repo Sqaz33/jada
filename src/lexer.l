@@ -119,6 +119,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
     
 {INTEGER}             { 
                         std::string text(yytext, yyleng);
+                        utility::toLower(text);
                         utility::replaceAll(text, "_", "");
                         int res = std::stoi(text);
                         yylval->emplace<int>(res);
@@ -130,6 +131,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         sv.remove_suffix(1);
                         std::string text(sv.begin(), sv.end());
                         utility::replaceAll(text, "_", "");
+                        utility::toLower(text);
                         int res = std::stoi(text, nullptr, 2);
                         yylval->emplace<int>(res);
                         return yy::parser::token_type::INTEGER;
@@ -140,6 +142,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         sv.remove_suffix(1);
                         std::string text(sv.begin(), sv.end());
                         utility::replaceAll(text, "_", "");
+                        utility::toLower(text);
                         int res = std::stoi(text, nullptr, 8);
                         yylval->emplace<int>(res);
                         return yy::parser::token_type::INTEGER;
@@ -150,6 +153,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         sv.remove_suffix(1);
                         std::string text(sv.begin(), sv.end());
                         utility::replaceAll(text, "_", "");
+                        utility::toLower(text);
                         int res = std::stoi(text, nullptr, 16);
                         yylval->emplace<int>(res);
                         return yy::parser::token_type::INTEGER;
@@ -157,6 +161,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 {FLOAT}               { 
                         std::string text(yytext, yyleng);
                         utility::replaceAll(text, "_", "");
+                        utility::toLower(text);
                         float res = std::stof(text);
                         yylval->emplace<float>(res);
                         return yy::parser::token_type::FLOAT;
@@ -205,6 +210,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 {NAME}                { 
                         std::string text(yytext, yyleng);
                         yylval->emplace<std::string>(std::move(text));
+                        utility::toLower(text);
                         return yy::parser::token_type::NAME;
                       }
 {GETTING_ATTRIBUTE}      { 

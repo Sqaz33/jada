@@ -21,4 +21,10 @@ void toLower(std::string& str) {
     );
 }
 
+std::string toLower(const std::string& str, bool) {
+    auto cp = str;
+    toLower(cp);
+    return cp;
+}
+
 } // namespace utility
