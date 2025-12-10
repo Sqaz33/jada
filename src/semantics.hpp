@@ -12,7 +12,7 @@ class ADASementics {
 public:
     void addPart(semantics_part::SharedPtr part);
     std::pair<bool, std::string> analyse(
-        const std::vector<mdl::Module>& program);
+        const std::vector<std::shared_ptr<mdl::Module>>& program);
 
 private:
     semantics_part::WeakPtr head_;

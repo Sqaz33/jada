@@ -63,7 +63,10 @@ namespace node {
 
 class IStm : public INode { /* ... */ };
 
-class IDecl : public INode { /*...*/ };
+class IDecl : public INode { 
+public: 
+    virtual const std::string& name() const noexcept = 0;
+};
 
 struct IType : INode { 
     virtual bool compare(
@@ -129,6 +132,9 @@ public: // INode interface
                        graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+public: // IDecl interface
+    const std::string& name() const noexcept override;
+
 private:
     std::string name_;
     std::shared_ptr<IType> type_;
@@ -150,6 +156,9 @@ public: // INode interface
                        graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+public: // IDecl interface
+    const std::string& name() const noexcept override;
+
 private:
     void printParam_(const ParamType& param, 
                      graphviz::GraphViz& gv, 
@@ -162,10 +171,7 @@ protected:
     std::shared_ptr<Body> body_;
 };
 
-class FuncDecl : 
-    private ProcDecl 
-    , public IDecl
-{
+class FuncDecl : public ProcDecl {
 public:
     using ParamType = ProcDecl::ParamType;
 
@@ -179,6 +185,8 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+
+    using ProcDecl::name;
 
 private:
     std::shared_ptr<IType> retType_;
@@ -198,15 +206,18 @@ public: // INode interface
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+public: // IDecl interface
+    const std::string& name() const noexcept override;
+
 private:
     std::string name_;
     std::shared_ptr<DeclArea> decls_;
     std::shared_ptr<DeclArea> privateDecls_;
 };
 
-class UseDecl : public IDecl {
+class Use : public INode{
 public:
-    UseDecl(attribute::QualifiedName name);
+    Use(attribute::QualifiedName name);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -216,6 +227,7 @@ public: // INode interface
 private:
     attribute::QualifiedName name_;
 };
+
 
 class With : public INode {
 public:
@@ -242,6 +254,9 @@ public: // INode interface
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+public: // IDecl interface
+    const std::string& name() const noexcept override;
+
 private:
     std::string name_;
     std::vector<std::shared_ptr<VarDecl>> decls_;
@@ -259,6 +274,9 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+
+public: // IDecl interface
+    const std::string& name() const noexcept override;
 
 private:
     std::string name_;

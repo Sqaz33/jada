@@ -14,11 +14,13 @@ struct ISemanticsPart {
         std::weak_ptr<ISemanticsPart> tail);
 
     virtual std::string analyse(
-        std::vector<mdl::Module> program) = 0; 
+                const std::vector<
+                    std::shared_ptr<mdl::Module>>& program) = 0; 
 
 protected:
     std::string analyseNext(
-        std::vector<mdl::Module> program);
+        const std::vector<
+                std::shared_ptr<mdl::Module>>& program);
 
 private:
     std::weak_ptr<ISemanticsPart> next_;

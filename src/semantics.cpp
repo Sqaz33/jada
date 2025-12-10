@@ -14,7 +14,7 @@ void ADASementics::addPart(
 
 std::pair<bool, std::string>
 ADASementics::analyse(
-    const std::vector<mdl::Module>& program)
+    const std::vector<std::shared_ptr<mdl::Module>>& program)
 {
     auto msg = head_.lock()->analyse(program);
     return {msg.empty(), msg};

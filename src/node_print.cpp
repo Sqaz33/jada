@@ -102,10 +102,10 @@ void PackDecl::print(graphviz::GraphViz& gv,
     }
 }
 
-void UseDecl::print(graphviz::GraphViz& gv, 
+void Use::print(graphviz::GraphViz& gv, 
                     graphviz::VertexType par) const 
 {
-    auto v = gv.addVertex("Use Decl", 
+    auto v = gv.addVertex("Use", 
                           {"Name: " + name_.toSring()});
     gv.addEdge(par, v);
 }
@@ -113,7 +113,7 @@ void UseDecl::print(graphviz::GraphViz& gv,
 void With::print(graphviz::GraphViz& gv, 
                  graphviz::VertexType par) const 
 {
-    auto v = gv.addVertex("With Decl", 
+    auto v = gv.addVertex("With", 
                           {"Name: " + name_.toSring()});
     gv.addEdge(par, v);
 }

@@ -1,17 +1,47 @@
 #include "semantics_part.hpp"
 
+#include <sstream>
+#include <ranges>
+
 #include "node.hpp"
 
 namespace semantics_part {
 
 // EntryPointCheck
 std::string EntryPointCheck::analyse(
-        std::vector<mdl::Module> program) 
-{
-    auto entry = program[0].unit().lock();
-    if (!std::dynamic_pointer_cast<node::ProcDecl>(entry)) {
-        return "The entry point should be a procedure";
+        const std::vector<
+                std::shared_ptr<mdl::Module>>& program) 
+{   
+    auto unit = program[0]->unit().lock();
+    if (!std::dynamic_pointer_cast<node::ProcDecl>(unit) ||
+         std::dynamic_pointer_cast<node::FuncDecl>(unit)) 
+    {
+        return program[0]->fileName()
+                + ": The entry point should be a procedure";
     }
+    return ISemanticsPart::analyseNext(program);
+}
+
+// ModuleNameCheck
+std::string ModuleNameCheck::analyse(
+        const std::vector<
+                std::shared_ptr<mdl::Module>>& program) 
+{   
+    for (auto&& mod : program | std::views::drop(1)) {
+        auto unit = mod->unit().lock();
+        if (unit->name() != mod->name()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << " The name of the compilation unit must"
+                  " be equal to the name of the code file: ";
+            ss << mod->name();
+            ss << " != ";
+            ss << unit->name();
+            return ss.str();
+        }
+    }
+
     return ISemanticsPart::analyseNext(program);
 }
 

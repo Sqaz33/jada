@@ -13,13 +13,12 @@ void ISemanticsPart::setTail(
 }
 
 std::string ISemanticsPart::analyseNext(
-    std::vector<mdl::Module> program) 
+        const std::vector<std::shared_ptr<mdl::Module>>& program) 
 {
     if (!next_.expired()) {
         return next_.lock()->analyse(program);
     }
     return "";
 }
-
 
 } // namespace semantics_part

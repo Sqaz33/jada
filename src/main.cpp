@@ -12,6 +12,9 @@
 #include "graphviz.hpp"
 #include "string_utility.hpp"
 #include "graphviz.hpp"
+#include "semantics.hpp"
+#include "semantics_part.hpp"
+
 namespace {
 
 void printErrors() {
@@ -69,13 +72,21 @@ int yyFlexLexer::yywrap() { return 1; }
 int main(int argc, char** argv) try {
     namespace fs = std::filesystem;
 
-    if (argc != 2) {
+    if (argc == 2 && std::string("-h") == argv[1]) {
+        std::cout << 
+        R"(Help:
+    -h : help
+    --pAst-before-semantics : print ast before semantics analysis)";
+        return 0;
+    }
+
+    if (argc < 2) {
         std::cout << "usage ./jada file.adb" << std::endl;
         return 1;
     }
 
     // argv = new char*[2]; // TODO: delete
-    // argv[1] = "../test_data/complex.adb"; // TODO: delete
+    // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
     
     fs::path path(argv[1]);
     if (".adb" != path.extension()) {
@@ -86,6 +97,7 @@ int main(int argc, char** argv) try {
     auto mdl = path.filename();
     mdl.replace_extension("");
     helper::modulesForPars.push(mdl.string());
+
     helper::allModules.insert("ada");
 
     if (!parseProgram(path.remove_filename())) {
@@ -93,7 +105,24 @@ int main(int argc, char** argv) try {
         return 1;
     }
 
-    printAst();
+    if (3 == argc && 
+        std::string("--pAst-before-semantics") == argv[2]) 
+    {
+        printAst();
+    }
+
+    semantics::ADASementics sem;
+    auto EPC = 
+        std::make_shared<semantics_part::EntryPointCheck>();
+    auto MNC = 
+        std::make_shared<semantics_part::ModuleNameCheck>();
+    sem.addPart(EPC);
+    sem.addPart(MNC);
+    auto[ok, msg] = sem.analyse(helper::modules);
+    if (!ok) {
+        std::cerr << msg << std::endl;
+        return 1;
+    }
 
     return 0;
 } catch (const std::exception& e) {

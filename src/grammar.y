@@ -34,7 +34,7 @@
 
   using OptionalImports = typename 
     std::pair<std::vector<std::shared_ptr<node::With>>, 
-                std::vector<std::shared_ptr<node::IDecl>>>;
+                std::vector<std::shared_ptr<node::Use>>>;
                 
   using ArgsType = typename std::vector<std::shared_ptr<node::IExpr>>;
 
@@ -91,8 +91,8 @@
 
 %nterm<std::shared_ptr<node::IDecl>> decl
 %nterm<std::shared_ptr<node::IDecl>> var_decl
-%nterm<std::shared_ptr<node::With>> import
-%nterm<std::shared_ptr<node::IDecl>> use_decl
+%nterm<std::shared_ptr<node::With>> with
+%nterm<std::shared_ptr<node::Use>> use
 %nterm<attribute::QualifiedName> qualified_name
 %nterm<attribute::Attribute> getting_attribute
 %nterm<std::shared_ptr<node::IDecl>> proc_decl
@@ -148,26 +148,14 @@
 
 program: optional_imports compile_unit                                  { 
                                                                           auto mod = std::make_shared<mdl::Module>(
-                                                                            $2, $1.first, $1.second, helper::curModuleName);
+                                                                            $2, $1.first, $1.second, 
+                                                                            helper::curModuleName, helper::curModuleFileName);
                                                                           helper::modules.push_back(mod);
                                                                         }
 
 /* declarations */
 /* ################################################################################ */
-decl_area:        decl                                                  { $$.reset(new node::DeclArea()); $$->addDecl($1); }  
-                | decl_area decl                                        { $$ = $1; $$->addDecl($2); }
- 
-decl:             var_decl
-                | use_decl
-                | proc_decl  
-                | func_decl
-                | pack_decl  
-                | type_decl
-
-var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
-                | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
- 
-import:           WITH qualified_name SC                                { 
+with:             WITH qualified_name SC                                { 
                                                                           auto mdl = $2.first();
                                                                           utility::toLower(mdl);
                                                                           if (!helper::allModules.contains(mdl))
@@ -175,15 +163,27 @@ import:           WITH qualified_name SC                                {
                                                                           $$.reset(new node::With($2)); 
                                                                         }
 
-use_decl:         USE qualified_name SC                                 { $$.reset(new node::UseDecl($2)); } /* we want it? */
+use:              USE qualified_name SC                                 { $$.reset(new node::Use($2)); } 
 
 optional_imports: imports
                 | %empty                                                { $$ = OptionalImports({}, {}); }
 
-imports:          import                                                { $$ = OptionalImports({$1}, {}); }
-                | use_decl                                              { $$ = OptionalImports({}, {$1}); }
-                | imports import                                        { $$ = std::move($1); $$.first.push_back($2); }
-                | imports use_decl                                      { $$ = std::move($1); $$.second.push_back($2); }
+imports:          with                                                  { $$ = OptionalImports({$1}, {}); }
+                | use                                                   { $$ = OptionalImports({}, {$1}); }
+                | imports with                                          { $$ = std::move($1); $$.first.push_back($2); }
+                | imports use                                           { $$ = std::move($1); $$.second.push_back($2); }
+
+decl_area:        decl                                                  { $$.reset(new node::DeclArea()); $$->addDecl($1); }  
+                | decl_area decl                                        { $$ = $1; $$->addDecl($2); }
+ 
+decl:             var_decl
+                | proc_decl  
+                | func_decl
+                | pack_decl  
+                | type_decl
+
+var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
+                | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
 
 qualified_name:   NAME                                                  { $$ = attribute::QualifiedName($1); } 
                 | qualified_name DOT NAME                               { $$ = std::move($1); $$.push($3); }       

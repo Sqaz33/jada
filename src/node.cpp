@@ -29,6 +29,10 @@ VarDecl::VarDecl(const std::string& name,
     , rval_(rval)
 {}
 
+const std::string& VarDecl::name() const noexcept {
+    return name_;
+}
+
 // FuncDecl
 FuncDecl::FuncDecl(const std::string& name, 
                    const std::vector<FuncDecl::ParamType>& params,
@@ -50,6 +54,10 @@ ProcDecl::ProcDecl(const std::string& name,
     , body_(body)
 {}
 
+const std::string& ProcDecl::name() const noexcept {
+    return name_;
+}
+
 // ProcDecl
 PackDecl::PackDecl(const std::string& name, 
                    std::shared_ptr<DeclArea> decls,
@@ -59,12 +67,21 @@ PackDecl::PackDecl(const std::string& name,
     , privateDecls_(privateDecls)
 {}
 
+const std::string& PackDecl::name() const noexcept {
+    return name_;
+}
+
 // Use Decl 
-UseDecl::UseDecl(attribute::QualifiedName name) :
+Use::Use(attribute::QualifiedName name) :
     name_(std::move(name))
 {}
 
-// With Decl 
+// const std::string& Use::name() const noexcept {
+//     assert(false && "Use name");
+//     return *static_cast<std::string*>(nullptr);
+// }
+
+// With 
 With::With(attribute::QualifiedName name) :
     name_(std::move(name))
 {}
@@ -80,12 +97,20 @@ RecordDecl::RecordDecl(const std::string& name,
     , isTagged_(isTagged)
 { isInherits_ = !base.empty(); }
 
+const std::string& RecordDecl::name() const noexcept {
+    return name_;
+}
 
+//TypeAliasDecl
 TypeAliasDecl::TypeAliasDecl(const std::string& name, 
                             std::shared_ptr<IType> origin):
     name_(name)
     , origin_(origin)
 {}
+
+const std::string& TypeAliasDecl::name() const noexcept {
+    return name_;
+}
 
 } // namespace node 
 

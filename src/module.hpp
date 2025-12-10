@@ -8,9 +8,10 @@ namespace mdl {
 class Module {
 public:
     Module(std::shared_ptr<node::IDecl> unit, 
-           std::vector<std::shared_ptr<node::With>> imports,
-           std::vector<std::shared_ptr<node::IDecl>> useDecls,
-           const std::string& name);
+           std::vector<std::shared_ptr<node::With>> with,
+           std::vector<std::shared_ptr<node::Use>> use,
+           const std::string& name,
+           const std::string& fileName);
 
 public:
     void print(graphviz::GraphViz& gv, 
@@ -18,11 +19,16 @@ public:
 
     std::weak_ptr<node::IDecl> unit();
 
+    const std::string& fileName() const noexcept;
+
+    const std::string& name() const noexcept;
+
  private:
     std::shared_ptr<node::IDecl> unit_;
-    std::vector<std::shared_ptr<node::With>> imports_;
-    std::vector<std::shared_ptr<node::IDecl>> useDecls_;
+    std::vector<std::shared_ptr<node::With>> with_;
+    std::vector<std::shared_ptr<node::Use>> use_;
     std::string name_;
+    std::string fileName_;
 };
 
 } // namespace mdl

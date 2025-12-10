@@ -3,13 +3,15 @@
 namespace mdl {
 
 Module::Module(std::shared_ptr<node::IDecl> unit, 
-               std::vector<std::shared_ptr<node::With>> imports,
-               std::vector<std::shared_ptr<node::IDecl>> useDecls,
-               const std::string& name) :
+               std::vector<std::shared_ptr<node::With>> with,
+               std::vector<std::shared_ptr<node::Use>> use,
+               const std::string& name,
+               const std::string& fileName) :
     unit_(unit)
-    , imports_(imports)
-    , useDecls_(useDecls)
+    , with_(with)
+    , use_(use)
     , name_(name)
+    , fileName_(fileName)
 {}
 
  void Module::print(graphviz::GraphViz& gv, 
@@ -18,10 +20,10 @@ Module::Module(std::shared_ptr<node::IDecl> unit,
     auto v = gv.addVertex("Module", {name_ + ".adb"});
     gv.addEdge(par, v);
 
-    for (auto imp : imports_) {
+    for (auto imp : with_) {
         imp->print(gv, v);
     }
-    for (auto use : useDecls_) {
+    for (auto use : use_) {
         use->print(gv, v);
     }
     unit_->print(gv, v);
@@ -31,6 +33,12 @@ std::weak_ptr<node::IDecl> Module::unit() {
     return unit_;
 }
 
+const std::string& Module::fileName() const noexcept {
+    return fileName_;
+}
 
+const std::string& Module::name() const noexcept {
+    return name_;
+}
 
 } // namespace mdl
