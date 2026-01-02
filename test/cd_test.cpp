@@ -7,7 +7,7 @@ int main() {
     cls->addAccesFlag(codegen::AccessFlag::ACC_PUBLIC);
 
 
-    auto initType =  descriptor::JVMMethodDescriptor::createVoidParamsVoidreturn();
+    auto initType =  descriptor::JVMMethodDescriptor::createVoidParamsVoidReturn();
 
     attribute::QualifiedName objName("java/lang/Object");
     auto obj = cd.createClass(objName);

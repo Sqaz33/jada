@@ -103,7 +103,7 @@ JVMMethodDescriptor::createVoidParams(
 }
 
 JVMMethodDescriptor
-JVMMethodDescriptor::createVoidParamsVoidreturn() {
+JVMMethodDescriptor::createVoidParamsVoidReturn() {
     std::string desc("()");
     desc += 'V';
     return JVMMethodDescriptor(std::move(desc));
