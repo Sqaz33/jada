@@ -18,6 +18,8 @@ public:
                graphviz::VertexType par) const;
 
     std::weak_ptr<node::IDecl> unit();
+    const std::vector<std::shared_ptr<node::With>>&
+    with() const noexcept;
 
     const std::string& fileName() const noexcept;
 

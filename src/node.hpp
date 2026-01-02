@@ -238,6 +238,9 @@ public: // INode interface
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+public:
+    const attribute::QualifiedName& name() const noexcept;
+
 private:
     attribute::QualifiedName name_;
 };

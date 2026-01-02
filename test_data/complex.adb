@@ -87,4 +87,6 @@ begin
             end if;
         end loop;
     end loop;
+   I := 1 + 2 + 3 + 4 + 5;
+
 end TestLoops;

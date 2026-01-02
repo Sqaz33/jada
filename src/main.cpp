@@ -65,6 +65,22 @@ void printAst() {
     gv->printDOT(std::cout);
 }
 
+int semanticAnalysis() {
+    semantics::ADASementics sem;
+    auto EPC = 
+        std::make_shared<semantics_part::EntryPointCheck>();
+    auto MNC = 
+        std::make_shared<semantics_part::ModuleNameCheck>();
+    sem.addPart(EPC);
+    sem.addPart(MNC);
+    auto[ok, msg] = sem.analyse(helper::modules);
+    if (!ok) {
+        std::cerr << msg << std::endl;
+        return 1;
+    }
+    return 0;
+}
+
 } // namespace
 
 int yyFlexLexer::yywrap() { return 1; }
@@ -111,20 +127,7 @@ int main(int argc, char** argv) try {
         printAst();
     }
 
-    semantics::ADASementics sem;
-    auto EPC = 
-        std::make_shared<semantics_part::EntryPointCheck>();
-    auto MNC = 
-        std::make_shared<semantics_part::ModuleNameCheck>();
-    sem.addPart(EPC);
-    sem.addPart(MNC);
-    auto[ok, msg] = sem.analyse(helper::modules);
-    if (!ok) {
-        std::cerr << msg << std::endl;
-        return 1;
-    }
-
-    return 0;
+    return semanticAnalysis();
 } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
     printErrors();

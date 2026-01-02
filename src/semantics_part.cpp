@@ -2,6 +2,9 @@
 
 #include <sstream>
 #include <ranges>
+#include <set>
+#include <iterator>
+#include <algorithm>
 
 #include "node.hpp"
 
@@ -45,4 +48,72 @@ std::string ModuleNameCheck::analyse(
     return ISemanticsPart::analyseNext(program);
 }
 
+// OneLevelWithCheck 
+std::string OneLevelWithCheck::analyse(
+        const std::vector<
+                std::shared_ptr<mdl::Module>>& program) 
+{   
+    for (auto&& mod : program) {
+        for (auto&& with : mod->with()) {
+            auto&& name = with->name();
+            if (name.size() != 1) {
+                std::stringstream ss;
+                ss << mod->fileName();
+                ss << ":";
+                ss << "The With statement must contain one name level.";
+                return ss.str();
+            }
+        }
+    }
+
+    return ISemanticsPart::analyseNext(program);
 }
+
+// SelfImportCheck
+std::string SelfImportCheck::analyse(
+        const std::vector<
+                std::shared_ptr<mdl::Module>>& program) 
+{   
+    for (auto&& mod : program) {
+        for (auto&& with : mod->with()) {
+            auto&& name = with->name();
+            if (name.first() == mod->name()) {
+                std::stringstream ss;
+                ss << mod->fileName();
+                ss << ":";
+                ss << "The module cannot import itself.";
+                return ss.str();
+            }
+        }
+    }
+
+    return ISemanticsPart::analyseNext(program);
+}
+
+// ExistingModuleImportCheck
+std::string SelfImportCheck::analyse(
+        const std::vector<
+                std::shared_ptr<mdl::Module>>& program) 
+{   
+    std::set<std::string> moduleNames;
+    std::transform(program.begin(), program.end(), 
+                   std::inserter(moduleNames, moduleNames.end()), 
+                   [] (auto&& mod) { return mod->name(); });
+
+    for (auto&& mod : program) {
+        for (auto&& with : mod->with()) {
+            auto&& name = with->name();
+            if (!moduleNames.contains(name.first())) {
+                std::stringstream ss;
+                ss << mod->fileName();
+                ss << ":";
+                ss << "Importing a non-existing module";
+                return ss.str();
+            }
+        }
+    }
+
+    return ISemanticsPart::analyseNext(program);
+}
+
+} // semantics_part

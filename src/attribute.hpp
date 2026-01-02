@@ -16,6 +16,7 @@ public:
     std::string toSring() const;
     const std::string& first() const noexcept; 
     const std::string& last() const noexcept;
+    std::size_t size() const noexcept;
     
     auto operator<=>(const QualifiedName&) const = default;
 private:

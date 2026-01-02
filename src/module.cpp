@@ -33,6 +33,11 @@ std::weak_ptr<node::IDecl> Module::unit() {
     return unit_;
 }
 
+const std::vector<std::shared_ptr<node::With>>&
+Module::with() const noexcept {
+    return with_;
+}
+
 const std::string& Module::fileName() const noexcept {
     return fileName_;
 }

@@ -37,6 +37,10 @@ const std::string& QualifiedName::last() const noexcept {
     return fullName_.back();
 }
 
+std::size_t QualifiedName::size() const noexcept {
+    return fullName_.size();
+}
+
 Attribute::Attribute(QualifiedName left, const std::string& right) :
     left_(std::move(left))
     , right_(right)

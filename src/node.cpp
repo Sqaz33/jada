@@ -86,6 +86,12 @@ With::With(attribute::QualifiedName name) :
     name_(std::move(name))
 {}
 
+const attribute::QualifiedName& 
+With::name() const noexcept {
+    return name_;
+}
+
+
 // RecordDecl
 RecordDecl::RecordDecl(const std::string& name, 
                        const std::vector<std::shared_ptr<VarDecl>>& decls, 
