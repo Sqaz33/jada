@@ -42,7 +42,7 @@ public:
     createVoidParams(const JVMFieldDescriptor& ret);
 
     static JVMMethodDescriptor
-    createVoidParamsVoidreturn();
+    createVoidParamsVoidReturn();
 
     static JVMMethodDescriptor
     create(        

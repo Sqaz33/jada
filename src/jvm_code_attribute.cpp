@@ -170,7 +170,7 @@ std::uint32_t CodeAttr::selfLen_() const {
 
 void CodeAttr::checBBThenThrow_(bb::SharedPtrBB bb) {
     if (bb->codeAttr().lock() != shared_from_this()) {
-        throw std::logic_error("working with bb" 
+        throw std::logic_error("Working with bb" 
                                " from another method");
     }
 }  

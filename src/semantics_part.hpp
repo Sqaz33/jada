@@ -32,4 +32,12 @@ public:
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
+class ExistingModuleImportCheck : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+};
+
+
 } // namespace semantics_part

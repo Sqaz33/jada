@@ -91,7 +91,7 @@ std::string SelfImportCheck::analyse(
 }
 
 // ExistingModuleImportCheck
-std::string SelfImportCheck::analyse(
+std::string ExistingModuleImportCheck::analyse(
         const std::vector<
                 std::shared_ptr<mdl::Module>>& program) 
 {   
