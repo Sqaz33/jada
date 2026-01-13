@@ -38,4 +38,20 @@ bool SymTab::contains(
     return symbols_.contains(name);
 }
 
+void SymTab::changeNode(const attribute::QualifiedName& name, 
+                        std::weak_ptr<node::INode> symb)
+{
+    auto&& p = symbols_.at(name);
+    p.second.swap(symb);
+}
+
+void SymTab::changeType(const attribute::QualifiedName& name,
+                        SymbolType type)
+{
+    auto&& p = symbols_.at(name);
+    p.first = type;
+}
+
+SymTab globalTab;
+
 } // namespace symtab

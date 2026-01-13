@@ -35,6 +35,12 @@ public:
 
     bool contains(const attribute::QualifiedName& name);
 
+    void changeNode(const attribute::QualifiedName& name, 
+                    std::weak_ptr<node::INode> symb);
+
+    void changeType(const attribute::QualifiedName& name,
+                    SymbolType type);
+
 private:
     std::map<attribute::QualifiedName, 
             std::pair<
@@ -45,3 +51,6 @@ private:
 extern SymTab globalTab;
 
 } // namespace symtab
+
+// TODO delete
+// думайте подсказывайте 
