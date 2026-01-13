@@ -66,6 +66,21 @@ class IStm : public INode { /* ... */ };
 class IDecl : public INode { 
 public: 
     virtual const std::string& name() const noexcept = 0;
+
+    std::shared_ptr<IDecl> reachable(
+        const attribute::QualifiedName& name, 
+        std::shared_ptr<IDecl> requester);
+
+    virtual void setParent(std::weak_ptr<IDecl> parent) = 0; // TODO
+
+private:
+    std::shared_ptr<IDecl> reachable_(
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        std::shared_ptr<IDecl> requester);
+
+private:
+    std::weak_ptr<IDecl> parent_;
 };
 
 struct IType : INode { 
@@ -106,8 +121,11 @@ private:
 namespace node { 
 class DeclArea : public INode {
 public:
-
     void addDecl(std::shared_ptr<IDecl> decl);
+
+    void replaceDecl(
+        const std::string& name, 
+        std::shared_ptr<IDecl> decl);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -141,7 +159,10 @@ private:
     std::shared_ptr<IExpr> rval_;
 };
 
-class ProcDecl : public IDecl {
+class ProcDecl : 
+    public IDecl 
+    , public std::enable_shared_from_this<ProcDecl>
+{
 public:
     using ParamType = 
         std::pair<std::shared_ptr<VarDecl>, ParamMode>;
@@ -158,6 +179,7 @@ public: // INode interface
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
+
 
 private:
     void printParam_(const ParamType& param, 

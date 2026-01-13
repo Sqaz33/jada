@@ -53,4 +53,4 @@ extern SymTab globalTab;
 } // namespace symtab
 
 // TODO delete
-// думайте подсказывайте 
+// 1. заполняется только структурами, доступными из глобала

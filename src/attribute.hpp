@@ -5,6 +5,8 @@
 
 namespace attribute {
     
+
+// TODO: добавить пару коснт итер 
 class QualifiedName {
 public:
     QualifiedName() = default;
@@ -17,6 +19,8 @@ public:
     const std::string& first() const noexcept; 
     const std::string& last() const noexcept;
     std::size_t size() const noexcept;
+    std::vector<std::string>::const_iterator begin() const;
+    std::vector<std::string>::const_iterator end() const;
     
     auto operator<=>(const QualifiedName&) const = default;
 private:

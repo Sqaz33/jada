@@ -15,6 +15,28 @@ Body::Body(const std::vector<std::shared_ptr<IStm>>& stms) :
 // Decls 
 namespace node {
 
+
+// IDecl 
+std::shared_ptr<IDecl> IDecl::reachable(
+    const attribute::QualifiedName& name, 
+    std::shared_ptr<IDecl> requester) 
+{
+    if (dynamic_cast<VarDecl*>(this) || 
+         dynamic_cast<TypeAliasDecl*>(this)) 
+    {
+        return nullptr;
+    }
+
+    if (auto symb = reachable_(name.begin(), name.end(), requester)); // если нет то вызывать у парента
+}
+
+// первый проход начиная с вложенных, второй начиная с контейнера
+std::shared_ptr<IDecl> reachable_(
+    std::vector<std::string>::const_iterator it,
+    std::vector<std::string>::const_iterator end,
+    std::shared_ptr<IDecl> requester); 
+
+
 // DeclArea
 void DeclArea::addDecl(std::shared_ptr<IDecl> decl) {
     decls_.push_back(decl);
@@ -58,7 +80,7 @@ const std::string& ProcDecl::name() const noexcept {
     return name_;
 }
 
-// ProcDecl
+// PackDecl
 PackDecl::PackDecl(const std::string& name, 
                    std::shared_ptr<DeclArea> decls,
                    std::shared_ptr<DeclArea> privateDecls):

@@ -4,7 +4,7 @@
 #include <sstream>
 
 namespace attribute {
-
+// QualifiedName
 QualifiedName::QualifiedName(const std::string& base) :
     fullName_({base})
 {}
@@ -41,6 +41,17 @@ std::size_t QualifiedName::size() const noexcept {
     return fullName_.size();
 }
 
+std::vector<std::string>::const_iterator 
+QualifiedName::begin() const {
+    return fullName_.cbegin();
+}
+
+std::vector<std::string>::const_iterator 
+QualifiedName::end() const {
+    return fullName_.cend();
+}
+
+// Attribute:
 Attribute::Attribute(QualifiedName left, const std::string& right) :
     left_(std::move(left))
     , right_(right)
