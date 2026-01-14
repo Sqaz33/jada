@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "node.hpp"
+#include "string_utility.hpp"
 
 namespace semantics_part {
 
@@ -56,7 +57,9 @@ std::string OneLevelWithCheck::analyse(
     for (auto&& mod : program) {
         for (auto&& with : mod->with()) {
             auto&& name = with->name();
-            if (name.size() != 1) {
+            if (name.size() != 1 && 
+                utility::toLower(name.first(), bool()) != "ada") 
+            {
                 std::stringstream ss;
                 ss << mod->fileName();
                 ss << ":";

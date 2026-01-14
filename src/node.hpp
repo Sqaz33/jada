@@ -20,6 +20,10 @@ struct INode {
 
     void setLocation(const yy::location& loc);
 
+    void setParent(std::weak_ptr<INode> parent);
+
+protected:
+    std::weak_ptr<INode> parent_;
 protected:
     yy::location loc;
 };
@@ -102,7 +106,10 @@ class ILiteral : public IExpr { /*...*/ };
 // #########################################
 namespace node {
 
-class Body : public INode {
+class Body : 
+    public INode 
+    , std::enable_shared_from_this<Body>
+{
 public:
     Body(const std::vector<std::shared_ptr<IStm>>& stms);
     
@@ -119,7 +126,10 @@ private:
 
 // Decls 
 namespace node { 
-class DeclArea : public INode {
+class DeclArea : 
+    public INode 
+    , std::enable_shared_from_this<Body>
+{
 public:
     void addDecl(std::shared_ptr<IDecl> decl);
 
@@ -193,7 +203,10 @@ protected:
     std::shared_ptr<Body> body_;
 };
 
-class FuncDecl : public ProcDecl {
+class FuncDecl : 
+    public ProcDecl 
+    , std::enable_shared_from_this<Body>
+{
 public:
     using ParamType = ProcDecl::ParamType;
 
@@ -217,7 +230,10 @@ private:
                                 graphviz::VertexType par) const;
 };
 
-class PackDecl : public IDecl {
+class PackDecl : 
+    public IDecl 
+    , std::enable_shared_from_this<Body>
+{
 public:
     PackDecl(const std::string& name, 
              std::shared_ptr<DeclArea> decls, 
@@ -267,7 +283,10 @@ private:
     attribute::QualifiedName name_;
 };
 
-class RecordDecl : public IDecl {
+class RecordDecl : 
+    public IDecl 
+    , std::enable_shared_from_this<Body>
+{
 public:
     RecordDecl(const std::string& name, 
                const std::vector<std::shared_ptr<VarDecl>>& decls, 
@@ -282,7 +301,11 @@ public: // INode interface
 public: // IDecl interface
     const std::string& name() const noexcept override;
 
+public: 
+    void setBase(std::shared_ptr<RecordDecl> base);
+
 private:
+    std::weak_ptr<RecordDecl> base_;
     std::string name_;
     std::vector<std::shared_ptr<VarDecl>> decls_;
     attribute::QualifiedName base_;
@@ -290,7 +313,10 @@ private:
     bool isTagged_;
 };
 
-class TypeAliasDecl : public IDecl {
+class TypeAliasDecl : 
+    public IDecl 
+    , std::enable_shared_from_this<Body>
+{
 public:
     TypeAliasDecl(const std::string& name, 
                   std::shared_ptr<IType> type); 
@@ -334,7 +360,10 @@ private:
     SimpleType type_;
 };
 
-class ArrayType : public IType {
+class ArrayType : 
+    public IType 
+    , std::enable_shared_from_this<Body>
+{
 public:
     ArrayType(const std::vector<std::pair<int, int>>& ranges, 
               std::shared_ptr<IType> type);
@@ -376,7 +405,10 @@ private:
 // Exprs
 namespace node {
 
-class Op : public IExpr {
+class Op : 
+    public IExpr 
+    , std::enable_shared_from_this<Body>
+{
 public:
     Op(std::shared_ptr<IExpr> lhs, 
        OpType opType, 
@@ -431,7 +463,10 @@ private:
     attribute::Attribute attr_;
 };
 
-class CallOrIdxExpr : public IExpr {
+class CallOrIdxExpr : 
+    public IExpr 
+    , std::enable_shared_from_this<Body>
+{
     using ArgsType_ = std::vector<std::shared_ptr<IExpr>>;
 
 public:
@@ -462,7 +497,10 @@ private:
 // Exprs - Literals
 namespace node {
 
-class SimpleLiteral : public ILiteral {
+class SimpleLiteral : 
+    public ILiteral 
+    , std::enable_shared_from_this<Body>
+{
 public:
     template <class T>
     SimpleLiteral(std::shared_ptr<SimpleLiteralType> type, T&& value):

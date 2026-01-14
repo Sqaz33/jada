@@ -2,13 +2,20 @@
 
 #include <algorithm>
 
+// INode
+void node::INode::setParent(std::weak_ptr<INode> parent) {
+    parent_ = parent;
+}
 
 // Stms
 namespace node {
 
 Body::Body(const std::vector<std::shared_ptr<IStm>>& stms) :
     stms_(stms)
-{}
+{
+    std::for_each(stms_.begin(), stms_.end(), 
+        [this](auto s) { s->setParent(shared_from_this()); });
+}
 
 } // namespace node 
 
@@ -27,7 +34,15 @@ std::shared_ptr<IDecl> IDecl::reachable(
         return nullptr;
     }
 
-    if (auto symb = reachable_(name.begin(), name.end(), requester)); // если нет то вызывать у парента
+    if (auto symb = 
+        reachable_(name.begin(), name.end(), requester)) 
+    {
+        return symb;
+    } 
+    else
+    {
+        // return 
+    } 
 }
 
 // первый проход начиная с вложенных, второй начиная с контейнера
@@ -40,6 +55,7 @@ std::shared_ptr<IDecl> reachable_(
 // DeclArea
 void DeclArea::addDecl(std::shared_ptr<IDecl> decl) {
     decls_.push_back(decl);
+    decl->setParent();
 }
 
 // VarDecl
