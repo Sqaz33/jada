@@ -3,9 +3,17 @@
 #include <algorithm>
 
 // INode
-void node::INode::setParent(std::weak_ptr<INode> parent) {
+namespace node {
+
+void INode::setParent(std::weak_ptr<INode> parent) {
     parent_ = parent;
 }
+
+std::shared_ptr<INode> INode::self() {
+    return shared_from_this();
+}
+
+} // 
 
 // Stms
 namespace node {
@@ -14,7 +22,7 @@ Body::Body(const std::vector<std::shared_ptr<IStm>>& stms) :
     stms_(stms)
 {
     std::for_each(stms_.begin(), stms_.end(), 
-        [this](auto s) { s->setParent(shared_from_this()); });
+        [this](auto s) { s->setParent(self()); });
 }
 
 } // namespace node 
@@ -45,17 +53,38 @@ std::shared_ptr<IDecl> IDecl::reachable(
     } 
 }
 
+
 // первый проход начиная с вложенных, второй начиная с контейнера
-std::shared_ptr<IDecl> reachable_(
+std::shared_ptr<IDecl> IDecl::reachable_(
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    std::shared_ptr<IDecl> requester); 
+    std::shared_ptr<IDecl> requester)
+{
+    
+}
 
 
 // DeclArea
 void DeclArea::addDecl(std::shared_ptr<IDecl> decl) {
     decls_.push_back(decl);
-    decl->setParent();
+    decl->setParent(self());
+}
+
+void DeclArea::replaceDecl(
+    const std::string& name, 
+    std::shared_ptr<IDecl> decl) 
+{
+    for (auto&& d : decls_) {
+        if (d->name() == name) {
+            d.swap(decl);
+            d->setParent(self());
+            return;
+        }
+    }
+    throw std::logic_error("There is no declaration" 
+                           " with that name" 
+                           " in this declaration area: " 
+                           + name);   
 }
 
 // VarDecl
@@ -65,36 +94,45 @@ VarDecl::VarDecl(const std::string& name,
     name_(name)
     , type_(type)
     , rval_(rval)
-{}
+{
+    type->setParent(self());
+    rval->setParent(self());
+}
 
 const std::string& VarDecl::name() const noexcept {
     return name_;
 }
 
-// FuncDecl
-FuncDecl::FuncDecl(const std::string& name, 
-                   const std::vector<FuncDecl::ParamType>& params,
-                   std::shared_ptr<DeclArea> decls,
-                   std::shared_ptr<Body> body,
-                   std::shared_ptr<IType> retType) :
-    ProcDecl(name, params, decls, body)
-    , retType_(retType)
-{}
-
 // ProcDecl
 ProcDecl::ProcDecl(const std::string& name, 
-                   const std::vector<ParamType>& params,
+                   const std::vector<std::shared_ptr<VarDecl>>& params,
                    std::shared_ptr<DeclArea> decls,
                    std::shared_ptr<Body> body) :
     name_(name)
     , params_(params)
     , decls_(decls)
     , body_(body)
-{}
+{
+    for (auto param : params_) {
+        param->setParent(self());
+    }
+    decls_->setParent(self());
+    body_->setParent(self());
+}
 
 const std::string& ProcDecl::name() const noexcept {
     return name_;
 }
+
+// FuncDecl
+FuncDecl::FuncDecl(const std::string& name, 
+                   const std::vector<std::shared_ptr<VarDecl>>& params,
+                   std::shared_ptr<DeclArea> decls,
+                   std::shared_ptr<Body> body,
+                   std::shared_ptr<IType> retType) :
+    ProcDecl(name, params, decls, body)
+    , retType_(retType)
+{ retType_->setParent(self()); }
 
 // PackDecl
 PackDecl::PackDecl(const std::string& name, 
@@ -103,7 +141,10 @@ PackDecl::PackDecl(const std::string& name,
     name_(name)
     , decls_(decls)
     , privateDecls_(privateDecls)
-{}
+{
+    decls->setParent(self());
+    privateDecls_->setParent(self());
+}
 
 const std::string& PackDecl::name() const noexcept {
     return name_;
@@ -113,11 +154,6 @@ const std::string& PackDecl::name() const noexcept {
 Use::Use(attribute::QualifiedName name) :
     name_(std::move(name))
 {}
-
-// const std::string& Use::name() const noexcept {
-//     assert(false && "Use name");
-//     return *static_cast<std::string*>(nullptr);
-// }
 
 // With 
 With::With(attribute::QualifiedName name) :
@@ -139,7 +175,12 @@ RecordDecl::RecordDecl(const std::string& name,
     , decls_(decls)
     , base_(std::move(base))
     , isTagged_(isTagged)
-{ isInherits_ = !base.empty(); }
+{ 
+    isInherits_ = !base.empty(); 
+    for (auto d : decls) {
+        d->setParent(self());
+    }
+}
 
 const std::string& RecordDecl::name() const noexcept {
     return name_;
@@ -150,7 +191,9 @@ TypeAliasDecl::TypeAliasDecl(const std::string& name,
                             std::shared_ptr<IType> origin):
     name_(name)
     , origin_(origin)
-{}
+{
+    origin_->setParent(self());
+}
 
 const std::string& TypeAliasDecl::name() const noexcept {
     return name_;
@@ -175,7 +218,9 @@ ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges,
                      std::shared_ptr<IType> type) :
     ranges_(ranges)
     , type_(type)
-{}
+{
+    type_->setParent(self());
+}
 
 // StringType
 StringType::StringType(std::pair<int, int> range) :
@@ -186,7 +231,11 @@ StringType::StringType(std::pair<int, int> range) :
 Aggregate::Aggregate(const std::vector<
                         std::shared_ptr<ILiteral>>& inits) :
     inits_(inits)
-{}
+{
+    for (auto i : inits_) {
+        i->setParent(self());
+    }
+}
 
 
 } // namespace node 
@@ -200,7 +249,10 @@ Op::Op(std::shared_ptr<IExpr> lhs,
     lhs_(lhs)
     , opType_(opType)
     , rhs_(rhs)
-{}
+{
+    lhs->setParent(self());
+    rhs->setParent(self());
+}
 
 NameExpr::NameExpr(const std::string& name) :
     name_(name)
@@ -215,7 +267,12 @@ CallOrIdxExpr::CallOrIdxExpr(
     const std::vector<std::shared_ptr<node::IExpr>>& args) :
     name_(name)
     , args_(args)
-{}
+{
+    name_->setParent(self());
+    for (auto arg : args) {
+        arg->setParent(self());
+    }
+}
 
 } // namespace node 
 
@@ -227,7 +284,9 @@ StringLiteral::StringLiteral(std::shared_ptr<StringType> type,
                              const std::string& str) :
     str_(str)
     , type_(type)
-{}
+{
+    type_->setParent(self());
+}
 
 } // namespace node 
 
@@ -243,7 +302,15 @@ If::If(std::shared_ptr<IExpr> cond,
     , body_(body)
     , els_(els)
     , elsifs_(elsifs)
-{}
+{
+    cond_->setParent(self());
+    body_->setParent(self());
+    els_->setParent(self());
+    for (auto [cnd, bdy] : elsifs_) {
+        cnd->setParent(self());
+        bdy->setParent(self());
+    }
+}
 
 // For
 For::For(const std::string& init, 
@@ -252,24 +319,26 @@ For::For(const std::string& init,
     init_(init)
     , range_(range)
     , body_(body)
-{}
+{
+    range_.first->setParent(self());
+    range_.second->setParent(self());
+    body_->setParent(self());
+}
 
 // While
 While::While(std::shared_ptr<IExpr> cond, 
             std::shared_ptr<Body> body) :
     cond_(cond)
     , body_(body)
-{}
+{
+    cond_->setParent(self());
+    body_->setParent(self());
+}
 
 } // namespace node 
 
 // Stms - Other
 namespace node {
-
-// // CallOrIndexingOrVar
-// void CallOrIndexingOrVar::addPart(const CallOrIndexingOrVar::NamePart& part) {
-//     fullName_.push_back(part);
-// }
 
 MBCall::MBCall(std::shared_ptr<IExpr> call) :
     call_(call)
@@ -299,15 +368,16 @@ Assign::Assign(std::shared_ptr<IExpr> lval,
                std::shared_ptr<IExpr> rval) :
     lval_(lval)
     , rval_(rval)
-{}
-
-// // CallOrIndexingOrVarStm
-// CallOrIndexingOrVarStm::
-// CallOrIndexingOrVarStm(std::shared_ptr<CallOrIndexingOrVar> CIV):
-//     CIV_(CIV)
-// {}
+{
+    lval_->setParent(self());
+    rval_->setParent(self());
+}
 
 // Return 
-Return::Return(std::shared_ptr<IExpr> ret) : ret_(ret) {}
+Return::Return(std::shared_ptr<IExpr> ret) : 
+    ret_(ret) 
+{
+    ret_->setParent(self());
+}
 
 } // namespace node

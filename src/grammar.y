@@ -101,8 +101,8 @@
 %nterm<std::shared_ptr<node::IDecl>> type_decl
 %nterm<std::shared_ptr<node::IDecl>> record_decl
 %nterm<std::vector<std::shared_ptr<node::VarDecl>>> vars_decl
-%nterm<std::pair<std::shared_ptr<node::VarDecl>, node::ParamMode>> param
-%nterm<std::vector<std::pair<std::shared_ptr<node::VarDecl>, node::ParamMode>>> param_list
+%nterm<std::shared_ptr<node::VarDecl>> param
+%nterm<std::vector<std::shared_ptr<node::VarDecl>>> param_list
 %nterm<std::shared_ptr<node::IType>> string_type
 %nterm<std::shared_ptr<node::IType>> array_type
 %nterm<std::shared_ptr<node::IType>> type
@@ -114,7 +114,6 @@
 %nterm<std::shared_ptr<node::IStm>> stm
 %nterm<std::shared_ptr<node::IStm>> oper
 %nterm<std::shared_ptr<node::IStm>> assign
-/* %nterm<std::shared_ptr<node::IExpr>> lval */
 %nterm<std::shared_ptr<node::IStm>> return_stm
 %nterm<std::shared_ptr<node::IExpr>> expr
 %nterm<std::vector<std::shared_ptr<node::IExpr>>> args
@@ -129,17 +128,12 @@
 %nterm<std::shared_ptr<node::IStm>> for_stm
 %nterm<std::shared_ptr<node::IStm>> while_stm
 %nterm<std::pair<std::shared_ptr<node::IExpr>, std::shared_ptr<node::IExpr>>> range
-/*
-%nterm<std::shared_ptr<node::IStm>> call_or_indexing_or_var_stm
-%nterm<std::shared_ptr<node::IExpr>> call_or_indexing_or_var
-*/
 %nterm<std::shared_ptr<node::IDecl>> compile_unit
 %nterm<std::shared_ptr<node::IDecl>> type_alias_decl
 %nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
 %nterm<std::shared_ptr<node::DeclArea>> decl_area
 %nterm<OptionalImports> optional_imports
 %nterm<OptionalImports> imports
-/* %nterm<node::CallOrIndexingOrVar::NamePart> CIV */
 %nterm<std::shared_ptr<node::IStm>> mb_call
 
 %start program
@@ -225,19 +219,7 @@ param_list:       param                                                 { $$ = s
 
 param:            NAME COLON type                                       { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $3));
-                                                                          $$ = std::make_pair(decl, node::ParamMode::IN); 
-                                                                        }
-                | NAME COLON IN OUT type                                { 
-                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $5));
-                                                                          $$ = std::make_pair(decl, node::ParamMode::IN_OUT); 
-                                                                        }
-                | NAME COLON IN type                                    { 
-                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
-                                                                          $$ = std::make_pair(decl, node::ParamMode::IN); 
-                                                                        }
-                | NAME COLON OUT type                                   { 
-                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
-                                                                          $$ = std::make_pair(decl, node::ParamMode::OUT); 
+                                                                          $$ = decl; 
                                                                         }
 
 optional_decl_area: %empty                                              { $$ = nullptr; }

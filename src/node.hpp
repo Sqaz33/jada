@@ -12,7 +12,7 @@
 // inteface
 namespace node {    
 
-struct INode {
+struct INode : std::enable_shared_from_this<INode> {
     virtual void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const = 0;
     virtual void* codegen() = 0; // TODO
@@ -22,8 +22,11 @@ struct INode {
 
     void setParent(std::weak_ptr<INode> parent);
 
+    std::shared_ptr<INode> self(); 
+
 protected:
     std::weak_ptr<INode> parent_;
+    
 protected:
     yy::location loc;
 };
@@ -75,16 +78,11 @@ public:
         const attribute::QualifiedName& name, 
         std::shared_ptr<IDecl> requester);
 
-    virtual void setParent(std::weak_ptr<IDecl> parent) = 0; // TODO
-
 private:
     std::shared_ptr<IDecl> reachable_(
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
         std::shared_ptr<IDecl> requester);
-
-private:
-    std::weak_ptr<IDecl> parent_;
 };
 
 struct IType : INode { 
@@ -106,10 +104,7 @@ class ILiteral : public IExpr { /*...*/ };
 // #########################################
 namespace node {
 
-class Body : 
-    public INode 
-    , std::enable_shared_from_this<Body>
-{
+class Body : public INode {
 public:
     Body(const std::vector<std::shared_ptr<IStm>>& stms);
     
@@ -126,10 +121,7 @@ private:
 
 // Decls 
 namespace node { 
-class DeclArea : 
-    public INode 
-    , std::enable_shared_from_this<Body>
-{
+class DeclArea : public INode {
 public:
     void addDecl(std::shared_ptr<IDecl> decl);
 
@@ -169,16 +161,10 @@ private:
     std::shared_ptr<IExpr> rval_;
 };
 
-class ProcDecl : 
-    public IDecl 
-    , public std::enable_shared_from_this<ProcDecl>
-{
+class ProcDecl : public IDecl {
 public:
-    using ParamType = 
-        std::pair<std::shared_ptr<VarDecl>, ParamMode>;
-
     ProcDecl(const std::string& name, 
-             const std::vector<ParamType>& params,
+             const std::vector<std::shared_ptr<VarDecl>>& params,
              std::shared_ptr<DeclArea> decls,
              std::shared_ptr<Body> body);
 
@@ -192,26 +178,21 @@ public: // IDecl interface
 
 
 private:
-    void printParam_(const ParamType& param, 
+    void printParam_(const std::shared_ptr<VarDecl> param, 
                      graphviz::GraphViz& gv, 
                      graphviz::VertexType v) const;
 
 protected:
     std::string name_;
-    std::vector<ParamType> params_;
+    std::vector<std::shared_ptr<VarDecl>> params_;
     std::shared_ptr<DeclArea> decls_;
     std::shared_ptr<Body> body_;
 };
 
-class FuncDecl : 
-    public ProcDecl 
-    , std::enable_shared_from_this<Body>
-{
+class FuncDecl : public ProcDecl {
 public:
-    using ParamType = ProcDecl::ParamType;
-
     FuncDecl(const std::string& name, 
-             const std::vector<ParamType>& params ,
+             const std::vector<std::shared_ptr<VarDecl>>& params ,
              std::shared_ptr<DeclArea> decls,
              std::shared_ptr<Body> body,
              std::shared_ptr<IType> retType);
@@ -230,10 +211,7 @@ private:
                                 graphviz::VertexType par) const;
 };
 
-class PackDecl : 
-    public IDecl 
-    , std::enable_shared_from_this<Body>
-{
+class PackDecl : public IDecl {
 public:
     PackDecl(const std::string& name, 
              std::shared_ptr<DeclArea> decls, 
@@ -253,7 +231,7 @@ private:
     std::shared_ptr<DeclArea> privateDecls_;
 };
 
-class Use : public INode{
+class Use : public INode {
 public:
     Use(attribute::QualifiedName name);
 
@@ -265,7 +243,6 @@ public: // INode interface
 private:
     attribute::QualifiedName name_;
 };
-
 
 class With : public INode {
 public:
@@ -283,10 +260,7 @@ private:
     attribute::QualifiedName name_;
 };
 
-class RecordDecl : 
-    public IDecl 
-    , std::enable_shared_from_this<Body>
-{
+class RecordDecl : public IDecl {
 public:
     RecordDecl(const std::string& name, 
                const std::vector<std::shared_ptr<VarDecl>>& decls, 
@@ -305,7 +279,7 @@ public:
     void setBase(std::shared_ptr<RecordDecl> base);
 
 private:
-    std::weak_ptr<RecordDecl> base_;
+    std::weak_ptr<RecordDecl> baseRecord_;
     std::string name_;
     std::vector<std::shared_ptr<VarDecl>> decls_;
     attribute::QualifiedName base_;
@@ -313,10 +287,7 @@ private:
     bool isTagged_;
 };
 
-class TypeAliasDecl : 
-    public IDecl 
-    , std::enable_shared_from_this<Body>
-{
+class TypeAliasDecl : public IDecl {
 public:
     TypeAliasDecl(const std::string& name, 
                   std::shared_ptr<IType> type); 
@@ -360,10 +331,7 @@ private:
     SimpleType type_;
 };
 
-class ArrayType : 
-    public IType 
-    , std::enable_shared_from_this<Body>
-{
+class ArrayType : public IType {
 public:
     ArrayType(const std::vector<std::pair<int, int>>& ranges, 
               std::shared_ptr<IType> type);
@@ -405,10 +373,7 @@ private:
 // Exprs
 namespace node {
 
-class Op : 
-    public IExpr 
-    , std::enable_shared_from_this<Body>
-{
+class Op : public IExpr {
 public:
     Op(std::shared_ptr<IExpr> lhs, 
        OpType opType, 
@@ -463,10 +428,7 @@ private:
     attribute::Attribute attr_;
 };
 
-class CallOrIdxExpr : 
-    public IExpr 
-    , std::enable_shared_from_this<Body>
-{
+class CallOrIdxExpr : public IExpr {
     using ArgsType_ = std::vector<std::shared_ptr<IExpr>>;
 
 public:
@@ -497,10 +459,7 @@ private:
 // Exprs - Literals
 namespace node {
 
-class SimpleLiteral : 
-    public ILiteral 
-    , std::enable_shared_from_this<Body>
-{
+class SimpleLiteral : public ILiteral {
 public:
     template <class T>
     SimpleLiteral(std::shared_ptr<SimpleLiteralType> type, T&& value):
@@ -643,43 +602,6 @@ private:
 
 } // namespace node
 
-
-// Stms - Other
-namespace node {
-
-// class CallOrIndexingOrVar : public IExpr {
-//     using ArgsType_ = std::vector<std::shared_ptr<IExpr>>;
-
-// public:
-//     struct NamePart {
-//         std::string name;       // or
-//         attribute::Attribute attribute; 
-//         ArgsType_ args;
-//     };
-
-// public:
-//     void addPart(const NamePart& part);
-
-// public: // IExpr interface
-//     bool 
-//     compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
-
-// public: // INode interface
-//     void print(graphviz::GraphViz& gv, 
-//                graphviz::VertexType par) const override;
-//     void* codegen() override { return nullptr; } // TODO
-
-// private:
-//     void printArgs_(const ArgsType_& args, 
-//                     graphviz::GraphViz& gv, 
-//                     graphviz::VertexType par) const;
-
-// private:
-//     std::vector<NamePart> fullName_;
-// };
-
-} // namespace node
-
 // Typeinfo - Other
 namespace node {
 class TypeName : public IType {
@@ -720,20 +642,6 @@ private:
     std::shared_ptr<IExpr> lval_;
     std::shared_ptr<IExpr> rval_;
 };
-
-// class CallOrIndexingOrVarStm : public IStm {
-// public:
-//     CallOrIndexingOrVarStm(std::shared_ptr<CallOrIndexingOrVar> CIV);
-
-// public: // INode interface
-//     void print(graphviz::GraphViz& gv, 
-//                graphviz::VertexType par) const override;
-//     void* codegen() override { return nullptr; } // TODO
-
-// private:
-//     std::shared_ptr<CallOrIndexingOrVar> CIV_;
-// };
-
 class MBCall : public IStm {
 public:
     MBCall(std::shared_ptr<IExpr> call);

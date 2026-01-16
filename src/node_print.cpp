@@ -39,18 +39,11 @@ void VarDecl::print(graphviz::GraphViz& gv,
     }
 }
 
-void ProcDecl::printParam_(const ProcDecl::ParamType& param, 
+void ProcDecl::printParam_(const std::shared_ptr<VarDecl> param, 
                            graphviz::GraphViz& gv, 
                            graphviz::VertexType par) const
 { 
-    static const std::unordered_map<ParamMode, std::string> modes {
-        { ParamMode::IN, "IN" },
-        { ParamMode::OUT, "OUT" },
-        { ParamMode::IN_OUT, "IN_OUT" }
-    };
-
-    gv.nameNextEdge(modes.at(param.second));
-    param.first->print(gv, par);
+    param->print(gv, par);
 }
 
 void ProcDecl::print(graphviz::GraphViz& gv, 
@@ -371,42 +364,6 @@ void While::print(graphviz::GraphViz& gv,
     gv.nameNextEdge("body");
     body_->print(gv, v);
 }
-// TODO: delete
-// void CallOrIndexingOrVar::print(graphviz::GraphViz& gv, 
-//                                 graphviz::VertexType par) const 
-// {
-//     CallOrIndexingOrVar::ArgsType_ arg;
-//     std::stringstream ss;
-//     int i = 0;
-//     for (auto&& [name, attr, args] : fullName_) {
-//         if (!name.empty()) {
-//             ss << name;
-//         } else {
-//             ss << attr.toString();
-//         }
-//         if (!args.empty()) {
-//             ss << "(...)";
-//         }
-//         if (i < fullName_.size() - 1) {
-//             ss << '.';
-//         }
-//         arg.insert(arg.end(), args.begin(), args.end());
-//     }
-//     auto v = gv.addVertex("Call, idx, var", 
-//                 { "Name: " + ss.str()});
-//     gv.addEdge(par, v);
-//     printArgs_(arg, gv, v);
-// }
-
-// void CallOrIndexingOrVar::printArgs_(const ArgsType_& args, 
-//                                      graphviz::GraphViz& gv, 
-//                                      graphviz::VertexType par) const 
-// {
-//     for (auto arg : args) {
-//         gv.nameNextEdge("arg");
-//         arg->print(gv, par);
-//     }
-// }
 
 void TypeName::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
@@ -429,15 +386,6 @@ void Assign::print(graphviz::GraphViz& gv,
     gv.nameNextEdge("rval");
     rval_->print(gv, v);
 }
-// TODO: delete
-// void 
-// CallOrIndexingOrVarStm::print(graphviz::GraphViz& gv, 
-//                               graphviz::VertexType par) const 
-// {
-//     auto v = gv.addVertex("Cal, idx, var - stm");
-//     gv.addEdge(par, v);
-//     CIV_->print(gv, v);
-// }
 
 void MBCall::print(graphviz::GraphViz& gv, 
                    graphviz::VertexType par) const 
