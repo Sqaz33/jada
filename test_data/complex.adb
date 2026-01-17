@@ -22,7 +22,7 @@ procedure TestLoops is
 
    arr2: array(1..3) of Pack.Base;
 
-   function Func(X: Integer; Y: out Integer) return Integer is
+   function Func(X: Integer; Y:  Integer) return Integer is
    begin
       return x + Y;
    end Func;  
@@ -34,7 +34,7 @@ procedure TestLoops is
    end Proc;
 
    type IntArray is array(1 .. 100) of Integer;
-   procedure Sort(arr: in out IntArray; len: Integer) is 
+   procedure Sort(arr:   IntArray; len: Integer) is 
       min: Integer;
       buf: Integer;
       begin

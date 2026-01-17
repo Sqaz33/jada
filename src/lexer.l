@@ -219,6 +219,8 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
                         std::smatch match;
                         std::regex_match(text, match, re);
                         std::pair<std::string, std::string> res(match[1], match[2]);
+                        utility::toLower(res.first);
+                        utility::toLower(res.second);
                         yylval->
                           emplace<std::pair<std::string, std::string>>(std::move(res));
                         return yy::parser::token_type::GETTING_ATTRIBUTE;

@@ -81,6 +81,27 @@ int semanticAnalysis() {
     return 0;
 }
 
+void addAdaStdLib(
+    std::vector<std::shared_ptr<mdl::Module>>& prog) 
+{   
+    auto textIO = 
+        std::make_shared<node::PackDecl>("text_io", 
+            std::make_shared<node::DeclArea>());
+
+    auto libArea = std::make_shared<node::DeclArea>();
+    auto libUnit = 
+        std::make_shared<node::PackDecl>("ada", libArea);
+
+    libArea->addDecl(textIO);
+
+    auto mod = std::make_shared<mdl::Module>(
+        libUnit, 
+        std::vector<std::shared_ptr<node::With>>(), 
+        std::vector<std::shared_ptr<node::Use>>(), 
+        "ada", "ada.adb");
+    helper::modules.push_back(mod);
+}
+
 } // namespace
 
 int yyFlexLexer::yywrap() { return 1; }
@@ -96,17 +117,17 @@ int main(int argc, char** argv) try {
         return 0;
     }
 
-    if (argc < 2) {
-        std::cout << "usage ./jada file.adb" << std::endl;
-        return 1;
-    }
+    // if (argc < 2) {
+    //     std::cout << "usage ./jada file.adb" << std::endl;
+    //     return 1;
+    // }
 
-    // argv = new char*[2]; // TODO: delete
-    // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
+    argv = new char*[2]; // TODO: delete
+    argv[1] = "../test_data/complex.adb"; // TODO: delete
     
     fs::path path(argv[1]);
     if (".adb" != path.extension()) {
-        std::cout << "Usage ./jada file.adb" << std::endl;
+        std::cout << "Usage ./jada file.adb; -h for help" << std::endl;
         return 1;
     } 
     
@@ -120,12 +141,14 @@ int main(int argc, char** argv) try {
         printErrors();
         return 1;
     }
-
-    if (3 == argc && 
+        // TODO: delete
+    if (true || 3 == argc && 
         std::string("--pAst-before-semantics") == argv[2]) 
     {
         printAst();
     }
+
+    addAdaStdLib(helper::modules);
 
     return semanticAnalysis();
 } catch (const std::exception& e) {

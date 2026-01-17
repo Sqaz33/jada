@@ -5,7 +5,7 @@
 // INode
 namespace node {
 
-void INode::setParent(std::weak_ptr<INode> parent) {
+void INode::setParent(INode* parent) {
     parent_ = parent;
 }
 
@@ -13,61 +13,57 @@ std::shared_ptr<INode> INode::self() {
     return shared_from_this();
 }
 
-} // 
+} 
 
 // Stms
 namespace node {
 
 Body::Body(const std::vector<std::shared_ptr<IStm>>& stms) :
     stms_(stms)
-{
-    std::for_each(stms_.begin(), stms_.end(), 
-        [this](auto s) { s->setParent(self()); });
-}
+{}
 
 } // namespace node 
 
 // Decls 
 namespace node {
 
-
 // IDecl 
-std::shared_ptr<IDecl> IDecl::reachable(
+
+std::vector<
+    std::vector<std::shared_ptr<IDecl>>>  
+IDecl::reachable(
     const attribute::QualifiedName& name, 
-    std::shared_ptr<IDecl> requester) 
-{
+    const std::string& requester) 
+{   
     if (dynamic_cast<VarDecl*>(this) || 
          dynamic_cast<TypeAliasDecl*>(this)) 
     {
-        return nullptr;
+        return {};
     }
 
-    if (auto symb = 
-        reachable_(name.begin(), name.end(), requester)) 
-    {
-        return symb;
-    } 
-    else
-    {
-        // return 
-    } 
-}
+    std::vector<
+        std::vector<std::shared_ptr<IDecl>>> res;
 
-
-// первый проход начиная с вложенных, второй начиная с контейнера
-std::shared_ptr<IDecl> IDecl::reachable_(
-    std::vector<std::string>::const_iterator it,
-    std::vector<std::string>::const_iterator end,
-    std::shared_ptr<IDecl> requester)
-{
+    reachable_(res, name.begin(), name.end(), requester);
     
+    if (parent_) {
+        auto buf = dynamic_cast<IDecl*>
+                    (parent_)->reachable(name, this->name());
+        res.insert(res.end(), buf.begin(), buf.end());
+    }
+
+    return res;
 }
 
+// TODO: delete
+// либо полное квал. имя, либо просто имя декла 
+// прохожусь по деклу, если it==name() и it==end -> return decl
+// иначе, если это package или record, захожу и ищу там, если it!=end, иначе return nullptr 
 
 // DeclArea
 void DeclArea::addDecl(std::shared_ptr<IDecl> decl) {
     decls_.push_back(decl);
-    decl->setParent(self());
+    decl->setParent(parent_);
 }
 
 void DeclArea::replaceDecl(
@@ -77,7 +73,7 @@ void DeclArea::replaceDecl(
     for (auto&& d : decls_) {
         if (d->name() == name) {
             d.swap(decl);
-            d->setParent(self());
+            d->setParent(this);
             return;
         }
     }
@@ -87,17 +83,61 @@ void DeclArea::replaceDecl(
                            + name);   
 }
 
+std::shared_ptr<IDecl> 
+DeclArea::findDecl(const std::string& name, 
+                   const std::string& requester)
+{
+    auto itDecl = std::find_if(
+        decls_.begin(), 
+        decls_.end(), 
+        [&name](auto decl) 
+        { return decl->name() == name; });
+
+    auto itReq = std::find_if(
+        decls_.begin(), 
+        decls_.end(), 
+        [&requester](auto decl) 
+        { return decl->name() == requester; });
+
+    if (itDecl != decls_.end() && 
+        (itReq == decls_.end() || itDecl <= itReq )) 
+    {
+        return *itDecl;
+    } 
+    return nullptr;
+}
+
+std::vector<std::shared_ptr<IDecl>>::iterator 
+DeclArea::begin() {
+    return decls_.begin();
+}
+
+std::vector<std::shared_ptr<IDecl>>::iterator 
+DeclArea::end() {
+    return decls_.end();
+}
+
 // VarDecl
 VarDecl::VarDecl(const std::string& name, 
                  std::shared_ptr<IType> type, 
-                std::shared_ptr<IExpr> rval) :
+                 std::shared_ptr<IExpr> rval) :
     name_(name)
     , type_(type)
     , rval_(rval)
 {
-    type->setParent(self());
-    rval->setParent(self());
+    type_->setParent(this);
+    if (rval_) {
+        rval_->setParent(this);
+    }
 }
+
+void VarDecl::reachable_(
+        std::vector<
+            std::vector<std::shared_ptr<IDecl>>>& res,
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        const std::string& requester)
+{ return; }
 
 const std::string& VarDecl::name() const noexcept {
     return name_;
@@ -114,14 +154,81 @@ ProcDecl::ProcDecl(const std::string& name,
     , body_(body)
 {
     for (auto param : params_) {
-        param->setParent(self());
+        param->setParent(this);
     }
-    decls_->setParent(self());
-    body_->setParent(self());
+    if (decls_) {
+        decls_->setParent(this);
+    }
+    body_->setParent(this);
 }
 
 const std::string& ProcDecl::name() const noexcept {
     return name_;
+}
+
+std::shared_ptr<VarDecl> 
+ProcDecl::findParam(const std::string& name) {
+    auto r = std::find_if(
+        params_.begin(), 
+        params_.end(), 
+        [&name] (auto par) 
+        { return par->name() == name; });
+
+    if (r != params_.end()) {
+        return *r;
+    }
+
+    return nullptr;
+}
+
+std::shared_ptr<IDecl> 
+ProcDecl::findDecl(
+    const std::string& name, 
+    const std::string& requester) 
+{
+    return decls_->findDecl(name, requester);
+}
+
+void ProcDecl::reachable_(
+        std::vector<
+            std::vector<std::shared_ptr<IDecl>>>& res,
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        const std::string& requester) 
+{
+    if (it == end) return;
+
+    bool emplace = false;
+    if (std::distance(it, end) == 1) {
+        for (auto& param : params_) {
+            if (param->name() == *it) {
+                if (!emplace) {
+                    res.emplace_back();
+                    emplace = true;
+                }
+                res.back().push_back(param);
+            }
+        }
+    }
+
+    auto declsBegin = decls_->begin();
+    auto declsEnd = decls_->end();
+
+    for (; declsBegin != declsEnd; ++declsBegin) {
+        if ((*declsBegin)->name() == *it) {
+            auto decl = *declsBegin;
+            if (std::distance(it, end) == 1) {
+                if (!emplace) {
+                    res.emplace_back();
+                    emplace = true;
+                }
+                res.back().push_back(decl);
+            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+                decl->reachable_(
+                    res, std::next(it), end, requester);
+            }   
+        }
+    }
 }
 
 // FuncDecl
@@ -132,7 +239,7 @@ FuncDecl::FuncDecl(const std::string& name,
                    std::shared_ptr<IType> retType) :
     ProcDecl(name, params, decls, body)
     , retType_(retType)
-{ retType_->setParent(self()); }
+{ retType_->setParent(this); }
 
 // PackDecl
 PackDecl::PackDecl(const std::string& name, 
@@ -142,12 +249,51 @@ PackDecl::PackDecl(const std::string& name,
     , decls_(decls)
     , privateDecls_(privateDecls)
 {
-    decls->setParent(self());
-    privateDecls_->setParent(self());
+    decls_->setParent(this);
+    if (privateDecls_) { 
+        privateDecls_->setParent(this);
+    }
 }
 
 const std::string& PackDecl::name() const noexcept {
     return name_;
+}
+
+std::shared_ptr<IDecl> 
+PackDecl::findDecl(const std::string& name,  
+                   const std::string& requester)
+{
+    return decls_->findDecl(name, requester);
+}
+
+void PackDecl::reachable_(
+        std::vector<
+            std::vector<std::shared_ptr<IDecl>>>& res,
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        const std::string& requester) 
+{
+    if (it == end) return;
+
+    auto declsBegin = decls_->begin();
+    auto declsEnd = decls_->end();
+
+    bool emplace = false;
+    for (; declsBegin != declsEnd; ++declsBegin) {
+        if ((*declsBegin)->name() == *it) {
+            auto decl = *declsBegin;
+            if (std::distance(it, end) == 1) {
+                if (!emplace) {
+                    res.emplace_back();
+                    emplace = true;
+                }
+                res.back().push_back(decl);
+            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+                decl->reachable_(
+                    res, std::next(it), end, requester);
+            }   
+        }
+    }
 }
 
 // Use Decl 
@@ -165,10 +311,9 @@ With::name() const noexcept {
     return name_;
 }
 
-
 // RecordDecl
 RecordDecl::RecordDecl(const std::string& name, 
-                       const std::vector<std::shared_ptr<VarDecl>>& decls, 
+                       std::shared_ptr<DeclArea> decls, 
                        attribute::QualifiedName base, 
                        bool isTagged) :
     name_(name)
@@ -177,13 +322,46 @@ RecordDecl::RecordDecl(const std::string& name,
     , isTagged_(isTagged)
 { 
     isInherits_ = !base.empty(); 
-    for (auto d : decls) {
-        d->setParent(self());
-    }
+    decls_->setParent(this);
 }
 
 const std::string& RecordDecl::name() const noexcept {
     return name_;
+}
+
+std::shared_ptr<IDecl> 
+RecordDecl::findDecl(const std::string& name,  
+                     const std::string& requester)
+{
+    return decls_->findDecl(name, requester); 
+}
+
+void RecordDecl::reachable_(
+    std::vector<
+        std::vector<std::shared_ptr<IDecl>>>& res,
+    std::vector<std::string>::const_iterator it,
+    std::vector<std::string>::const_iterator end,
+    const std::string& requester)
+{
+    auto declsBegin = decls_->begin();
+    auto declsEnd = decls_->end();
+    
+    bool emplace = false;
+    for (; declsBegin != declsEnd; ++declsBegin) {
+        if ((*declsBegin)->name() == *it) {
+            auto decl = *declsBegin;
+            if (std::distance(it, end) == 1) {
+                if (!emplace) {
+                    res.emplace_back();
+                    emplace = true;
+                }
+                res.back().push_back(decl);
+            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+                decl->reachable_(
+                    res, std::next(it), end, requester);
+            }   
+        }
+    }
 }
 
 //TypeAliasDecl
@@ -192,12 +370,20 @@ TypeAliasDecl::TypeAliasDecl(const std::string& name,
     name_(name)
     , origin_(origin)
 {
-    origin_->setParent(self());
+    origin_->setParent(this);
 }
 
 const std::string& TypeAliasDecl::name() const noexcept {
     return name_;
 }
+
+void TypeAliasDecl::reachable_(
+    std::vector<
+        std::vector<std::shared_ptr<IDecl>>>& res,
+    std::vector<std::string>::const_iterator it,
+    std::vector<std::string>::const_iterator end,
+    const std::string& requester) 
+{ return; }
 
 } // namespace node 
 
@@ -219,7 +405,7 @@ ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges,
     ranges_(ranges)
     , type_(type)
 {
-    type_->setParent(self());
+    type_->setParent(this);
 }
 
 // StringType
@@ -233,7 +419,7 @@ Aggregate::Aggregate(const std::vector<
     inits_(inits)
 {
     for (auto i : inits_) {
-        i->setParent(self());
+        i->setParent(this);
     }
 }
 
@@ -250,8 +436,8 @@ Op::Op(std::shared_ptr<IExpr> lhs,
     , opType_(opType)
     , rhs_(rhs)
 {
-    lhs->setParent(self());
-    rhs->setParent(self());
+    lhs_->setParent(this);
+    rhs_->setParent(this);
 }
 
 NameExpr::NameExpr(const std::string& name) :
@@ -268,9 +454,9 @@ CallOrIdxExpr::CallOrIdxExpr(
     name_(name)
     , args_(args)
 {
-    name_->setParent(self());
+    name_->setParent(this);
     for (auto arg : args) {
-        arg->setParent(self());
+        arg->setParent(this);
     }
 }
 
@@ -285,7 +471,7 @@ StringLiteral::StringLiteral(std::shared_ptr<StringType> type,
     str_(str)
     , type_(type)
 {
-    type_->setParent(self());
+    type_->setParent(this);
 }
 
 } // namespace node 
@@ -303,12 +489,14 @@ If::If(std::shared_ptr<IExpr> cond,
     , els_(els)
     , elsifs_(elsifs)
 {
-    cond_->setParent(self());
-    body_->setParent(self());
-    els_->setParent(self());
+    cond_->setParent(this);
+    body_->setParent(this);
+    if (els_) {
+        els_->setParent(this);
+    }
     for (auto [cnd, bdy] : elsifs_) {
-        cnd->setParent(self());
-        bdy->setParent(self());
+        cnd->setParent(this);
+        bdy->setParent(this);
     }
 }
 
@@ -320,9 +508,9 @@ For::For(const std::string& init,
     , range_(range)
     , body_(body)
 {
-    range_.first->setParent(self());
-    range_.second->setParent(self());
-    body_->setParent(self());
+    range_.first->setParent(this);
+    range_.second->setParent(this);
+    body_->setParent(this);
 }
 
 // While
@@ -331,8 +519,8 @@ While::While(std::shared_ptr<IExpr> cond,
     cond_(cond)
     , body_(body)
 {
-    cond_->setParent(self());
-    body_->setParent(self());
+    cond_->setParent(this);
+    body_->setParent(this);
 }
 
 } // namespace node 
@@ -369,15 +557,15 @@ Assign::Assign(std::shared_ptr<IExpr> lval,
     lval_(lval)
     , rval_(rval)
 {
-    lval_->setParent(self());
-    rval_->setParent(self());
+    lval_->setParent(this);
+    rval_->setParent(this);
 }
 
 // Return 
-Return::Return(std::shared_ptr<IExpr> ret) : 
-    ret_(ret) 
+Return::Return(std::shared_ptr<IExpr> retVal) : 
+    retVal_(retVal) 
 {
-    ret_->setParent(self());
+    retVal_->setParent(this);
 }
 
 } // namespace node

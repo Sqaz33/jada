@@ -100,7 +100,7 @@
 %nterm<std::shared_ptr<node::IDecl>> pack_decl
 %nterm<std::shared_ptr<node::IDecl>> type_decl
 %nterm<std::shared_ptr<node::IDecl>> record_decl
-%nterm<std::vector<std::shared_ptr<node::VarDecl>>> vars_decl
+%nterm<std::shared_ptr<node::DeclArea>> vars_decl
 %nterm<std::shared_ptr<node::VarDecl>> param
 %nterm<std::vector<std::shared_ptr<node::VarDecl>>> param_list
 %nterm<std::shared_ptr<node::IType>> string_type
@@ -200,18 +200,15 @@ type_decl:        record_decl
 
 record_decl:      TYPE NAME IS RECORD vars_decl END RECORD SC                                                        { $$.reset(new node::RecordDecl($2, $5)); }
                 | TYPE NAME IS TAGGED RECORD vars_decl END RECORD SC                                                 { $$.reset(new node::RecordDecl($2, $6, {}, true)); }
-                | TYPE NAME IS NEW qualified_name WITH RECORD vars_decl END RECORD SC                                { $$.reset(new node::RecordDecl($2, std::move($8), $5)); }
+                | TYPE NAME IS NEW qualified_name WITH RECORD vars_decl END RECORD SC                                { $$.reset(new node::RecordDecl($2, $8, $5)); }
 
 vars_decl:        var_decl                                              { 
-                                                                          auto decl = 
-                                                                            std::dynamic_pointer_cast<node::VarDecl>($1);
-                                                                          $$ = std::vector<std::shared_ptr<node::VarDecl>>({decl}); 
+                                                                          $$ = std::make_shared<node::DeclArea>();
+                                                                          $$->addDecl($1);
                                                                         }
                 | vars_decl var_decl                                    { 
-                                                                          $$ = std::move($1); 
-                                                                          auto decl = 
-                                                                            std::dynamic_pointer_cast<node::VarDecl>($2);
-                                                                          $$.push_back(decl); 
+                                                                          $$ = $1;
+                                                                          $$->addDecl($2); 
                                                                         }
 
 param_list:       param                                                 { $$ = std::vector({$1}); }

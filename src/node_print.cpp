@@ -124,9 +124,7 @@ void RecordDecl::print(graphviz::GraphViz& gv,
                     + base_.toSring());
     auto v = gv.addVertex("Type Record Decl", desc);
     gv.addEdge(par, v);
-    for (auto var : decls_) {
-        var->print(gv, v);
-    }
+    decls_->print(gv, v);
 }
 
 void TypeAliasDecl::print(graphviz::GraphViz& gv, 
@@ -400,7 +398,7 @@ void Return::print(graphviz::GraphViz& gv,
 {
     auto v = gv.addVertex("Return stm");
     gv.addEdge(par, v);
-    ret_->print(gv, v);
+    retVal_->print(gv, v);
 }
 
 } // namespace node
