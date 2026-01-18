@@ -149,6 +149,8 @@ public:
     std::vector<std::shared_ptr<IDecl>>::iterator begin();
     std::vector<std::shared_ptr<IDecl>>::iterator end();
 
+    void setParent(INode* parent) override;
+
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
@@ -293,6 +295,13 @@ public: // INode interface
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+private:
+    void reachable_(
+        std::vector<
+            std::vector<std::shared_ptr<IDecl>>>& res,
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        const std::string& requester) override;
 };
 
 class Use : public INode {
@@ -454,7 +463,6 @@ private:
 
 } // namespace node
 
-
 // Exprs
 namespace node {
 
@@ -540,7 +548,6 @@ private:
 
 } // namespace node
 
-
 // Exprs - Literals
 namespace node {
 
@@ -617,7 +624,6 @@ private:
 };
 
 } // namespace node
-
 
 // Stms - Control Structure
 namespace node {

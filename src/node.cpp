@@ -55,11 +55,6 @@ IDecl::reachable(
     return res;
 }
 
-// TODO: delete
-// либо полное квал. имя, либо просто имя декла 
-// прохожусь по деклу, если it==name() и it==end -> return decl
-// иначе, если это package или record, захожу и ищу там, если it!=end, иначе return nullptr 
-
 // DeclArea
 void DeclArea::addDecl(std::shared_ptr<IDecl> decl) {
     decls_.push_back(decl);
@@ -115,6 +110,12 @@ DeclArea::begin() {
 std::vector<std::shared_ptr<IDecl>>::iterator 
 DeclArea::end() {
     return decls_.end();
+}
+
+void DeclArea::setParent(INode* parent) {
+    INode::setParent(parent);
+    std::for_each(decls_.begin(), decls_.end(), 
+        [this](auto decl) { decl->setParent(parent_); });
 }
 
 // VarDecl
@@ -422,7 +423,6 @@ Aggregate::Aggregate(const std::vector<
         i->setParent(this);
     }
 }
-
 
 } // namespace node 
 
