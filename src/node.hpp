@@ -71,13 +71,12 @@ namespace node {
 
 class IStm : public INode { /* ... */ };
 
-
-class ProcDec;
+class ProcDecl;
 class PackDecl;
 class RecordDecl;
+class GlobalSpace;
 class IDecl : public INode { 
 public: 
-
     virtual const std::string& name() const noexcept = 0;
 
     std::vector<
@@ -90,6 +89,7 @@ protected:
     friend class ProcDecl;
     friend class PackDecl;
     friend class RecordDecl;
+    friend class GlobalSpace;
     virtual void reachable_(
         std::vector<
             std::vector<std::shared_ptr<IDecl>>>& res,
@@ -269,7 +269,7 @@ public: // INode interface
 public:
     std::shared_ptr<IDecl> 
         findDecl(const std::string& name,  
-                 const std::string& requester);
+                 const std::string& requester); 
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
@@ -289,10 +289,14 @@ private:
 };
 
 class GlobalSpace : public IDecl {
+public:
+    GlobalSpace(
+        std::shared_ptr<IDecl> unit, 
+        const std::vector<std::shared_ptr<IDecl>>& imports);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-               graphviz::VertexType par) const override;
+               graphviz::VertexType par) const override { }; // TODO
     void* codegen() override { return nullptr; } // TODO
 
 private:
@@ -302,6 +306,10 @@ private:
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
         const std::string& requester) override;
+    
+private:
+    std::shared_ptr<IDecl> unit_;
+    std::vector<std::shared_ptr<IDecl>> imports_;
 };
 
 class Use : public INode {
@@ -312,6 +320,9 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+
+public:
+    const attribute::QualifiedName& name() const noexcept;
 
 private:
     attribute::QualifiedName name_;
@@ -353,7 +364,7 @@ public:
 
 public:
     std::shared_ptr<IDecl> 
-        findDecl(const std::string& name,  
+        findDecl(const std::string& name,  // TODO: delete and all others
                  const std::string& requester);
 
 private:

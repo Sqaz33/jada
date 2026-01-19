@@ -199,13 +199,13 @@ void ProcDecl::reachable_(
 {
     if (it == end) return;
 
-    bool emplace = false;
+    bool insert = false;
     if (std::distance(it, end) == 1) {
         for (auto& param : params_) {
             if (param->name() == *it) {
-                if (!emplace) {
+                if (!insert) {
                     res.emplace_back();
-                    emplace = true;
+                    insert = true;
                 }
                 res.back().push_back(param);
             }
@@ -219,9 +219,9 @@ void ProcDecl::reachable_(
         if ((*declsBegin)->name() == *it) {
             auto decl = *declsBegin;
             if (std::distance(it, end) == 1) {
-                if (!emplace) {
+                if (!insert) {
                     res.emplace_back();
-                    emplace = true;
+                    insert = true;
                 }
                 res.back().push_back(decl);
             } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
@@ -279,14 +279,14 @@ void PackDecl::reachable_(
     auto declsBegin = decls_->begin();
     auto declsEnd = decls_->end();
 
-    bool emplace = false;
+    bool insert = false;
     for (; declsBegin != declsEnd; ++declsBegin) {
         if ((*declsBegin)->name() == *it) {
             auto decl = *declsBegin;
             if (std::distance(it, end) == 1) {
-                if (!emplace) {
+                if (!insert) {
                     res.emplace_back();
-                    emplace = true;
+                    insert = true;
                 }
                 res.back().push_back(decl);
             } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
@@ -297,10 +297,59 @@ void PackDecl::reachable_(
     }
 }
 
-// Use Decl 
+// GlobalSpace
+GlobalSpace::GlobalSpace(
+    std::shared_ptr<IDecl> unit, 
+    const std::vector<std::shared_ptr<IDecl>>& imports) :
+    unit_(unit)
+    , imports_(imports)
+{}
+
+void GlobalSpace::reachable_(
+    std::vector<
+        std::vector<std::shared_ptr<IDecl>>>& res,
+    std::vector<std::string>::const_iterator it,
+    std::vector<std::string>::const_iterator end,
+    const std::string& requester) 
+{
+    if (it == end) return;
+
+    bool insert = false;
+
+    if (std::distance(it, end) == 1 && *it == unit_->name()) {
+        insert = true;
+        res.emplace_back();
+        res.back().push_back(unit_);
+    } else if (*it == unit_->name()) {
+        unit_->reachable_(
+            res, std::next(it), end, requester);
+    }
+
+    for (auto decl : imports_) {
+        if (decl->name() == *it) {
+            if (std::distance(it, end) == 1) {
+                if (!insert) {
+                    res.emplace_back();
+                    insert = true;
+                }
+                res.back().push_back(decl);
+            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+                decl->reachable_(
+                    res, std::next(it), end, requester);
+            }   
+        }
+    }
+}
+
+// Use 
 Use::Use(attribute::QualifiedName name) :
     name_(std::move(name))
 {}
+
+const attribute::QualifiedName& 
+Use::name() const noexcept {
+    return name_;
+}
 
 // With 
 With::With(attribute::QualifiedName name) :
@@ -347,14 +396,14 @@ void RecordDecl::reachable_(
     auto declsBegin = decls_->begin();
     auto declsEnd = decls_->end();
     
-    bool emplace = false;
+    bool insert = false;
     for (; declsBegin != declsEnd; ++declsBegin) {
         if ((*declsBegin)->name() == *it) {
             auto decl = *declsBegin;
             if (std::distance(it, end) == 1) {
-                if (!emplace) {
+                if (!insert) {
                     res.emplace_back();
-                    emplace = true;
+                    insert = true;
                 }
                 res.back().push_back(decl);
             } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
