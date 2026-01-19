@@ -84,21 +84,15 @@ int semanticAnalysis() {
 void addAdaStdLib(
     std::vector<std::shared_ptr<mdl::Module>>& prog) 
 {   
-    auto textIO = 
-        std::make_shared<node::PackDecl>("text_io", 
-            std::make_shared<node::DeclArea>());
-
     auto libArea = std::make_shared<node::DeclArea>();
     auto libUnit = 
-        std::make_shared<node::PackDecl>("ada", libArea);
-
-    libArea->addDecl(textIO);
+        std::make_shared<node::PackDecl>("ada.text_io", libArea);
 
     auto mod = std::make_shared<mdl::Module>(
         libUnit, 
         std::vector<std::shared_ptr<node::With>>(), 
         std::vector<std::shared_ptr<node::Use>>(), 
-        "ada", "ada.adb");
+        "ada.text_io", "ada.text_io.adb");
     helper::modules.push_back(mod);
 }
 

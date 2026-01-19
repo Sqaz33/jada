@@ -99,7 +99,7 @@ void Use::print(graphviz::GraphViz& gv,
                     graphviz::VertexType par) const 
 {
     auto v = gv.addVertex("Use", 
-                          {"Name: " + name_.toSring()});
+                          {"Name: " + name_.toString()});
     gv.addEdge(par, v);
 }
 
@@ -107,7 +107,7 @@ void With::print(graphviz::GraphViz& gv,
                  graphviz::VertexType par) const 
 {
     auto v = gv.addVertex("With", 
-                          {"Name: " + name_.toSring()});
+                          {"Name: " + name_.toString()});
     gv.addEdge(par, v);
 }
 
@@ -121,7 +121,7 @@ void RecordDecl::print(graphviz::GraphViz& gv,
     desc.push_back("Is Inherits: " 
                     + std::to_string(isInherits_));
     desc.push_back("Base Name: " 
-                    + base_.toSring());
+                    + base_.toString());
     auto v = gv.addVertex("Type Record Decl", desc);
     gv.addEdge(par, v);
     decls_->print(gv, v);
@@ -368,7 +368,7 @@ void TypeName::print(graphviz::GraphViz& gv,
 {
     auto name = name_.empty() ? 
                   attr_.toString() : 
-                  name_.toSring();
+                  name_.toString();
     auto v = gv.addVertex("Type Name", 
                     {"Name: " + name});
     gv.addEdge(par, v);

@@ -15,7 +15,7 @@ public:
 public:
     void push(const std::string& name);
     bool empty() const noexcept; 
-    std::string toSring() const;
+    std::string toString(char delim = '/') const;
     const std::string& first() const noexcept; 
     const std::string& last() const noexcept;
     std::size_t size() const noexcept;

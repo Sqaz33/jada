@@ -17,14 +17,14 @@ bool QualifiedName::empty() const noexcept {
     return fullName_.empty();    
 }
 
-std::string QualifiedName::toSring() const {
+std::string QualifiedName::toString(char delim) const {
     if (empty()) return "";
 
     std::stringstream ss;
     std::size_t lim = fullName_.empty() ? 
                         0 : fullName_.size() - 1;
     for (std::size_t i = 0; i < lim; ++i) {
-        ss << fullName_[i] << '/';
+        ss << fullName_[i] << delim;
     }
     ss << fullName_.back();
     return ss.str();
@@ -59,7 +59,7 @@ Attribute::Attribute(QualifiedName left, const std::string& right) :
 
 std::string Attribute::toString() const {
     if (left_.empty() || right_.empty()) return "";
-    return left_.toSring() + '\'' + right_;
+    return left_.toString() + '\'' + right_;
 }
 
 } // namespace attribute

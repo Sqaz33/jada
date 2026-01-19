@@ -297,12 +297,14 @@ void PackDecl::reachable_(
     }
 }
 
+std::shared_ptr<DeclArea> PackDecl::decls() {
+    return decls_;
+}
+
+
 // GlobalSpace
-GlobalSpace::GlobalSpace(
-    std::shared_ptr<IDecl> unit, 
-    const std::vector<std::shared_ptr<IDecl>>& imports) :
+GlobalSpace::GlobalSpace(std::shared_ptr<IDecl> unit) :
     unit_(unit)
-    , imports_(imports)
 {}
 
 void GlobalSpace::reachable_(
@@ -340,6 +342,14 @@ void GlobalSpace::reachable_(
         }
     }
 }
+
+void GlobalSpace::addImport(std::shared_ptr<IDecl> decl) {
+    imports_.push_back(decl);
+}
+
+const std::vector<std::shared_ptr<IDecl>>& 
+GlobalSpace::imports() const noexcept
+{ return imports_; }
 
 // Use 
 Use::Use(attribute::QualifiedName name) :

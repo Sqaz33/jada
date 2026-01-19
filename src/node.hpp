@@ -271,6 +271,9 @@ public:
         findDecl(const std::string& name,  
                  const std::string& requester); 
 
+public:
+    std::shared_ptr<DeclArea> decls();
+
 public: // IDecl interface
     const std::string& name() const noexcept override;
 
@@ -285,19 +288,24 @@ private:
 private:
     std::string name_;
     std::shared_ptr<DeclArea> decls_;
-    std::shared_ptr<DeclArea> privateDecls_;
+    std::shared_ptr<DeclArea> privateDecls_; // todo delete
 };
 
 class GlobalSpace : public IDecl {
 public:
-    GlobalSpace(
-        std::shared_ptr<IDecl> unit, 
-        const std::vector<std::shared_ptr<IDecl>>& imports);
+    GlobalSpace(std::shared_ptr<IDecl> unit);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override { }; // TODO
+
     void* codegen() override { return nullptr; } // TODO
+
+public:
+    void addImport(std::shared_ptr<IDecl> decl);
+
+    const std::vector<std::shared_ptr<IDecl>>& 
+        imports() const noexcept;
 
 private:
     void reachable_(

@@ -38,12 +38,22 @@ Module::with() const noexcept {
     return with_;
 }
 
+const std::vector<std::shared_ptr<node::Use>>&
+Module::use() const noexcept {
+    return use_;
+}
+
+
 const std::string& Module::fileName() const noexcept {
     return fileName_;
 }
 
 const std::string& Module::name() const noexcept {
     return name_;
+}
+
+void Module::resetUnit(std::shared_ptr<node::IDecl> unit) {
+    unit_ = unit;
 }
 
 } // namespace mdl

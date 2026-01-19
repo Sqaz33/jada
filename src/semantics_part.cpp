@@ -119,4 +119,107 @@ std::string ExistingModuleImportCheck::analyse(
     return ISemanticsPart::analyseNext(program);
 }
 
+// GlobalSpaceCreation
+std::string GlobalSpaceCreation::analyse(
+        const std::vector<
+            std::shared_ptr<mdl::Module>>& program) 
+{
+    std::vector<std::shared_ptr<node::IDecl>> units;
+    std::transform(
+        program.begin(), program.end(),
+        std::inserter(units, units.end()),
+        [] (auto mdl) { return mdl->unit(); });
+
+    for (auto mdl : program) {
+        auto unit = mdl->unit().lock();
+        auto gp = 
+            std::make_shared<node::GlobalSpace>(unit);
+        mdl->resetUnit(gp);
+        auto [ok1, with] = addImportsPtrs_(mdl, units);
+        if (!ok1) {
+            auto name = with->name().toString();
+            return "The module cannot be imported:"
+                    + name;
+        }
+        auto [ok2, use] = addReduceImportPtrs_(mdl, units);
+        if (!ok2) {
+            auto name = use->name().toString();
+            return "The name cannot be reduced:"
+                    + name;
+        }
+    }
+
+    return ISemanticsPart::analyseNext(program);
+}
+
+std::pair<bool, std::shared_ptr<node::With>> 
+GlobalSpaceCreation::addImportsPtrs_(
+    std::shared_ptr<mdl::Module> mdl,
+    const std::vector<std::shared_ptr<node::IDecl>>& units)
+{
+    std::map<std::string, std::shared_ptr<node::IDecl>> map;
+    std::transform(
+        units.begin(), units.end(), 
+        std::inserter(map, map.end()), 
+        [] (auto u) { return std::make_pair(u->name(), u); } );
+    
+    for (auto w : mdl->with()) {
+        auto name = w->name().toString('.');
+        auto it = map.find(name);
+        if (it == map.end()) {
+            return {false, w};
+        }
+        auto unit = mdl->unit().lock();
+        if (auto space = 
+            std::dynamic_pointer_cast<node::GlobalSpace>(unit)) 
+        {
+            space->addImport(it->second);
+        }
+        else 
+        {
+            throw std::logic_error(
+                "Internal error in semantic_part.cpp");
+        }
+    }
+    return {true, nullptr};
+}
+
+std::pair<bool,std::shared_ptr<node::Use>>
+GlobalSpaceCreation::addReduceImportPtrs_(
+    std::shared_ptr<mdl::Module> mdl,
+    const std::vector<std::shared_ptr<node::IDecl>>& units)
+{
+    auto unit = mdl->unit().lock();
+    std::map<std::string, std::shared_ptr<node::IDecl>> imports;
+    auto space = 
+            std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+    if (space) {
+        auto imp = space->imports();
+        std::transform(imp.begin(), imp.end(), 
+                       std::inserter(imports, imports.end()), 
+                       [] (auto i) { return std::make_pair(i->name(), i); });
+    } else {
+        throw std::logic_error(
+            "Internal error in semantic_part.cpp");
+    }
+
+    for (auto u : mdl->use()) {
+        auto name = u->name().toString('.');
+        auto it = imports.find(name);
+        if (it == imports.end()) {
+            return {false, u};
+        }
+        if (auto pack 
+                = std::dynamic_pointer_cast<node::PackDecl>(it->second)) 
+        {
+            auto begin = pack->decls()->begin();
+            auto end = pack->decls()->end();
+            for (; begin != end; ++begin) {
+                space->addImport(*begin);
+            }
+        }
+    }
+    return {true, nullptr};
+}
+
 } // semantics_part

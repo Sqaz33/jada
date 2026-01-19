@@ -11,19 +11,25 @@ public:
            std::vector<std::shared_ptr<node::With>> with,
            std::vector<std::shared_ptr<node::Use>> use,
            const std::string& name,
-           const std::string& fileName);
+           const std::string& fileNme);
 
 public:
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const;
 
     std::weak_ptr<node::IDecl> unit();
+
     const std::vector<std::shared_ptr<node::With>>&
-    with() const noexcept;
+        with() const noexcept;
+
+    const std::vector<std::shared_ptr<node::Use>>&
+        use() const noexcept;
 
     const std::string& fileName() const noexcept;
 
     const std::string& name() const noexcept;
+
+    void resetUnit(std::shared_ptr<node::IDecl> unit);
 
  private:
     std::shared_ptr<node::IDecl> unit_;

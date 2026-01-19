@@ -34,7 +34,7 @@ JVMFieldDescriptor::createObject(
     const attribute::QualifiedName& name)
 {
     std::string descr("L");
-    descr += name.toSring() + ";";
+    descr += name.toString() + ";";
     return JVMFieldDescriptor(std::move(descr), 1);
 }
 

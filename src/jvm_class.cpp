@@ -8,12 +8,12 @@ JVMClass::JVMClass(
     const attribute::QualifiedName& name, 
     std::uint16_t majorV,
     std::uint16_t minorV) :
-    name_(name.toSring())
+    name_(name.toString())
     , simpleName_(name.last())
     , minorV_(minorV)
     , majorV_(majorV)
     , cp_(new constant_pool::JVMConstantPool)
-    , nameIdx_(cp_->addClass(name.toSring()))
+    , nameIdx_(cp_->addClass(name.toString()))
 {}
 
 void JVMClass::printBytes(std::ostream& out) const {
