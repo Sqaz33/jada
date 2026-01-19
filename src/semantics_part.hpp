@@ -54,4 +54,14 @@ private:
         const std::vector<std::shared_ptr<node::IDecl>>& units);
 };
 
+class NameConflictCheck : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+
+public:
+    std::string analyzeDecl_(std::shared_ptr<node::IDecl> decl);
+};
+
 } // namespace semantics_part

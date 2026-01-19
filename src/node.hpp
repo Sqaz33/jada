@@ -142,10 +142,6 @@ public:
         const std::string& name, 
         std::shared_ptr<IDecl> decl);
 
-    std::shared_ptr<IDecl> 
-    findDecl(const std::string& name, 
-             const std::string& requester);
-
     std::vector<std::shared_ptr<IDecl>>::iterator begin();
     std::vector<std::shared_ptr<IDecl>>::iterator end();
 
@@ -207,12 +203,8 @@ public: // IDecl interface
     const std::string& name() const noexcept override;
 
 public:
-    std::shared_ptr<VarDecl> 
-        findParam(const std::string& name);
-
-    std::shared_ptr<IDecl> 
-        findDecl(const std::string& name,  
-                 const std::string& requester);
+    std::shared_ptr<DeclArea> decls();
+    const std::vector<std::shared_ptr<VarDecl>>& params() const noexcept;
 
 private:
     void printParam_(const std::shared_ptr<VarDecl> param, 
@@ -267,11 +259,6 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO
 
 public:
-    std::shared_ptr<IDecl> 
-        findDecl(const std::string& name,  
-                 const std::string& requester); 
-
-public:
     std::shared_ptr<DeclArea> decls();
 
 public: // IDecl interface
@@ -295,6 +282,9 @@ class GlobalSpace : public IDecl {
 public:
     GlobalSpace(std::shared_ptr<IDecl> unit);
 
+public:
+    const std::string& name() const noexcept override;
+
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override { }; // TODO
@@ -306,6 +296,8 @@ public:
 
     const std::vector<std::shared_ptr<IDecl>>& 
         imports() const noexcept;
+
+    std::shared_ptr<IDecl> unit();
 
 private:
     void reachable_(
@@ -370,10 +362,7 @@ public: // IDecl interface
 public: 
     void setBase(std::shared_ptr<RecordDecl> base);
 
-public:
-    std::shared_ptr<IDecl> 
-        findDecl(const std::string& name,  // TODO: delete and all others
-                 const std::string& requester);
+    std::shared_ptr<DeclArea> decls();
 
 private:
     void reachable_(

@@ -78,30 +78,6 @@ void DeclArea::replaceDecl(
                            + name);   
 }
 
-std::shared_ptr<IDecl> 
-DeclArea::findDecl(const std::string& name, 
-                   const std::string& requester)
-{
-    auto itDecl = std::find_if(
-        decls_.begin(), 
-        decls_.end(), 
-        [&name](auto decl) 
-        { return decl->name() == name; });
-
-    auto itReq = std::find_if(
-        decls_.begin(), 
-        decls_.end(), 
-        [&requester](auto decl) 
-        { return decl->name() == requester; });
-
-    if (itDecl != decls_.end() && 
-        (itReq == decls_.end() || itDecl <= itReq )) 
-    {
-        return *itDecl;
-    } 
-    return nullptr;
-}
-
 std::vector<std::shared_ptr<IDecl>>::iterator 
 DeclArea::begin() {
     return decls_.begin();
@@ -167,27 +143,13 @@ const std::string& ProcDecl::name() const noexcept {
     return name_;
 }
 
-std::shared_ptr<VarDecl> 
-ProcDecl::findParam(const std::string& name) {
-    auto r = std::find_if(
-        params_.begin(), 
-        params_.end(), 
-        [&name] (auto par) 
-        { return par->name() == name; });
-
-    if (r != params_.end()) {
-        return *r;
-    }
-
-    return nullptr;
+std::shared_ptr<DeclArea> ProcDecl::decls() {
+    return decls_;
 }
 
-std::shared_ptr<IDecl> 
-ProcDecl::findDecl(
-    const std::string& name, 
-    const std::string& requester) 
-{
-    return decls_->findDecl(name, requester);
+const std::vector<std::shared_ptr<VarDecl>>& 
+ProcDecl::params() const noexcept {
+    return params_;
 }
 
 void ProcDecl::reachable_(
@@ -212,12 +174,8 @@ void ProcDecl::reachable_(
         }
     }
 
-    auto declsBegin = decls_->begin();
-    auto declsEnd = decls_->end();
-
-    for (; declsBegin != declsEnd; ++declsBegin) {
-        if ((*declsBegin)->name() == *it) {
-            auto decl = *declsBegin;
+    for (auto decl : *decls_) {
+        if (decl->name() == *it) {
             if (std::distance(it, end) == 1) {
                 if (!insert) {
                     res.emplace_back();
@@ -260,13 +218,6 @@ const std::string& PackDecl::name() const noexcept {
     return name_;
 }
 
-std::shared_ptr<IDecl> 
-PackDecl::findDecl(const std::string& name,  
-                   const std::string& requester)
-{
-    return decls_->findDecl(name, requester);
-}
-
 void PackDecl::reachable_(
         std::vector<
             std::vector<std::shared_ptr<IDecl>>>& res,
@@ -276,13 +227,9 @@ void PackDecl::reachable_(
 {
     if (it == end) return;
 
-    auto declsBegin = decls_->begin();
-    auto declsEnd = decls_->end();
-
     bool insert = false;
-    for (; declsBegin != declsEnd; ++declsBegin) {
-        if ((*declsBegin)->name() == *it) {
-            auto decl = *declsBegin;
+    for (auto decl : *decls_) {
+        if (decl->name() == *it) {
             if (std::distance(it, end) == 1) {
                 if (!insert) {
                     res.emplace_back();
@@ -301,11 +248,10 @@ std::shared_ptr<DeclArea> PackDecl::decls() {
     return decls_;
 }
 
-
 // GlobalSpace
 GlobalSpace::GlobalSpace(std::shared_ptr<IDecl> unit) :
     unit_(unit)
-{}
+{ unit->setParent(this); }
 
 void GlobalSpace::reachable_(
     std::vector<
@@ -351,6 +297,17 @@ const std::vector<std::shared_ptr<IDecl>>&
 GlobalSpace::imports() const noexcept
 { return imports_; }
 
+const std::string& GlobalSpace::name() const noexcept {
+    assert(false);
+    *static_cast<std::string*>(nullptr);
+}
+
+std::shared_ptr<IDecl> 
+GlobalSpace::unit() {
+    return unit_;
+}
+
+
 // Use 
 Use::Use(attribute::QualifiedName name) :
     name_(std::move(name))
@@ -389,11 +346,8 @@ const std::string& RecordDecl::name() const noexcept {
     return name_;
 }
 
-std::shared_ptr<IDecl> 
-RecordDecl::findDecl(const std::string& name,  
-                     const std::string& requester)
-{
-    return decls_->findDecl(name, requester); 
+std::shared_ptr<DeclArea> RecordDecl::decls() {
+    return decls_;
 }
 
 void RecordDecl::reachable_(
@@ -402,14 +356,10 @@ void RecordDecl::reachable_(
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
     const std::string& requester)
-{
-    auto declsBegin = decls_->begin();
-    auto declsEnd = decls_->end();
-    
+{   
     bool insert = false;
-    for (; declsBegin != declsEnd; ++declsBegin) {
-        if ((*declsBegin)->name() == *it) {
-            auto decl = *declsBegin;
+    for (auto decl : *decls_) {
+        if (decl->name() == *it) {
             if (std::distance(it, end) == 1) {
                 if (!insert) {
                     res.emplace_back();
