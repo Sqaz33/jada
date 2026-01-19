@@ -105,8 +105,8 @@ std::string ExistingModuleImportCheck::analyse(
 
     for (auto&& mod : program) {
         for (auto&& with : mod->with()) {
-            auto&& name = with->name();
-            if (!moduleNames.contains(name.first())) {
+            auto&& name = with->name().toString('.');
+            if (!moduleNames.contains(name)) {
                 std::stringstream ss;
                 ss << mod->fileName();
                 ss << ":";
@@ -296,8 +296,9 @@ std::string NameConflictCheck::analyzeDecl_(
         {
             std::stringstream ss;
             ss << "Name conflict: ";
-            ss << "name: " << d->name() << '.';
+            ss << "name: " << d->name() << ". ";
             ss << "In decl: " << decl->name();
+            return ss.str();
         } else {
             nameNDecl[d->name()] = d;
         }

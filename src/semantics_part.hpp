@@ -4,35 +4,35 @@
 
 namespace semantics_part {
 
-class EntryPointCheck : public ISemanticsPart { 
+class EntryPointCheck : public ISemanticsPart { // 
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class ModuleNameCheck : public ISemanticsPart { 
+class ModuleNameCheck : public ISemanticsPart { //
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class OneLevelWithCheck : public ISemanticsPart {
+class OneLevelWithCheck : public ISemanticsPart { // 
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class SelfImportCheck : public ISemanticsPart {
+class SelfImportCheck : public ISemanticsPart { // 
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class ExistingModuleImportCheck : public ISemanticsPart {
+class ExistingModuleImportCheck : public ISemanticsPart { // 
 public:
     std::string analyse(
             const std::vector<

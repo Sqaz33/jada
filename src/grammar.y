@@ -152,7 +152,7 @@ program: optional_imports compile_unit                                  {
 with:             WITH qualified_name SC                                { 
                                                                           auto mdl = $2.first();
                                                                           utility::toLower(mdl);
-                                                                          if (!helper::allModules.contains(mdl))
+                                                                          if (!helper::allModules.contains(mdl) && mdl != helper::curModuleName)
                                                                           { helper::modulesForPars.push($2.first()); }
                                                                           $$.reset(new node::With($2)); 
                                                                         }

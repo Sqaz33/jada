@@ -71,8 +71,25 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::EntryPointCheck>();
     auto MNC = 
         std::make_shared<semantics_part::ModuleNameCheck>();
+    auto OLC  = 
+        std::make_shared<semantics_part::OneLevelWithCheck>();
+    auto SIC = 
+        std::make_shared<semantics_part::SelfImportCheck>();
+    auto EMIC = 
+        std::make_shared<semantics_part::ExistingModuleImportCheck>();
+    auto GSC = 
+        std::make_shared<semantics_part::GlobalSpaceCreation>();
+    auto NCC = 
+        std::make_shared<semantics_part::NameConflictCheck>();
+
     sem.addPart(EPC);
     sem.addPart(MNC);
+    sem.addPart(OLC);
+    sem.addPart(SIC);
+    sem.addPart(EMIC);
+    sem.addPart(GSC);
+    sem.addPart(NCC);
+
     auto[ok, msg] = sem.analyse(helper::modules);
     if (!ok) {
         std::cerr << msg << std::endl;
@@ -117,7 +134,8 @@ int main(int argc, char** argv) try {
     // }
 
     argv = new char*[2]; // TODO: delete
-    argv[1] = "../test_data/complex.adb"; // TODO: delete
+    // argv[1] = "../test_data/complex.adb"; // TODO: delete
+    argv[1] = "../test_data/modules/main.adb"; // TODO: delete
     
     fs::path path(argv[1]);
     if (".adb" != path.extension()) {

@@ -209,8 +209,8 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
       
 {NAME}                { 
                         std::string text(yytext, yyleng);
-                        yylval->emplace<std::string>(std::move(text));
                         utility::toLower(text);
+                        yylval->emplace<std::string>(std::move(text));
                         return yy::parser::token_type::NAME;
                       }
 {GETTING_ATTRIBUTE}      { 
