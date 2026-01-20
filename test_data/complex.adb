@@ -23,18 +23,25 @@ procedure TestLoops is
 
    arr2: array(1..3) of Pack.Base;
 
+   type IntArray is array(1 .. 100) of Integer;
+
    function Func(X: Integer; Y:  Integer) return Integer is
    begin
       return x + Y;
    end Func;  
 
-   procedure Proc is 
+   procedure Proc (X: IntArray) is 
    begin 
       Put("Hi from ada");
       New_Line;
    end Proc;
 
-   type IntArray is array(1 .. 100) of Integer;
+   procedure Proc (X: Integer) is 
+   begin 
+      Put("Hi from ada");
+      New_Line;
+   end Proc;
+
    procedure Sort(arr: IntArray; len: Integer) is 
       min: Integer;
       buf: Integer;

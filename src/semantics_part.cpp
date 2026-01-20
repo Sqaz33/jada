@@ -629,7 +629,6 @@ std::string
 OverloadCheck::analyzeContainer_(
     std::shared_ptr<node::IDecl> decl)
 {
-    
     std::shared_ptr<node::DeclArea> decls;
 
     if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
@@ -645,11 +644,54 @@ OverloadCheck::analyzeContainer_(
 
     for (auto&& [_, decls] : nameNDecls) {
         if (decls.size() > 1) {
-            for (auto&& proc : decls) {
-                
+            for (std::size_t i = 0; i < decls.size() - 1; ++i) {
+                auto&& d1 = decls[i];
+                auto proc1 = 
+                        std::dynamic_pointer_cast<node::ProcDecl>(d1);
+                auto&& params1 = proc1->params();
+                for (std::size_t j = i + 1; j < decls.size(); ++j) {
+                    auto&& d2 = decls[j];
+                    auto proc2 = 
+                        std::dynamic_pointer_cast<node::ProcDecl>(d2);
+                    auto&& params2 = proc2->params();
+                    if (params1.size() != params2.size()) {
+                        continue;
+                    } 
+                    bool eq = false;
+                    for (std::size_t k = 0; k < params1.size(); ++k) {
+                        eq = params1[k]->type()->compare(params2[k]->type());
+                        if (!eq) {
+                            break;
+                        }
+                    }
+                    if (eq) {
+                        std::stringstream ss;
+                        ss << decl->name();
+                        ss << " Not an overload, but a name conflict: ";
+                        ss << proc1->name();
+                        return ss.str();
+                    }
+                } 
             }
         }
     }
+
+    for (auto&& d : *decls) {
+        if (std::dynamic_pointer_cast<node::PackDecl>(d) || 
+            std::dynamic_pointer_cast<node::ProcDecl>(d))
+        {
+            auto res = analyzeContainer_(d);
+            if (!res.empty()) {
+                std::stringstream ss;
+                ss << decl->name();
+                ss << '.';
+                ss << res;
+                return ss.str();
+            }
+        }
+    }
+
+    return "";
 }
 
 } // semantics_part

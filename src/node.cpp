@@ -433,7 +433,7 @@ bool TypeAliasDecl::compare(const std::shared_ptr<IType> rhs) const {
         next = cur->origin_;
         cur = std::dynamic_pointer_cast<TypeAliasDecl>(next);
     }
-    return next->compare(rhs);
+    return rhs->compare(next);
 }
 
 std::shared_ptr<IType> 

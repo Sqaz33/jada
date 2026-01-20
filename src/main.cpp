@@ -83,6 +83,8 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::NameConflictCheck>();
     auto TNRT = 
         std::make_shared<semantics_part::TypeNameToRealType>();
+    auto OC = 
+        std::make_shared<semantics_part::OverloadCheck>();
 
     sem.addPart(EPC);
     sem.addPart(MNC);
@@ -92,6 +94,7 @@ int semanticAnalysis() {
     sem.addPart(GSC);
     sem.addPart(NCC);
     sem.addPart(TNRT);
+    sem.addPart(OC);
 
     auto[ok, msg] = sem.analyse(helper::modules);
     if (!ok) {
