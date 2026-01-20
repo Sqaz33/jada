@@ -89,17 +89,13 @@ void PackDecl::print(graphviz::GraphViz& gv,
         gv.nameNextEdge("public");
         decls_->print(gv, v);
     }
-    if (privateDecls_) {
-        gv.nameNextEdge("private");
-        privateDecls_->print(gv, v);
-    }
 }
 
 void Use::print(graphviz::GraphViz& gv, 
                     graphviz::VertexType par) const 
 {
     auto v = gv.addVertex("Use", 
-                          {"Name: " + name_.toString()});
+                          {"Name: " + name_.toString('.')});
     gv.addEdge(par, v);
 }
 
@@ -107,7 +103,7 @@ void With::print(graphviz::GraphViz& gv,
                  graphviz::VertexType par) const 
 {
     auto v = gv.addVertex("With", 
-                          {"Name: " + name_.toString()});
+                          {"Name: " + name_.toString('.')});
     gv.addEdge(par, v);
 }
 
@@ -121,7 +117,7 @@ void RecordDecl::print(graphviz::GraphViz& gv,
     desc.push_back("Is Inherits: " 
                     + std::to_string(isInherits_));
     desc.push_back("Base Name: " 
-                    + base_.toString());
+                    + base_.toString('.'));
     auto v = gv.addVertex("Type Record Decl", desc);
     gv.addEdge(par, v);
     decls_->print(gv, v);
@@ -368,7 +364,7 @@ void TypeName::print(graphviz::GraphViz& gv,
 {
     auto name = name_.empty() ? 
                   attr_.toString() : 
-                  name_.toString();
+                  name_.toString('.');
     auto v = gv.addVertex("Type Name", 
                     {"Name: " + name});
     gv.addEdge(par, v);
@@ -398,7 +394,9 @@ void Return::print(graphviz::GraphViz& gv,
 {
     auto v = gv.addVertex("Return stm");
     gv.addEdge(par, v);
-    retVal_->print(gv, v);
+    if (retVal_) {
+        retVal_->print(gv, v);
+    }
 }
 
 } // namespace node

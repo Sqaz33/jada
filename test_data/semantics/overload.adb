@@ -1,7 +1,6 @@
 --  with pack; use pack;
 
 with ada.text_io;
-use ada.text_io;
 
 procedure main is 
    function Func(X: Integer; Y: Integer) return Integer is
@@ -13,8 +12,6 @@ procedure main is
    begin
       return x + 1;
    end Func; 
-
-   func: Integer;
 
 begin
 

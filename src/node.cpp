@@ -13,6 +13,10 @@ std::shared_ptr<INode> INode::self() {
     return shared_from_this();
 }
 
+INode* INode::parent() noexcept {
+    return parent_;
+}
+
 } 
 
 // Stms
@@ -33,7 +37,7 @@ std::vector<
     std::vector<std::shared_ptr<IDecl>>>  
 IDecl::reachable(
     const attribute::QualifiedName& name, 
-    const std::string& requester) 
+    std::shared_ptr<IDecl> requester)
 {   
     if (dynamic_cast<VarDecl*>(this) || 
          dynamic_cast<TypeAliasDecl*>(this)) 
@@ -48,7 +52,8 @@ IDecl::reachable(
     
     if (parent_) {
         auto buf = dynamic_cast<IDecl*>
-                    (parent_)->reachable(name, this->name());
+                    (parent_)->reachable(name, 
+                            std::dynamic_pointer_cast<node::IDecl>(self()));
         res.insert(res.end(), buf.begin(), buf.end());
     }
 
@@ -113,11 +118,19 @@ void VarDecl::reachable_(
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester)
+        std::shared_ptr<IDecl> requester)
 { return; }
 
 const std::string& VarDecl::name() const noexcept {
     return name_;
+}
+
+std::shared_ptr<IType> VarDecl::type() {
+    return type_;
+}
+
+void VarDecl::resetType(std::shared_ptr<IType> type) {
+    type_ = type;
 }
 
 // ProcDecl
@@ -127,7 +140,7 @@ ProcDecl::ProcDecl(const std::string& name,
                    std::shared_ptr<Body> body) :
     name_(name)
     , params_(params)
-    , decls_(decls)
+    , decls_(decls ? decls : std::make_shared<DeclArea>())
     , body_(body)
 {
     for (auto param : params_) {
@@ -157,7 +170,7 @@ void ProcDecl::reachable_(
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) 
+        std::shared_ptr<IDecl> requester) 
 {
     if (it == end) return;
 
@@ -187,6 +200,9 @@ void ProcDecl::reachable_(
                     res, std::next(it), end, requester);
             }   
         }
+        if (decl == requester) {
+            break;
+        }
     }
 }
 
@@ -202,16 +218,11 @@ FuncDecl::FuncDecl(const std::string& name,
 
 // PackDecl
 PackDecl::PackDecl(const std::string& name, 
-                   std::shared_ptr<DeclArea> decls,
-                   std::shared_ptr<DeclArea> privateDecls):
+                   std::shared_ptr<DeclArea> decls):
     name_(name)
     , decls_(decls)
-    , privateDecls_(privateDecls)
 {
     decls_->setParent(this);
-    if (privateDecls_) { 
-        privateDecls_->setParent(this);
-    }
 }
 
 const std::string& PackDecl::name() const noexcept {
@@ -223,7 +234,7 @@ void PackDecl::reachable_(
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) 
+        std::shared_ptr<IDecl> requester) 
 {
     if (it == end) return;
 
@@ -240,6 +251,9 @@ void PackDecl::reachable_(
                 decl->reachable_(
                     res, std::next(it), end, requester);
             }   
+        }
+        if (decl == requester) {
+            break;
         }
     }
 }
@@ -258,7 +272,7 @@ void GlobalSpace::reachable_(
         std::vector<std::shared_ptr<IDecl>>>& res,
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    const std::string& requester) 
+    std::shared_ptr<IDecl> requester) 
 {
     if (it == end) return;
 
@@ -350,12 +364,26 @@ std::shared_ptr<DeclArea> RecordDecl::decls() {
     return decls_;
 }
 
+void RecordDecl::setBase(std::shared_ptr<RecordDecl> base) {
+    baseRecord_ = base;
+    base_ = base->name();
+}
+
+const attribute::QualifiedName& 
+RecordDecl::baseName() const noexcept {
+    return base_;
+}
+
+bool RecordDecl::isInherits() const noexcept {
+    return isInherits_;
+}
+
 void RecordDecl::reachable_(
     std::vector<
         std::vector<std::shared_ptr<IDecl>>>& res,
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    const std::string& requester)
+    std::shared_ptr<IDecl> requester)
 {   
     bool insert = false;
     for (auto decl : *decls_) {
@@ -371,6 +399,9 @@ void RecordDecl::reachable_(
                     res, std::next(it), end, requester);
             }   
         }
+        if (decl == requester) {
+            break;
+        }
     }
 }
 
@@ -383,8 +414,20 @@ TypeAliasDecl::TypeAliasDecl(const std::string& name,
     origin_->setParent(this);
 }
 
+
 const std::string& TypeAliasDecl::name() const noexcept {
     return name_;
+}
+
+std::shared_ptr<IType> 
+TypeAliasDecl::origin() {
+    return origin_;
+}
+
+void TypeAliasDecl::resetOrigin(
+    std::shared_ptr<IType> newOrigin)
+{
+    origin_ = newOrigin;
 }
 
 void TypeAliasDecl::reachable_(
@@ -392,8 +435,9 @@ void TypeAliasDecl::reachable_(
         std::vector<std::shared_ptr<IDecl>>>& res,
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    const std::string& requester) 
+    std::shared_ptr<IDecl> requester) 
 { return; }
+
 
 } // namespace node 
 
@@ -416,6 +460,14 @@ ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges,
     , type_(type)
 {
     type_->setParent(this);
+}
+
+std::shared_ptr<IType> ArrayType::type() {
+    return type_;
+}
+
+void ArrayType::resetType(std::shared_ptr<IType> newType) {
+    type_ = newType;
 }
 
 // StringType
@@ -549,11 +601,26 @@ namespace node {
 // TypeName
 TypeName::TypeName(attribute::QualifiedName name) :
     name_(std::move(name))
+    , hasName_(true)
 {}
 
 TypeName::TypeName(attribute::Attribute attr) :
     attr_(std::move(attr))
 {}
+
+const attribute::QualifiedName& 
+TypeName::name() const noexcept {
+    return name_;
+}
+
+const attribute::Attribute& 
+TypeName::attribute() const noexcept {
+    return attr_;
+}
+
+bool TypeName::hasName() const noexcept {
+    return hasName_;
+}
 
 } // namespace node 
 
@@ -574,7 +641,36 @@ Assign::Assign(std::shared_ptr<IExpr> lval,
 Return::Return(std::shared_ptr<IExpr> retVal) : 
     retVal_(retVal) 
 {
-    retVal_->setParent(this);
+    if (retVal) {
+        retVal_->setParent(this);
+    }
 }
 
 } // namespace node
+
+// Decls - other
+namespace node {
+
+// SuperclassReference
+SuperclassReference::SuperclassReference(
+    const attribute::Attribute& ref) :
+    ref_(ref)
+{}
+
+const attribute::Attribute& 
+SuperclassReference::ref() const noexcept {
+    return ref_;
+}
+
+const std::shared_ptr<ClassDecl>& 
+SuperclassReference::cls() const noexcept {
+    return class_;
+}
+
+void SuperclassReference::setClass(
+    std::shared_ptr<ClassDecl> cls) 
+{
+    class_ = cls;
+}
+
+}

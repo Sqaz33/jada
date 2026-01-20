@@ -81,6 +81,8 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::GlobalSpaceCreation>();
     auto NCC = 
         std::make_shared<semantics_part::NameConflictCheck>();
+    auto TNRT = 
+        std::make_shared<semantics_part::TypeNameToRealType>();
 
     sem.addPart(EPC);
     sem.addPart(MNC);
@@ -89,6 +91,7 @@ int semanticAnalysis() {
     sem.addPart(EMIC);
     sem.addPart(GSC);
     sem.addPart(NCC);
+    sem.addPart(TNRT);
 
     auto[ok, msg] = sem.analyse(helper::modules);
     if (!ok) {
@@ -128,15 +131,20 @@ int main(int argc, char** argv) try {
         return 0;
     }
 
-    // if (argc < 2) {
-    //     std::cout << "usage ./jada file.adb" << std::endl;
-    //     return 1;
-    // }
-
-    argv = new char*[2]; // TODO: delete
-    // argv[1] = "../test_data/complex.adb"; // TODO: delete
-    argv[1] = "../test_data/modules/main.adb"; // TODO: delete
+    if (argc < 2) { // TODO: delete
+        std::cout << "asdf";
+        argc = 2;
+        argv = new char*[2]; // TODO: delete
+        argv[1] = "../test_data/complex.adb"; // TODO: delete
+        // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
+        // argv[1] = "../test_data/semantics/type_replace_check.adb";
+    }
     
+    if (argc < 2) {
+        std::cout << "usage ./jada file.adb" << std::endl;
+        return 1;
+    }
+
     fs::path path(argv[1]);
     if (".adb" != path.extension()) {
         std::cout << "Usage ./jada file.adb; -h for help" << std::endl;

@@ -59,7 +59,17 @@ Attribute::Attribute(QualifiedName left, const std::string& right) :
 
 std::string Attribute::toString() const {
     if (left_.empty() || right_.empty()) return "";
-    return left_.toString() + '\'' + right_;
+    return left_.toString('.') + '\'' + right_;
 }
+
+const QualifiedName& 
+Attribute::left() const noexcept {
+    return left_;
+}
+const std::string& 
+Attribute::right() const noexcept {
+    return right_;
+}
+
 
 } // namespace attribute

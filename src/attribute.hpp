@@ -33,6 +33,9 @@ public:
     Attribute() = default;
     
     std::string toString() const;
+
+    const QualifiedName& left() const noexcept;
+    const std::string& right() const noexcept;
     
 private:
     QualifiedName left_; 

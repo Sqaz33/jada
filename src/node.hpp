@@ -22,6 +22,7 @@ struct INode : std::enable_shared_from_this<INode> {
     void setLocation(const yy::location& loc);
 
     virtual void setParent(INode* parent);
+    INode* parent() noexcept;
 
     std::shared_ptr<INode> self(); 
 
@@ -75,7 +76,7 @@ class ProcDecl;
 class PackDecl;
 class RecordDecl;
 class GlobalSpace;
-class IDecl : public INode { 
+class IDecl : virtual public INode { 
 public: 
     virtual const std::string& name() const noexcept = 0;
 
@@ -83,7 +84,7 @@ public:
         std::vector<std::shared_ptr<IDecl>>> 
     reachable(
         const attribute::QualifiedName& name, 
-        const std::string& requester = "");
+        std::shared_ptr<IDecl> requester = nullptr);
 
 protected:
     friend class ProcDecl;
@@ -95,10 +96,10 @@ protected:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) = 0;
+        std::shared_ptr<IDecl> requester) = 0;
 };
 
-struct IType : INode { 
+struct IType : virtual INode { 
     virtual bool compare(
         const std::shared_ptr<IType> rhs) const = 0;
 };
@@ -165,6 +166,9 @@ public:
 public:
     bool compareTypes(std::shared_ptr<IType> rhs) const {};
 
+    std::shared_ptr<IType> type();
+    void resetType(std::shared_ptr<IType> type);
+
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
@@ -179,7 +183,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) override;
+        std::shared_ptr<IDecl> requester) override;
 
 private:
     std::string name_;
@@ -216,7 +220,7 @@ protected:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) override;
+        std::shared_ptr<IDecl> requester) override;
 
 protected:
     std::string name_;
@@ -250,8 +254,7 @@ private:
 class PackDecl : public IDecl {
 public:
     PackDecl(const std::string& name, 
-             std::shared_ptr<DeclArea> decls, 
-             std::shared_ptr<DeclArea> privateDecls = nullptr);
+             std::shared_ptr<DeclArea> decls);
     
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -270,12 +273,11 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) override;
+        std::shared_ptr<IDecl> requester) override;
 
 private:
     std::string name_;
     std::shared_ptr<DeclArea> decls_;
-    std::shared_ptr<DeclArea> privateDecls_; // todo delete
 };
 
 class GlobalSpace : public IDecl {
@@ -305,7 +307,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) override;
+        std::shared_ptr<IDecl> requester) override;
     
 private:
     std::shared_ptr<IDecl> unit_;
@@ -344,7 +346,10 @@ private:
     attribute::QualifiedName name_;
 };
 
-class RecordDecl : public IDecl {
+class RecordDecl : 
+    public IDecl 
+    , public IType
+{
 public:
     RecordDecl(const std::string& name, 
                std::shared_ptr<DeclArea> decls, 
@@ -359,10 +364,19 @@ public: // INode interface
 public: // IDecl interface
     const std::string& name() const noexcept override;
 
+public: // IType interface
+    bool compare(
+            const std::shared_ptr<IType> rhs) const override { return false; }; // TODO
+
+            
 public: 
     void setBase(std::shared_ptr<RecordDecl> base);
-
+    
     std::shared_ptr<DeclArea> decls();
+
+    const attribute::QualifiedName& baseName() const noexcept;
+
+    bool isInherits() const noexcept;
 
 private:
     void reachable_(
@@ -370,7 +384,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) override;
+        std::shared_ptr<IDecl> requester) override;
 
 private:
     std::weak_ptr<RecordDecl> baseRecord_;
@@ -381,7 +395,10 @@ private:
     bool isTagged_;
 };
 
-class TypeAliasDecl : public IDecl {
+class TypeAliasDecl : 
+    public IDecl 
+    , public IType
+{
 public:
     TypeAliasDecl(const std::string& name, 
                   std::shared_ptr<IType> type); 
@@ -394,13 +411,21 @@ public: // INode interface
 public: // IDecl interface
     const std::string& name() const noexcept override;
 
+public: // IType interface
+    bool compare(
+            const std::shared_ptr<IType> rhs) const override { return false; }; // TODO
+            
+public: 
+    std::shared_ptr<IType> origin();
+    void resetOrigin(std::shared_ptr<IType> newOrigin);
+
 private:
     void reachable_(
         std::vector<
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        const std::string& requester) override;
+        std::shared_ptr<IDecl> requester) override;
 
 private:
     std::string name_;
@@ -421,8 +446,7 @@ public:
     SimpleType type() const noexcept;
 
 public: // IType interface
-    bool 
-    compare(const std::shared_ptr<IType> rhs) const override {};
+    bool compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -439,13 +463,18 @@ public:
               std::shared_ptr<IType> type);
     
 public: // IType interface
-    bool 
-    compare(const std::shared_ptr<IType> rhs) const override {};
+    bool compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
+
     void* codegen() override { return nullptr; } // TODO
+
+public:
+    std::shared_ptr<IType> type();
+
+    void resetType(std::shared_ptr<IType> newType);
 
 private:
     std::vector<std::pair<int, int>> ranges_; 
@@ -709,16 +738,23 @@ public:
     TypeName(attribute::Attribute attr);
 
 public: // IType interface
-    bool 
-    compare(const std::shared_ptr<IType> rhs) const override {};
+    bool compare(const std::shared_ptr<IType> rhs) const override {};
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+public:
+    const attribute::QualifiedName& name() const noexcept;
+
+    const attribute::Attribute& attribute() const noexcept;
+
+    bool hasName() const noexcept;
+
 private:
     attribute::QualifiedName name_;
+    bool hasName_ = false;
     attribute::Attribute attr_;
 };
 
@@ -748,7 +784,7 @@ public:
 public:
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+    void* codegen() override { return nullptr; } // TODOW
 
 private:
     std::shared_ptr<IExpr> call_;
@@ -765,6 +801,47 @@ public: // INode interface
 
 private:
     std::shared_ptr<IExpr> retVal_;
+};
+
+class ClassDecl; // TODO
+
+class SuperclassReference :
+    public IDecl,
+    public IType
+{
+public:
+    SuperclassReference(const attribute::Attribute& ref);
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override {}; // TODO
+    void* codegen() override { return nullptr; } // TODO
+
+public: // IDecl interface
+    const std::string& name() const noexcept override {}; // TODO
+
+private:
+void reachable_(
+        std::vector<
+            std::vector<std::shared_ptr<IDecl>>>& res,
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        std::shared_ptr<IDecl> requester) { } 
+
+public: // IType interface
+    bool compare(
+            const std::shared_ptr<IType> rhs) const override { return false; }; // TODO
+
+public:
+    const attribute::Attribute& ref() const noexcept;
+    const std::shared_ptr<ClassDecl>& cls() const noexcept;
+    void setClass(std::shared_ptr<ClassDecl> cls);
+
+
+
+private:
+    attribute::Attribute ref_;
+    std::shared_ptr<ClassDecl> class_;
 };
 
 } // namespace node

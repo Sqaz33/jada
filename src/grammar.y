@@ -191,8 +191,6 @@ func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body 
                 | OVERRIDING func_decl                                                                               { $$ = $2; }
 
 pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                                              { $$.reset(new node::PackDecl($2, $4)); }
-                | PACKAGE NAME IS decl_area PRIVATE decl_area END NAME SC                                            { $$.reset(new node::PackDecl($2, $4, $6)); }
-                | PACKAGE NAME IS PRIVATE decl_area END NAME SC                                                      { $$.reset(new node::PackDecl($2, nullptr, $5)); }
 
 type_decl:        record_decl                    
                  | type_alias_decl

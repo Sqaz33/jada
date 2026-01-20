@@ -4,42 +4,42 @@
 
 namespace semantics_part {
 
-class EntryPointCheck : public ISemanticsPart { // 
+class EntryPointCheck : public ISemanticsPart { 
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class ModuleNameCheck : public ISemanticsPart { //
+class ModuleNameCheck : public ISemanticsPart { 
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class OneLevelWithCheck : public ISemanticsPart { // 
+class OneLevelWithCheck : public ISemanticsPart { 
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class SelfImportCheck : public ISemanticsPart { // 
+class SelfImportCheck : public ISemanticsPart { 
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class ExistingModuleImportCheck : public ISemanticsPart { // 
+class ExistingModuleImportCheck : public ISemanticsPart { 
 public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 };
 
-class GlobalSpaceCreation : public ISemanticsPart {
+class GlobalSpaceCreation : public ISemanticsPart { 
 public:
     std::string analyse(
             const std::vector<
@@ -54,7 +54,7 @@ private:
         const std::vector<std::shared_ptr<node::IDecl>>& units);
 };
 
-class NameConflictCheck : public ISemanticsPart {
+class NameConflictCheck : public ISemanticsPart { 
 public:
     std::string analyse(
             const std::vector<
@@ -62,6 +62,22 @@ public:
 
 public:
     std::string analyzeDecl_(std::shared_ptr<node::IDecl> decl);
+};
+
+class TypeNameToRealType : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+public:
+    std::string analyzeContainer_(std::shared_ptr<node::IDecl> decl);
+    std::string analyzeDecl_(std::shared_ptr<node::IDecl> decl);
+    std::string analyzeArrayType_(
+        std::shared_ptr<node::ArrayType> atype, 
+        node::IDecl* space,
+        std::shared_ptr<node::IDecl> parent);
+    std::string analyseRecord_(std::shared_ptr<node::RecordDecl> decl);
+    std::string analyzeParam_(std::shared_ptr<node::VarDecl> decl);  
 };
 
 } // namespace semantics_part
