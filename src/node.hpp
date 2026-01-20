@@ -366,7 +366,7 @@ public: // IDecl interface
 
 public: // IType interface
     bool compare(
-            const std::shared_ptr<IType> rhs) const override { return false; }; // TODO
+            const std::shared_ptr<IType> rhs) const override;
 
             
 public: 
@@ -413,7 +413,7 @@ public: // IDecl interface
 
 public: // IType interface
     bool compare(
-            const std::shared_ptr<IType> rhs) const override { return false; }; // TODO
+            const std::shared_ptr<IType> rhs) const override;
             
 public: 
     std::shared_ptr<IType> origin();
@@ -446,7 +446,7 @@ public:
     SimpleType type() const noexcept;
 
 public: // IType interface
-    bool compare(const std::shared_ptr<IType> rhs) const override {};
+    bool compare(const std::shared_ptr<IType> rhs) const override;
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -463,7 +463,7 @@ public:
               std::shared_ptr<IType> type);
     
 public: // IType interface
-    bool compare(const std::shared_ptr<IType> rhs) const override {};
+    bool compare(const std::shared_ptr<IType> rhs) const override;
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -486,8 +486,7 @@ public:
     StringType(std::pair<int, int> range);
 
 public: // IType interface
-    bool 
-    compare(const std::shared_ptr<IType> rhs) const override {};
+    bool compare(const std::shared_ptr<IType> rhs) const override;
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -738,7 +737,7 @@ public:
     TypeName(attribute::Attribute attr);
 
 public: // IType interface
-    bool compare(const std::shared_ptr<IType> rhs) const override {};
+    bool compare(const std::shared_ptr<IType> rhs) const override;
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -830,14 +829,12 @@ void reachable_(
 
 public: // IType interface
     bool compare(
-            const std::shared_ptr<IType> rhs) const override { return false; }; // TODO
+            const std::shared_ptr<IType> rhs) const override;
 
 public:
     const attribute::Attribute& ref() const noexcept;
     const std::shared_ptr<ClassDecl>& cls() const noexcept;
     void setClass(std::shared_ptr<ClassDecl> cls);
-
-
 
 private:
     attribute::Attribute ref_;

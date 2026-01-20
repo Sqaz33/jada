@@ -69,7 +69,7 @@ public:
     std::string analyse(
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
-public:
+private:
     std::string analyzeContainer_(std::shared_ptr<node::IDecl> decl);
     std::string analyzeDecl_(std::shared_ptr<node::IDecl> decl);
     std::string analyzeArrayType_(
@@ -78,6 +78,17 @@ public:
         std::shared_ptr<node::IDecl> parent);
     std::string analyseRecord_(std::shared_ptr<node::RecordDecl> decl);
     std::string analyzeParam_(std::shared_ptr<node::VarDecl> decl);  
+};
+
+
+class OverloadCheck : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+
+private:
+    std::string analyzeContainer_(std::shared_ptr<node::IDecl> decl);
 };
 
 } // namespace semantics_part

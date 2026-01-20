@@ -13,4 +13,5 @@ namespace helper {
     std::queue<std::string> modulesForPars;
     std::string curModuleFileName;
     std::string curModuleName;
+    bool rightEnding = true;
 }

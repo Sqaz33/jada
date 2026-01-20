@@ -9,12 +9,12 @@ void INode::setParent(INode* parent) {
     parent_ = parent;
 }
 
-std::shared_ptr<INode> INode::self() {
-    return shared_from_this();
-}
-
 INode* INode::parent() noexcept {
     return parent_;
+}
+
+std::shared_ptr<INode> INode::self() {
+    return shared_from_this();
 }
 
 } 
@@ -360,6 +360,13 @@ const std::string& RecordDecl::name() const noexcept {
     return name_;
 }
 
+bool RecordDecl::compare(const std::shared_ptr<IType> rhs) const {
+    if (rhs.get() == this) {
+        return true;
+    }
+    return false;
+}
+
 std::shared_ptr<DeclArea> RecordDecl::decls() {
     return decls_;
 }
@@ -419,6 +426,16 @@ const std::string& TypeAliasDecl::name() const noexcept {
     return name_;
 }
 
+bool TypeAliasDecl::compare(const std::shared_ptr<IType> rhs) const {
+    auto cur = std::dynamic_pointer_cast<TypeAliasDecl>(origin_);
+    auto next = origin_;
+    while (cur) {
+        next = cur->origin_;
+        cur = std::dynamic_pointer_cast<TypeAliasDecl>(next);
+    }
+    return next->compare(rhs);
+}
+
 std::shared_ptr<IType> 
 TypeAliasDecl::origin() {
     return origin_;
@@ -453,6 +470,13 @@ SimpleType SimpleLiteralType::type() const noexcept {
     return type_;
 }
 
+bool SimpleLiteralType::compare(const std::shared_ptr<IType> rhs) const {
+    if (auto lit = std::dynamic_pointer_cast<SimpleLiteralType>(rhs)) {
+        return lit->type_ == type_;
+    }
+    return false;
+}
+
 // ArrayType
 ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges, 
                      std::shared_ptr<IType> type) :
@@ -461,6 +485,14 @@ ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges,
 {
     type_->setParent(this);
 }
+
+bool ArrayType::compare(const std::shared_ptr<IType> rhs) const {
+    if (auto arr = std::dynamic_pointer_cast<ArrayType>(rhs)) {
+        return arr->type_->compare(type_) && ranges_ == arr->ranges_;
+    }
+    return false;
+}
+
 
 std::shared_ptr<IType> ArrayType::type() {
     return type_;
@@ -474,6 +506,13 @@ void ArrayType::resetType(std::shared_ptr<IType> newType) {
 StringType::StringType(std::pair<int, int> range) :
     range_(range)
 {}
+
+bool StringType::compare(const std::shared_ptr<IType> rhs) const {
+    if (auto str = std::dynamic_pointer_cast<StringType>(rhs)) {
+        return range_ == str->range_;
+    }
+    return false;
+}
 
 // Aggregate
 Aggregate::Aggregate(const std::vector<
@@ -608,6 +647,11 @@ TypeName::TypeName(attribute::Attribute attr) :
     attr_(std::move(attr))
 {}
 
+bool TypeName::compare(const std::shared_ptr<IType> rhs) const {
+    assert(false);
+}
+
+
 const attribute::QualifiedName& 
 TypeName::name() const noexcept {
     return name_;
@@ -671,6 +715,14 @@ void SuperclassReference::setClass(
     std::shared_ptr<ClassDecl> cls) 
 {
     class_ = cls;
+}
+
+bool SuperclassReference::compare(
+    const std::shared_ptr<IType> rhs) const 
+{
+    if (auto r = std::dynamic_pointer_cast<SuperclassReference>(rhs)) {
+        return class_ && r->class_ && class_ == r->class_;
+    }
 }
 
 }

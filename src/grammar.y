@@ -45,6 +45,7 @@
       extern std::queue<std::string> modulesForPars;
       extern std::string curModuleFileName;
       extern std::string curModuleName;
+      extern bool rightEnding;
   } // namespace helper
 }
 
@@ -182,15 +183,30 @@ var_decl:         NAME COLON type ASG expr SC                           { $$.res
 qualified_name:   NAME                                                  { $$ = attribute::QualifiedName($1); } 
                 | qualified_name DOT NAME                               { $$ = std::move($1); $$.push($3); }       
 
-proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC                                     { $$.reset(new node::ProcDecl($2, {}, $4, $6)); }
-                | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { $$.reset(new node::ProcDecl($2, $4, $7, $9)); }
+proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC                                     { 
+                                                                                                                        $$.reset(new node::ProcDecl($2, {}, $4, $6));
+                                                                                                                        helper::rightEnding = ($2 == $8) && helper::rightEnding;
+                                                                                                                     }
+                | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { 
+                                                                                                                        $$.reset(new node::ProcDecl($2, $4, $7, $9)); 
+                                                                                                                        helper::rightEnding = ($2 == $11) && helper::rightEnding;
+                                                                                                                     }
                 | OVERRIDING proc_decl                                                                               { $$ = $2; }
 
-func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { $$.reset(new node::FuncDecl($2, {}, $6, $8, $4)); }  
-                | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC     { $$.reset(new node::FuncDecl($2, $4, $9, $11, $7)); }
+func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { 
+                                                                                                                        $$.reset(new node::FuncDecl($2, {}, $6, $8, $4)); 
+                                                                                                                        helper::rightEnding = ($2 == $10) && helper::rightEnding;
+                                                                                                                     }  
+                | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC     { 
+                                                                                                                        $$.reset(new node::FuncDecl($2, $4, $9, $11, $7)); 
+                                                                                                                        helper::rightEnding = ($2 == $13) && helper::rightEnding;
+                                                                                                                     }
                 | OVERRIDING func_decl                                                                               { $$ = $2; }
 
-pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                                              { $$.reset(new node::PackDecl($2, $4)); }
+pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                                              { 
+                                                                                                                        $$.reset(new node::PackDecl($2, $4)); 
+                                                                                                                        helper::rightEnding = ($2 == $6) && helper::rightEnding;
+                                                                                                                     }
 
 type_decl:        record_decl                    
                  | type_alias_decl

@@ -603,4 +603,53 @@ TypeNameToRealType::analyzeParam_(
     return "";
 }
 
+// OverloadCheck
+std::string 
+OverloadCheck::analyse(
+    const std::vector<
+        std::shared_ptr<mdl::Module>>& program) 
+{
+    for (auto mod : program) {
+        auto unit = mod->unit().lock();
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+        auto res = analyzeContainer_(space->unit());
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << res;
+            return ss.str();
+        }
+    }
+    return ISemanticsPart::analyseNext(program);
+}
+
+std::string 
+OverloadCheck::analyzeContainer_(
+    std::shared_ptr<node::IDecl> decl)
+{
+    
+    std::shared_ptr<node::DeclArea> decls;
+
+    if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
+        decls = pack->decls();
+    } else if (auto proc = std::dynamic_pointer_cast<node::ProcDecl>(decl)) {
+        decls = proc->decls();
+    }
+
+    std::map<std::string, std::vector<std::shared_ptr<node::IDecl>>> nameNDecls;
+    for (auto&& d : *decls) {
+        nameNDecls[d->name()].push_back(d);
+    }
+
+    for (auto&& [_, decls] : nameNDecls) {
+        if (decls.size() > 1) {
+            for (auto&& proc : decls) {
+                
+            }
+        }
+    }
+}
+
 } // semantics_part

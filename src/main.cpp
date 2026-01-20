@@ -168,6 +168,12 @@ int main(int argc, char** argv) try {
         printAst();
     }
 
+    if (!helper::rightEnding) {
+        std::cerr << "The declaration has" 
+                     " different names and endings\n";
+        return 1;
+    }
+
     addAdaStdLib(helper::modules);
 
     return semanticAnalysis();
