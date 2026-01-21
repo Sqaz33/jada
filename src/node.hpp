@@ -190,7 +190,11 @@ private:
     std::shared_ptr<IType> type_;
     std::shared_ptr<IExpr> rval_;
 };
-
+// TODO:
+// 1. при объявлении и функции и процедуры с одним именим - если rhs в assign - функция
+//      если просто вызов - процедура
+// 2. разные проверки перегрузки
+// 3. можно объявлять функции и процедуры с одним именем в одном спейсе
 class ProcDecl : public IDecl {
 public:
     ProcDecl(const std::string& name, 
@@ -371,12 +375,17 @@ public: // IType interface
             
 public: 
     void setBase(std::shared_ptr<RecordDecl> base);
-    
-    std::shared_ptr<DeclArea> decls();
 
+    std::weak_ptr<RecordDecl> base();
+    
     const attribute::QualifiedName& baseName() const noexcept;
 
+    std::shared_ptr<DeclArea> decls();
+
     bool isInherits() const noexcept;
+
+    void setTagged() noexcept;
+    bool isTagged() const noexcept;
 
 private:
     void reachable_(
@@ -802,6 +811,11 @@ private:
     std::shared_ptr<IExpr> retVal_;
 };
 
+// 1. содержит методы (фунции и процедуры)
+// 2. содержит рекорд
+// 3. поиск метода для точечной нотации 
+// 4. является ли класс производным от того, что в сслыке
+// 5. каждый тагед рекорд содержит ссылку на cвой ClassDecl
 class ClassDecl : public IDecl {
 public:
     ClassDecl(std::shared_ptr<RecordDecl> record);
@@ -812,20 +826,37 @@ public: // IDecl interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override { assert(false); }; // TODO
+
     void* codegen() override { return nullptr; } // TODO
 
 public:
     void setBase(std::weak_ptr<ClassDecl> base);
+
     void addDerived(std::shared_ptr<ClassDecl> derived);
 
-    // bool containMethod()
+    void addMethod(std::shared_ptr<ProcDecl> method);
 
+    std::shared_ptr<FuncDecl> methodFunc(
+        const std::string& name, 
+        std::vector<std::shared_ptr<IType>> params);
+
+    std::shared_ptr<ProcDecl> methodProc(
+        const std::string& name, 
+        std::vector<std::shared_ptr<IType>> params);
+
+    bool isDerivedOf(std::shared_ptr<ClassDecl> cls);
+
+    std::shared_ptr<ProcDecl> containsMethod(
+        const std::string& name, 
+        std::vector<std::shared_ptr<IType>> params,
+        bool proc);
 private:
     std::shared_ptr<RecordDecl> record_;
-    std::vector<std::weak_ptr<ClassDecl>> methods_;
+    std::vector<std::weak_ptr<ProcDecl>> procs_;
+    std::vector<std::weak_ptr<FuncDecl>> funcs_;
 
-    std::vector<std::shared_ptr<ClassDecl>> derived_; 
     std::weak_ptr<ClassDecl> base_;
+    std::string name_;
 };
 
 class SuperclassReference : public IType {

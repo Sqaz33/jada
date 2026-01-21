@@ -136,12 +136,13 @@ int main(int argc, char** argv) try {
     }
 
     if (argc < 2) { // TODO: delete
-        std::cout << "asdf";
         argc = 2;
         argv = new char*[2]; // TODO: delete
-        argv[1] = "../test_data/complex.adb"; // TODO: delete
+        // argv[1] = "../test_data/complex.adb"; // TODO: delete
         // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
         // argv[1] = "../test_data/semantics/type_replace_check.adb";
+        // argv[1] = "../test_data/semantics/proc_func_overload.adb";
+        argv[1] = "../test_data/semantics/record_inherits.adb";
     }
     
     if (argc < 2) {

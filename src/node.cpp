@@ -351,8 +351,8 @@ RecordDecl::RecordDecl(const std::string& name,
     , decls_(decls)
     , base_(std::move(base))
     , isTagged_(isTagged)
+    , isInherits_(!base_.empty())
 { 
-    isInherits_ = !base.empty(); 
     decls_->setParent(this);
 }
 
@@ -376,6 +376,10 @@ void RecordDecl::setBase(std::shared_ptr<RecordDecl> base) {
     base_ = base->name();
 }
 
+std::weak_ptr<RecordDecl> RecordDecl::base() {
+    return baseRecord_;
+}
+
 const attribute::QualifiedName& 
 RecordDecl::baseName() const noexcept {
     return base_;
@@ -383,6 +387,14 @@ RecordDecl::baseName() const noexcept {
 
 bool RecordDecl::isInherits() const noexcept {
     return isInherits_;
+}
+
+void RecordDecl::setTagged() noexcept {
+    isTagged_ = true;
+}
+
+bool RecordDecl::isTagged() const noexcept {
+    return isTagged_;
 }
 
 void RecordDecl::reachable_(
@@ -692,8 +704,50 @@ Return::Return(std::shared_ptr<IExpr> retVal) :
 
 } // namespace node
 
-// Decls - other
 namespace node {
+
+// ClassDecl
+ClassDecl::ClassDecl(std::shared_ptr<RecordDecl> record) :
+    record_(record),
+    name_(record->name() + "Class")
+{}
+
+const std::string& ClassDecl::name() const noexcept {
+    return name_;
+}
+
+void ClassDecl::setBase(std::weak_ptr<ClassDecl> base) {
+    base_ = base;
+}
+
+bool ClassDecl::isDerivedOf(std::shared_ptr<ClassDecl> cls) {
+    std::weak_ptr<ClassDecl> cur = std::dynamic_pointer_cast<ClassDecl>(self());
+    while (!cur.expired()) {
+        auto lock = cur.lock();
+        if (lock == cls) {
+            return true;
+        }
+        cur = lock->base_;
+    }
+    return false;
+}
+
+void ClassDecl::addMethod(std::shared_ptr<ProcDecl> method) {
+    if (auto func = std::dynamic_pointer_cast<FuncDecl>(method)) {
+        funcs_.emplace_back(func);
+    }
+    procs_.push_back(method);
+}
+
+std::shared_ptr<ProcDecl> ClassDecl::containsMethod(
+    const std::string& name, 
+    std::vector<std::shared_ptr<IType>> params,
+    bool proc)
+{
+    // if (proc) {
+    //     for (auto&& proc : ) 
+    // }
+}
 
 // SuperclassReference
 SuperclassReference::SuperclassReference(
@@ -724,5 +778,8 @@ bool SuperclassReference::compare(
         return class_ && r->class_ && class_ == r->class_;
     }
 }
+
+
+
 
 }

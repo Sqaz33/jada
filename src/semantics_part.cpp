@@ -551,20 +551,38 @@ TypeNameToRealType::analyseRecord_(
     std::shared_ptr<node::RecordDecl> decl)
 {
     if (!decl->isInherits()) return "";
+    if (decl->isInherits() && !decl->base().expired()) return "";
+
     auto&& baseName = decl->baseName();
     auto&& space = dynamic_cast<node::IDecl*>(decl->parent());
     auto&& selfDecl = std::dynamic_pointer_cast<node::IDecl>(decl->self());
     auto&& declsInSpaces = space->reachable(baseName, selfDecl);
     bool isBaseSet = false;
+
     if (!declsInSpaces.empty()) {
         auto&& decls = declsInSpaces.front();
         if (auto base = 
                 std::dynamic_pointer_cast<node::RecordDecl>(decls[0]))
         {
+            if (base->isInherits()) {
+                auto res = analyseRecord_(base);
+                if (!res.empty()) {
+                    return res;
+                }
+            }
+            if (!base->isTagged()) {
+                std::stringstream ss;
+                ss << "Inheritance is not possible" 
+                      " from an untagged record: ";
+                ss << "Record: " << decl->name();
+                ss << ". Base Name: " << baseName.toString('.');
+                return ss.str();
+            }
             isBaseSet = true;
             decl->setBase(base);
         }
     }
+
     if (!isBaseSet) {
         std::stringstream ss;
         ss << "Unresolved name during inheritance: ";
@@ -572,6 +590,9 @@ TypeNameToRealType::analyseRecord_(
         ss << "Base Name: " << baseName.toString('.');
         return ss.str();
     } 
+
+    decl->setTagged();
+
     return "";
 }
 
@@ -665,7 +686,7 @@ OverloadCheck::analyzeContainer_(
                     if (params1.size() != params2.size()) {
                         continue;
                     } 
-                    
+
                     bool eq = false;
                     for (std::size_t k = 0; k < params1.size(); ++k) {
                         eq = params1[k]->type()->compare(params2[k]->type());
