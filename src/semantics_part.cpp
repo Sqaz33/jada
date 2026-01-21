@@ -457,7 +457,6 @@ TypeNameToRealType::analyzeDecl_(
             parent->reachable(typeName->name(), decl);
         bool isTypeSet = false;
         if (!declsInSpaces.empty()) {
-        // for (auto&& decls : declsInSpaces) {
             auto&& decls = declsInSpaces.front();
             auto record = 
                 std::dynamic_pointer_cast<node::RecordDecl>(decls[0]);
@@ -482,9 +481,7 @@ TypeNameToRealType::analyzeDecl_(
             } 
             if (record || als) {
                 isTypeSet = true;
-        //         break;
             }
-        // }
         }
         if (!isTypeSet) {
             std::stringstream ss;
@@ -519,7 +516,6 @@ TypeNameToRealType::analyzeArrayType_(
         bool isTypeSet = false;
         auto declsInSpaces = 
             space->reachable(typeName->name(), parent);
-        // for (auto&& decls : declsInSpaces) { // TODO first space
         if (!declsInSpaces.empty()) {
             auto&& decls = declsInSpaces.front();
             auto record = 
@@ -532,10 +528,8 @@ TypeNameToRealType::analyzeArrayType_(
 
             if (record || als) {
                 isTypeSet = true;
-                // break;
             }
         }
-        // }
         if (!isTypeSet) {
             std::stringstream ss;
             ss << "An unresolved type name:";
@@ -562,7 +556,6 @@ TypeNameToRealType::analyseRecord_(
     auto&& selfDecl = std::dynamic_pointer_cast<node::IDecl>(decl->self());
     auto&& declsInSpaces = space->reachable(baseName, selfDecl);
     bool isBaseSet = false;
-    // for (auto decls : declsInSpaces) {
     if (!declsInSpaces.empty()) {
         auto&& decls = declsInSpaces.front();
         if (auto base = 
@@ -570,9 +563,7 @@ TypeNameToRealType::analyseRecord_(
         {
             isBaseSet = true;
             decl->setBase(base);
-            // break;
         }
-    // }
     }
     if (!isBaseSet) {
         std::stringstream ss;
@@ -659,14 +650,22 @@ OverloadCheck::analyzeContainer_(
                 auto proc1 = 
                         std::dynamic_pointer_cast<node::ProcDecl>(d1);
                 auto&& params1 = proc1->params();
+                auto isFunc1 = std::dynamic_pointer_cast<node::FuncDecl>(proc1);
                 for (std::size_t j = i + 1; j < decls.size(); ++j) {
                     auto&& d2 = decls[j];
                     auto proc2 = 
                         std::dynamic_pointer_cast<node::ProcDecl>(d2);
+                    auto isFunc2 = std::dynamic_pointer_cast<node::FuncDecl>(proc2);
+                    
+                    if ((isFunc1 && !isFunc2) || (!isFunc1 && isFunc2)) {
+                        continue;
+                    }
+                    
                     auto&& params2 = proc2->params();
                     if (params1.size() != params2.size()) {
                         continue;
                     } 
+                    
                     bool eq = false;
                     for (std::size_t k = 0; k < params1.size(); ++k) {
                         eq = params1[k]->type()->compare(params2[k]->type());
