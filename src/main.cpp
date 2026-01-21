@@ -108,6 +108,7 @@ void addAdaStdLib(
     std::vector<std::shared_ptr<mdl::Module>>& prog) 
 {   
     auto libArea = std::make_shared<node::DeclArea>();
+    // libArea->addDecl(std::make_shared<std::decl>)
     auto libUnit = 
         std::make_shared<node::PackDecl>("ada.text_io", libArea);
 

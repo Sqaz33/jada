@@ -137,7 +137,7 @@ std::string GlobalSpaceCreation::analyse(
         mod->resetUnit(gp);
         auto [ok1, with] = addImportsPtrs_(mod, units);
         if (!ok1) {
-            auto name = with->name().toString();
+            auto name = with->name().toString('.');
             std::stringstream ss;
             ss << mod->fileName();
             ss << ":";
@@ -147,7 +147,7 @@ std::string GlobalSpaceCreation::analyse(
         }
         auto [ok2, use] = addReduceImportPtrs_(mod, units);
         if (!ok2) {
-            auto name = use->name().toString();
+            auto name = use->name().toString('.');
             std::stringstream ss;
             ss << mod->fileName();
             ss << ":";
@@ -384,6 +384,7 @@ TypeNameToRealType::analyzeContainer_(
                 std::stringstream ss;
                 ss << decl->name() << ':';
                 ss << res;
+                return ss.str();
             }
         } 
         else 
@@ -393,7 +394,7 @@ TypeNameToRealType::analyzeContainer_(
                 std::stringstream ss;
                 ss << decl->name() << '.';
                 ss << res;
-                return res;
+                return ss.str();
             }
         }
     }
@@ -455,7 +456,9 @@ TypeNameToRealType::analyzeDecl_(
         auto declsInSpaces = 
             parent->reachable(typeName->name(), decl);
         bool isTypeSet = false;
-        for (auto&& decls : declsInSpaces) {
+        if (!declsInSpaces.empty()) {
+        // for (auto&& decls : declsInSpaces) {
+            auto&& decls = declsInSpaces.front();
             auto record = 
                 std::dynamic_pointer_cast<node::RecordDecl>(decls[0]);
             auto als = 
@@ -479,13 +482,14 @@ TypeNameToRealType::analyzeDecl_(
             } 
             if (record || als) {
                 isTypeSet = true;
-                break;
+        //         break;
             }
+        // }
         }
         if (!isTypeSet) {
             std::stringstream ss;
             ss << "An unresolved type name:";
-            ss << typeName->name().toString();
+            ss << typeName->name().toString('.');
             return ss.str();
         }
     } 
@@ -515,25 +519,27 @@ TypeNameToRealType::analyzeArrayType_(
         bool isTypeSet = false;
         auto declsInSpaces = 
             space->reachable(typeName->name(), parent);
-        for (auto&& decls : declsInSpaces) {
+        // for (auto&& decls : declsInSpaces) { // TODO first space
+        if (!declsInSpaces.empty()) {
+            auto&& decls = declsInSpaces.front();
             auto record = 
                 std::dynamic_pointer_cast<node::RecordDecl>(decls[0]);
             auto als = 
                 std::dynamic_pointer_cast<node::TypeAliasDecl>(decls[0]);
-            bool isTypeSet = false;
 
             if (record) atype->resetType(record);
             else if (als) atype->resetType(als);
 
             if (record || als) {
                 isTypeSet = true;
-                break;
+                // break;
             }
         }
+        // }
         if (!isTypeSet) {
             std::stringstream ss;
             ss << "An unresolved type name:";
-            ss << typeName->name().toString();
+            ss << typeName->name().toString('.');
             return ss.str();
         }
     } 
@@ -556,13 +562,17 @@ TypeNameToRealType::analyseRecord_(
     auto&& selfDecl = std::dynamic_pointer_cast<node::IDecl>(decl->self());
     auto&& declsInSpaces = space->reachable(baseName, selfDecl);
     bool isBaseSet = false;
-    for (auto decls : declsInSpaces) {
+    // for (auto decls : declsInSpaces) {
+    if (!declsInSpaces.empty()) {
+        auto&& decls = declsInSpaces.front();
         if (auto base = 
                 std::dynamic_pointer_cast<node::RecordDecl>(decls[0]))
         {
             isBaseSet = true;
             decl->setBase(base);
+            // break;
         }
+    // }
     }
     if (!isBaseSet) {
         std::stringstream ss;

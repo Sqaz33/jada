@@ -21,7 +21,7 @@ procedure TestLoops is
    L: String(1..2) := "1234";
    arr : array(1..10) of Integer := (1, 2, 3, 4);
 
-   arr2: array(1..3) of Pack.Base;
+   arr2: array(1..3) of Integer;
 
    type IntArray is array(1 .. 100) of Integer;
 
@@ -57,9 +57,9 @@ procedure TestLoops is
             arr(i) := arr(min);
             arr(min) := buf;
          end loop;
-      end Sort;
+   end Sort;
+   
 begin
-
    if 1 > 0 then
       if 2 > 0 then 
          x := x + 1;

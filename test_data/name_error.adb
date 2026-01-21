@@ -25,6 +25,13 @@ procedure main is
          l.X := 1;
          return l;
       end y;
+
+      --  procedure x is --err
+      --  begin
+      --     1; 
+      --  end x;
+
+      v: x;
    end a;
 
 begin

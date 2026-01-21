@@ -802,34 +802,51 @@ private:
     std::shared_ptr<IExpr> retVal_;
 };
 
-class ClassDecl; // TODO
+class ClassDecl : public IDecl {
+public:
+    ClassDecl(std::shared_ptr<RecordDecl> record);
 
-class SuperclassReference :
-    public IDecl,
-    public IType
-{
+public: // IDecl interface
+    const std::string& name() const noexcept override;
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override { assert(false); }; // TODO
+    void* codegen() override { return nullptr; } // TODO
+
+public:
+    void setBase(std::weak_ptr<ClassDecl> base);
+    void addDerived(std::shared_ptr<ClassDecl> derived);
+
+    // bool containMethod()
+
+private:
+    std::shared_ptr<RecordDecl> record_;
+    std::vector<std::weak_ptr<ClassDecl>> methods_;
+
+    std::vector<std::shared_ptr<ClassDecl>> derived_; 
+    std::weak_ptr<ClassDecl> base_;
+};
+
+class SuperclassReference : public IType {
 public:
     SuperclassReference(const attribute::Attribute& ref);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-               graphviz::VertexType par) const override {}; // TODO
+               graphviz::VertexType par) const override { assert(false); }; // TODO
     void* codegen() override { return nullptr; } // TODO
 
-public: // IDecl interface
-    const std::string& name() const noexcept override {}; // TODO
-
 private:
-void reachable_(
+    void reachable_(
         std::vector<
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) { } 
+        std::shared_ptr<IDecl> requester) { assert(false); } 
 
 public: // IType interface
-    bool compare(
-            const std::shared_ptr<IType> rhs) const override;
+    bool compare(const std::shared_ptr<IType> rhs) const override;
 
 public:
     const attribute::Attribute& ref() const noexcept;
