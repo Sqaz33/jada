@@ -169,6 +169,11 @@ public:
     std::shared_ptr<IType> type();
     void resetType(std::shared_ptr<IType> type);
 
+    bool in() const noexcept;
+    void setIn(bool in) noexcept;
+    bool out() const noexcept;
+    void setOut(bool out) noexcept;
+
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
@@ -189,6 +194,8 @@ private:
     std::string name_;
     std::shared_ptr<IType> type_;
     std::shared_ptr<IExpr> rval_;
+    bool in_ = true;
+    bool out_ = false;
 };
 // TODO:
 // 1. при объявлении и функции и процедуры с одним именим - если rhs в assign - функция
@@ -350,6 +357,8 @@ private:
     attribute::QualifiedName name_;
 };
 
+class ClassDecl;
+
 class RecordDecl : 
     public IDecl 
     , public IType
@@ -387,6 +396,9 @@ public:
     void setTagged() noexcept;
     bool isTagged() const noexcept;
 
+    std::weak_ptr<ClassDecl> cls();
+    void setClass(std::shared_ptr<ClassDecl> cls);
+
 private:
     void reachable_(
         std::vector<
@@ -402,6 +414,7 @@ private:
     attribute::QualifiedName base_;
     bool isInherits_;
     bool isTagged_;
+    std::weak_ptr<ClassDecl> class_;
 };
 
 class TypeAliasDecl : 

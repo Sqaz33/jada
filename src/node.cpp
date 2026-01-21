@@ -133,6 +133,22 @@ void VarDecl::resetType(std::shared_ptr<IType> type) {
     type_ = type;
 }
 
+bool VarDecl::in() const noexcept {
+    return in_;
+}
+
+void VarDecl::setIn(bool in) noexcept {
+    in_ = in;
+}
+
+bool VarDecl::out() const noexcept {
+    return out_;
+}
+
+void VarDecl::setOut(bool out) noexcept {
+    out_ = out;
+}
+
 // ProcDecl
 ProcDecl::ProcDecl(const std::string& name, 
                    const std::vector<std::shared_ptr<VarDecl>>& params,
@@ -321,7 +337,6 @@ GlobalSpace::unit() {
     return unit_;
 }
 
-
 // Use 
 Use::Use(attribute::QualifiedName name) :
     name_(std::move(name))
@@ -395,6 +410,14 @@ void RecordDecl::setTagged() noexcept {
 
 bool RecordDecl::isTagged() const noexcept {
     return isTagged_;
+}
+
+std::weak_ptr<ClassDecl> RecordDecl::cls() {
+    return class_;
+}
+
+void RecordDecl::setClass(std::shared_ptr<ClassDecl> cls) {
+    class_ = cls;    
 }
 
 void RecordDecl::reachable_(

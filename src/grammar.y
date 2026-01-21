@@ -221,7 +221,7 @@ vars_decl:        var_decl                                              {
                                                                           $$->addDecl($1);
                                                                         }
                 | vars_decl var_decl                                    { 
-                                                                          $$ = $1;
+                                                                          $$ = $1;  
                                                                           $$->addDecl($2); 
                                                                         }
 
@@ -232,6 +232,25 @@ param:            NAME COLON type                                       {
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $3));
                                                                           $$ = decl; 
                                                                         }
+                | NAME COLON IN type                                    { 
+                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
+                                                                          decl->setIn(true);
+                                                                          decl->setOut(false);
+                                                                          $$ = decl; 
+                                                                        }
+                | NAME COLON OUT type                                   { 
+                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
+                                                                          decl->setIn(false);
+                                                                          decl->setOut(true);
+                                                                          $$ = decl; 
+                                                                        }
+                | NAME COLON IN OUT type                                { 
+                                                                          std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $5));
+                                                                          decl->setIn(true);
+                                                                          decl->setOut(true);
+                                                                          $$ = decl; 
+                                                                        }
+                  
 
 optional_decl_area: %empty                                              { $$ = nullptr; }
                 |   decl_area                                           
