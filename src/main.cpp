@@ -87,6 +87,8 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::TypeNameToRealType>();
     auto OC = 
         std::make_shared<semantics_part::OverloadCheck>();
+    auto CCD = 
+        std::make_shared<semantics_part::CreateClassDeclaration>();
 
     sem.addPart(EPC);
     sem.addPart(MNC);
@@ -98,6 +100,7 @@ int semanticAnalysis() {
     sem.addPart(NCC);
     sem.addPart(TNRT);
     sem.addPart(OC);
+    sem.addPart(CCD);
 
     auto[ok, msg] = sem.analyse(helper::modules);
     if (!ok) {
@@ -146,7 +149,8 @@ int main(int argc, char** argv) try {
         // argv[1] = "../test_data/semantics/type_replace_check.adb";
         // argv[1] = "../test_data/semantics/proc_func_overload.adb";
         // argv[1] = "../test_data/semantics/record_inherits.adb";
-        argv[1] = "../test_data/semantics/mutal/main.adb";
+        // argv[1] = "../test_data/semantics/circular/main.adb";
+        argv[1] = "../test_data/semantics/oop1.adb";
     }
     
     if (argc < 2) {

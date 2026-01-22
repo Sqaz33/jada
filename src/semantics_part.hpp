@@ -74,7 +74,7 @@ public:
                 std::shared_ptr<mdl::Module>>& program) override;
 
 public:
-    std::string analyzeDecl_(std::shared_ptr<node::IDecl> decl);
+    std::string analyseDecl_(std::shared_ptr<node::IDecl> decl);
 };
 
 class TypeNameToRealType : public ISemanticsPart {
@@ -83,16 +83,16 @@ public:
             const std::vector<
                 std::shared_ptr<mdl::Module>>& program) override;
 private:
-    std::string analyzeContainer_(std::shared_ptr<node::IDecl> decl);
-    std::string analyzeDecl_(std::shared_ptr<node::IDecl> decl);
-    std::string analyzeArrayType_(
+    std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
+    std::string analyseDecl_(std::shared_ptr<node::IDecl> decl);
+    std::string analyseArrayType_(
         std::shared_ptr<node::ArrayType> atype, 
         node::IDecl* space,
         std::shared_ptr<node::IDecl> parent);
     std::string analyseRecord_(
         std::shared_ptr<node::RecordDecl> decl, 
         std::shared_ptr<node::RecordDecl> derivee = nullptr);
-    std::string analyzeParam_(std::shared_ptr<node::VarDecl> decl);  
+    std::string analyseParam_(std::shared_ptr<node::VarDecl> decl);  
 };
 class OverloadCheck : public ISemanticsPart {
 public:
@@ -101,7 +101,7 @@ public:
                 std::shared_ptr<mdl::Module>>& program) override;
 
 private:
-    std::string analyzeContainer_(std::shared_ptr<node::IDecl> decl);
+    std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
 };
 
 class CreateClassDeclaration : public ISemanticsPart {
@@ -111,7 +111,9 @@ public:
                 std::shared_ptr<mdl::Module>>& program) override;
 
 private:
-    void analyzeContainer_(node::IDecl* decl);
+    std::string analyseContainer_(node::IDecl* decl);
 };
+
+class OneClassInSubprogramCheckp; // TODO
 
 } // namespace semantics_part

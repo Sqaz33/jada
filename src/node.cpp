@@ -758,6 +758,7 @@ bool ClassDecl::isDerivedOf(std::shared_ptr<ClassDecl> cls) {
 void ClassDecl::addMethod(std::shared_ptr<ProcDecl> method) {
     if (auto func = std::dynamic_pointer_cast<FuncDecl>(method)) {
         funcs_.emplace_back(func);
+        return;
     }
     procs_.push_back(method);
 }
