@@ -371,7 +371,7 @@ expr:             expr EQ expr                                          { $$.res
                 | expr MOD expr                                         { $$.reset(new node::Op($1, node::OpType::MOD, $3));         }
                 | LPAR expr RPAR                                        { $$ = $2;                                                   }
                 | MINUS expr %prec UMINUS                               { $$.reset(new node::Op(nullptr, node::OpType::UMINUS, $2)); }
-                | expr LPAR args RPAR                                   { $$.reset(new node::CallOrIdxExpr($1, $3));      }
+                | expr LPAR args RPAR                                   { $$.reset(new node::CallOrIdxExpr($1, $3));                 }
                 | expr DOT expr                                         { $$.reset(new node::Op($1, node::OpType::DOT, $3));         }
                 | literal                                               { $$ = $1;                                                   }
                 | NAME                                                  { $$.reset(new node::NameExpr($1));                          }

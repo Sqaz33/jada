@@ -849,20 +849,13 @@ public:
 
     void addMethod(std::shared_ptr<ProcDecl> method);
 
-    std::shared_ptr<FuncDecl> methodFunc(
-        const std::string& name, 
-        std::vector<std::shared_ptr<IType>> params);
-
-    std::shared_ptr<ProcDecl> methodProc(
-        const std::string& name, 
-        std::vector<std::shared_ptr<IType>> params);
-
     bool isDerivedOf(std::shared_ptr<ClassDecl> cls);
 
     std::shared_ptr<ProcDecl> containsMethod(
         const std::string& name, 
-        std::vector<std::shared_ptr<IType>> params,
+        const std::vector<std::shared_ptr<IType>>& params,
         bool proc);
+        
 private:
     std::shared_ptr<RecordDecl> record_;
     std::vector<std::weak_ptr<ProcDecl>> procs_;

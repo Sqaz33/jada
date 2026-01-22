@@ -724,4 +724,30 @@ OverloadCheck::analyzeContainer_(
     return "";
 }
 
+// CreateClassDeclaration
+std::string CreateClassDeclaration::analyse(
+    const std::vector<std::shared_ptr<mdl::Module>>& program) 
+{
+    for (auto mod : program) {
+        auto unit = mod->unit().lock();
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+        auto res = analyzeContainer_(space->unit());
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << res;
+            return ss.str();
+        }
+    }
+    return ISemanticsPart::analyseNext(program);
+}
+
+std::string 
+CreateClassDeclaration::analyzeContainer_(std::shared_ptr<node::IDecl> decl) {
+
+}
+
+
 } // semantics_part

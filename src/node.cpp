@@ -764,12 +764,43 @@ void ClassDecl::addMethod(std::shared_ptr<ProcDecl> method) {
 
 std::shared_ptr<ProcDecl> ClassDecl::containsMethod(
     const std::string& name, 
-    std::vector<std::shared_ptr<IType>> params,
+    const std::vector<std::shared_ptr<IType>>& params,
     bool proc)
-{
-    // if (proc) {
-    //     for (auto&& proc : ) 
-    // }
+{   
+    auto eqParams = [&params] (auto proc) { 
+        auto&& procParams = proc->params();
+        if (procParams.size() != params.size()) {
+            return false;
+        }
+        for (std::size_t i = 0; i < params.size(); ++i) {
+            auto type = procParams[i]->type();
+            if (!type->compare(params[i])) {
+                return false;
+            }
+        }
+        return true;
+    };
+    if (proc) {
+        for (auto p : procs_) {
+            auto lock = p.lock();
+            if (lock->name() == name && eqParams(lock)) {
+                return lock;
+            }
+        }
+    } else {
+        for (auto f : funcs_) {
+            auto lock = f.lock();
+            if (lock->name() == name && eqParams(lock)) {
+                return lock;
+            }
+        }
+    }
+    if (base_.expired()) {
+        return nullptr;
+    } else {
+        auto lock = base_.lock();
+        return lock->containsMethod(name, params, proc);
+    }
 }
 
 // SuperclassReference
