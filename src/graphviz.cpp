@@ -82,7 +82,7 @@ VertexType GraphViz::addVertex(const std::string& name,
 {
     std::stringstream ss;
     ss << name << '\n';
-    for (int i = 0; i < desc.size() - 1; ++i) {
+    for (int i = 0; i < int(desc.size()) - 1; ++i) {
         ss << desc[i] << '\n';
     }
     ss << desc.back();

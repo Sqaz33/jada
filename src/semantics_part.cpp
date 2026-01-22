@@ -264,7 +264,6 @@ bool CircularImportCheck::checkSpace_(
     return true;
 }
 
-
 // NameConflictCheck 
 std::string NameConflictCheck::analyse(
     const std::vector<
@@ -704,6 +703,8 @@ OverloadCheck::analyseContainer_(
         decls = pack->decls();
     } else if (auto proc = std::dynamic_pointer_cast<node::ProcDecl>(decl)) {
         decls = proc->decls();
+    } else {
+        return "";
     }
 
     std::map<std::string, std::vector<std::shared_ptr<node::IDecl>>> nameNDecls;
@@ -779,7 +780,14 @@ std::string CreateClassDeclaration::analyse(
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
-        analyseContainer_(space->unit().get());
+        auto res = analyseContainer_(space->unit().get());
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << res;
+            return ss.str();
+        }
     }
     return ISemanticsPart::analyseNext(program);
 }
@@ -848,5 +856,68 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
     return "";
 }
 
+// OneClassInSubprogramCheckp
+std::string 
+OneClassInSubprogramCheckp::analyse(
+    const std::vector<
+        std::shared_ptr<mdl::Module>>& program) 
+{
+    for (auto mod : program) {
+        auto unit = mod->unit().lock();
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+        auto res = analyseContainer_(space->unit());
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << res;
+            return ss.str();
+        }
+    }
+    return ISemanticsPart::analyseNext(program);
+}
+
+std::string 
+OneClassInSubprogramCheckp::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
+    std::shared_ptr<node::DeclArea> decls;
+    if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
+        decls = pack->decls();
+    } else if (auto proc = std::dynamic_pointer_cast<node::ProcDecl>(decl)) {
+        decls = proc->decls();
+    } else {
+        return "";
+    }
+
+    for (auto&& d : *decls) {  
+        if (auto proc = std::dynamic_pointer_cast<node::ProcDecl>(d)) {
+            bool containsClass = false;
+            bool isMethod = false;
+            for (auto p : proc->params()) {
+                if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(p->type())) {
+                    if (auto cls = rec->cls().lock()) {
+                        isMethod = isMethod || cls->parent() == d->parent();
+                        if (containsClass && isMethod) {
+                            std::stringstream ss;
+                            ss << "A method cannot contain" 
+                                  " more than 1 class in its arguments.";
+                            ss << " Method: ";
+                            ss << proc->name();
+                            return ss.str();
+                        }
+                        containsClass = true;
+                    }
+                } 
+            }
+        }
+
+        auto res = analyseContainer_(d);
+        if (!res.empty()) {
+            return res;
+        }
+    }
+
+    return "";
+}
 
 } // semantics_part

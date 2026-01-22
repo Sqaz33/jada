@@ -89,6 +89,8 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::OverloadCheck>();
     auto CCD = 
         std::make_shared<semantics_part::CreateClassDeclaration>();
+    auto OCSC = 
+        std::make_shared<semantics_part::OneClassInSubprogramCheckp>();
 
     sem.addPart(EPC);
     sem.addPart(MNC);
@@ -101,6 +103,7 @@ int semanticAnalysis() {
     sem.addPart(TNRT);
     sem.addPart(OC);
     sem.addPart(CCD);
+    sem.addPart(OCSC);
 
     auto[ok, msg] = sem.analyse(helper::modules);
     if (!ok) {

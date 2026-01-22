@@ -114,6 +114,14 @@ private:
     std::string analyseContainer_(node::IDecl* decl);
 };
 
-class OneClassInSubprogramCheckp; // TODO
+class OneClassInSubprogramCheckp : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+
+private:
+    std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
+};
 
 } // namespace semantics_part
