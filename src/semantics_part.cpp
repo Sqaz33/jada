@@ -858,7 +858,7 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
 
 // OneClassInSubprogramCheckp
 std::string 
-OneClassInSubprogramCheckp::analyse(
+OneClassInSubprogramCheck::analyse(
     const std::vector<
         std::shared_ptr<mdl::Module>>& program) 
 {
@@ -879,7 +879,7 @@ OneClassInSubprogramCheckp::analyse(
 }
 
 std::string 
-OneClassInSubprogramCheckp::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
+OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
     std::shared_ptr<node::DeclArea> decls;
     if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
         decls = pack->decls();
@@ -894,7 +894,8 @@ OneClassInSubprogramCheckp::analyseContainer_(std::shared_ptr<node::IDecl> decl)
             bool containsClass = false;
             bool isMethod = false;
             for (auto p : proc->params()) {
-                if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(p->type())) {
+                auto type = p->type();
+                if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(type)) {
                     if (auto cls = rec->cls().lock()) {
                         isMethod = isMethod || cls->parent() == d->parent();
                         if (containsClass && isMethod) {
@@ -907,7 +908,33 @@ OneClassInSubprogramCheckp::analyseContainer_(std::shared_ptr<node::IDecl> decl)
                         }
                         containsClass = true;
                     }
-                } 
+                } else if (auto ref = std::dynamic_pointer_cast<node::SuperclassReference>(type)) {
+                    // добавление в надклассовую ссылку указателя на класс
+                    auto&& attr = ref->ref();
+                    auto&& name = attr.left(); 
+                    auto declsNSpaces = proc->reachable(name);
+                    bool isClassSet = false;
+                    if (!declsNSpaces.empty()) {
+                        auto&& decls = declsNSpaces.front();
+                        if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(decls[0])) {
+                            auto cls = rec->cls().lock();
+                            if (cls) {
+                                ref->setClass(cls);
+                                isClassSet = true;
+                            }
+                        }
+                    }
+                    if (!isClassSet) {
+                        std::stringstream ss;
+                        ss << "Unresolved class name" 
+                              " in a superclass reference.";
+                        ss << " Class name: ";
+                        ss << name.toString('.');
+                        ss << " Subprogram: ";
+                        ss << proc->name();
+                        return ss.str();
+                    }
+                }
             }
         }
 

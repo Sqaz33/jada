@@ -27,6 +27,12 @@ procedure main is
       q.X := 1;
    end f;
 
+   procedure f(q: pack.base'class) is
+   begin
+      2134;
+   end f;
+
+
    l: pack.base;
 
 begin

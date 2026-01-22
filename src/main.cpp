@@ -90,7 +90,7 @@ int semanticAnalysis() {
     auto CCD = 
         std::make_shared<semantics_part::CreateClassDeclaration>();
     auto OCSC = 
-        std::make_shared<semantics_part::OneClassInSubprogramCheckp>();
+        std::make_shared<semantics_part::OneClassInSubprogramCheck>();
 
     sem.addPart(EPC);
     sem.addPart(MNC);
