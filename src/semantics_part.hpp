@@ -2,6 +2,8 @@
 
 #include "isemantics_part.hpp"
 
+#include <set>
+
 namespace semantics_part {
 
 class EntryPointCheck : public ISemanticsPart { 
@@ -47,11 +49,22 @@ public:
 private:
     std::pair<bool, std::shared_ptr<node::With>> 
         addImportsPtrs_(std::shared_ptr<mdl::Module> mdl,
-        const std::vector<std::shared_ptr<node::IDecl>>& units);
+                        const std::vector<std::shared_ptr<node::IDecl>>& units);
 
     std::pair<bool,std::shared_ptr<node::Use>>
-        addReduceImportPtrs_(std::shared_ptr<mdl::Module> mdl,
-        const std::vector<std::shared_ptr<node::IDecl>>& units);
+        addReduceImportPtrs_(std::shared_ptr<mdl::Module> mdl);
+};
+
+class CircularImportCheck : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+
+private:
+    bool checkSpace_(
+        node::GlobalSpace* cur, 
+        std::vector<std::shared_ptr<node::IDecl>>& onStack);
 };
 
 class NameConflictCheck : public ISemanticsPart { 
@@ -76,7 +89,9 @@ private:
         std::shared_ptr<node::ArrayType> atype, 
         node::IDecl* space,
         std::shared_ptr<node::IDecl> parent);
-    std::string analyseRecord_(std::shared_ptr<node::RecordDecl> decl);
+    std::string analyseRecord_(
+        std::shared_ptr<node::RecordDecl> decl, 
+        std::shared_ptr<node::RecordDecl> derivee = nullptr);
     std::string analyzeParam_(std::shared_ptr<node::VarDecl> decl);  
 };
 class OverloadCheck : public ISemanticsPart {
@@ -96,7 +111,7 @@ public:
                 std::shared_ptr<mdl::Module>>& program) override;
 
 private:
-    std::string analyzeContainer_(std::shared_ptr<node::IDecl> decl);
+    void analyzeContainer_(node::IDecl* decl);
 };
 
 } // namespace semantics_part

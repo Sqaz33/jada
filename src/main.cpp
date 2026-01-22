@@ -79,6 +79,8 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::ExistingModuleImportCheck>();
     auto GSC = 
         std::make_shared<semantics_part::GlobalSpaceCreation>();
+    auto CIC =
+        std::make_shared<semantics_part::CircularImportCheck>();
     auto NCC = 
         std::make_shared<semantics_part::NameConflictCheck>();
     auto TNRT = 
@@ -92,6 +94,7 @@ int semanticAnalysis() {
     sem.addPart(SIC);
     sem.addPart(EMIC);
     sem.addPart(GSC);
+    sem.addPart(CIC);
     sem.addPart(NCC);
     sem.addPart(TNRT);
     sem.addPart(OC);
@@ -142,7 +145,8 @@ int main(int argc, char** argv) try {
         // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
         // argv[1] = "../test_data/semantics/type_replace_check.adb";
         // argv[1] = "../test_data/semantics/proc_func_overload.adb";
-        argv[1] = "../test_data/semantics/record_inherits.adb";
+        // argv[1] = "../test_data/semantics/record_inherits.adb";
+        argv[1] = "../test_data/semantics/mutal/main.adb";
     }
     
     if (argc < 2) {

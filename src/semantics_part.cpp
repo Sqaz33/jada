@@ -145,7 +145,7 @@ std::string GlobalSpaceCreation::analyse(
             ss << name;
             return ss.str();
         }
-        auto [ok2, use] = addReduceImportPtrs_(mod, units);
+        auto [ok2, use] = addReduceImportPtrs_(mod);
         if (!ok2) {
             auto name = use->name().toString('.');
             std::stringstream ss;
@@ -193,10 +193,7 @@ GlobalSpaceCreation::addImportsPtrs_(
 }
 
 std::pair<bool,std::shared_ptr<node::Use>>
-GlobalSpaceCreation::addReduceImportPtrs_(
-    std::shared_ptr<mdl::Module> mod,
-    const std::vector<std::shared_ptr<node::IDecl>>& units)
-{
+GlobalSpaceCreation::addReduceImportPtrs_(std::shared_ptr<mdl::Module> mod) {
     auto unit = mod->unit().lock();
     std::map<std::string, std::shared_ptr<node::IDecl>> imports;
     auto space = 
@@ -227,6 +224,45 @@ GlobalSpaceCreation::addReduceImportPtrs_(
     }
     return {true, nullptr};
 }
+
+// CircularImportCheck
+std::string CircularImportCheck::analyse(
+    const std::vector<std::shared_ptr<mdl::Module>>& program)  
+{
+    auto main = dynamic_cast<node::GlobalSpace*>(
+        program[0]->unit().lock().get());
+    assert(main);
+    std::vector<std::shared_ptr<node::IDecl>> onStack;
+    if (!checkSpace_(main, onStack)) {
+        return "There is a looped import in the program";
+    }
+    return "";
+}
+
+bool CircularImportCheck::checkSpace_(
+    node::GlobalSpace* cur, 
+    std::vector<std::shared_ptr<node::IDecl>>& onStack)
+{
+    auto&& unit = cur->unit();
+    auto it = std::find(onStack.begin(), onStack.end(), unit);
+    if (it != onStack.end()) {
+        return false;
+    }
+    onStack.push_back(unit);
+    auto&& imports = cur->imports();
+    for (auto&& import : imports) {
+        if (auto* space 
+            = dynamic_cast<node::GlobalSpace*>(import->parent())) 
+        {
+            if (!checkSpace_(space, onStack)) {
+                return false;
+            }
+        }
+    }
+    onStack.pop_back();
+    return true;
+}
+
 
 // NameConflictCheck 
 std::string NameConflictCheck::analyse(
@@ -548,7 +584,8 @@ TypeNameToRealType::analyzeArrayType_(
 
 std::string 
 TypeNameToRealType::analyseRecord_(
-    std::shared_ptr<node::RecordDecl> decl)
+    std::shared_ptr<node::RecordDecl> decl,
+    std::shared_ptr<node::RecordDecl> derived)
 {
     if (!decl->isInherits()) return "";
     if (decl->isInherits() && !decl->base().expired()) return "";
@@ -565,7 +602,7 @@ TypeNameToRealType::analyseRecord_(
                 std::dynamic_pointer_cast<node::RecordDecl>(decls[0]))
         {
             if (base->isInherits()) {
-                auto res = analyseRecord_(base);
+                auto res = analyseRecord_(base, decl);
                 if (!res.empty()) {
                     return res;
                 }
@@ -578,6 +615,15 @@ TypeNameToRealType::analyseRecord_(
                 ss << ". Base Name: " << baseName.toString('.');
                 return ss.str();
             }
+
+            if (base == derived) {
+                std::stringstream ss;
+                ss << "Mutual inheritance is prohibited";
+                ss << "Record 1: " << decl->name();
+                ss << ". Record 2: " << derived->name();
+                return ss.str();
+            } 
+
             isBaseSet = true;
             decl->setBase(base);
         }
@@ -587,7 +633,7 @@ TypeNameToRealType::analyseRecord_(
         std::stringstream ss;
         ss << "Unresolved name during inheritance: ";
         ss << "Record: " << decl->name();
-        ss << "Base Name: " << baseName.toString('.');
+        ss << ". Base Name: " << baseName.toString('.');
         return ss.str();
     } 
 
@@ -732,21 +778,37 @@ std::string CreateClassDeclaration::analyse(
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
-        auto res = analyzeContainer_(space->unit());
-        if (!res.empty()) {
-            std::stringstream ss;
-            ss << mod->fileName();
-            ss << ":";
-            ss << res;
-            return ss.str();
-        }
+        analyzeContainer_(space->unit().get());
     }
     return ISemanticsPart::analyseNext(program);
 }
 
-std::string 
-CreateClassDeclaration::analyzeContainer_(std::shared_ptr<node::IDecl> decl) {
+void
+CreateClassDeclaration::analyzeContainer_(node::IDecl* decl) {
+    std::shared_ptr<node::DeclArea> decls;
+    if (auto proc = dynamic_cast<node::ProcDecl*>(decl)) {
+        decls = proc->decls();
+    } else if (auto pack = dynamic_cast<node::PackDecl*>(decl)) {
+        decls = pack->decls();
+    }
 
+    std::map<std::shared_ptr<node::RecordDecl>, 
+            std::shared_ptr<node::ClassDecl>> recordsWithClasses;
+    for (auto&& d : *decls) {
+        if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(d)) {
+            if (rec->isTagged() && rec->cls().expired()) {
+                if (rec->isInherits()) {
+                    assert(!rec->base().expired());
+                    auto base = rec->base().lock();
+                    if (base->parent() != d->parent()) {
+                        analyzeContainer_(dynamic_cast<node::IDecl*>(base->parent()));
+                    }
+                }
+                recordsWithClasses[rec] = 
+                    std::make_shared<node::ClassDecl>(rec); 
+            }
+        }
+    }
 }
 
 

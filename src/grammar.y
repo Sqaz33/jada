@@ -154,7 +154,10 @@ with:             WITH qualified_name SC                                {
                                                                           auto mdl = $2.first();
                                                                           utility::toLower(mdl);
                                                                           if (!helper::allModules.contains(mdl) && mdl != helper::curModuleName)
-                                                                          { helper::modulesForPars.push($2.first()); }
+                                                                          { 
+                                                                            helper::modulesForPars.push($2.first()); 
+                                                                            helper::allModules.insert(mdl);
+                                                                          }
                                                                           $$.reset(new node::With($2)); 
                                                                         }
 
@@ -191,7 +194,6 @@ proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC
                                                                                                                         $$.reset(new node::ProcDecl($2, $4, $7, $9)); 
                                                                                                                         helper::rightEnding = ($2 == $11) && helper::rightEnding;
                                                                                                                      }
-                | OVERRIDING proc_decl                                                                               { $$ = $2; }
 
 func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { 
                                                                                                                         $$.reset(new node::FuncDecl($2, {}, $6, $8, $4)); 
@@ -201,7 +203,6 @@ func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body 
                                                                                                                         $$.reset(new node::FuncDecl($2, $4, $9, $11, $7)); 
                                                                                                                         helper::rightEnding = ($2 == $13) && helper::rightEnding;
                                                                                                                      }
-                | OVERRIDING func_decl                                                                               { $$ = $2; }
 
 pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                                              { 
                                                                                                                         $$.reset(new node::PackDecl($2, $4)); 

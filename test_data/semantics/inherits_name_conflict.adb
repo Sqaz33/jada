@@ -10,13 +10,13 @@ procedure main is
    end record;
 
    type derivedDerived is new derived with record 
+      Y: Integer;
       Z: Integer;
    end record;
 
    l: Integer;
 begin
-   l :=  X(1);
-   X(1);  
+   l :=  1;
 end main;
 
 -- 

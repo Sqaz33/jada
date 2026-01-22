@@ -857,6 +857,14 @@ public:
         bool proc);
         
 private:
+    void reachable_(
+        std::vector<
+            std::vector<std::shared_ptr<IDecl>>>& res,
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        std::shared_ptr<IDecl> requester) override {};
+
+private:
     std::shared_ptr<RecordDecl> record_;
     std::vector<std::weak_ptr<ProcDecl>> procs_;
     std::vector<std::weak_ptr<FuncDecl>> funcs_;
