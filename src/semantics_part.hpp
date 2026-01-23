@@ -77,6 +77,20 @@ public:
     std::string analyseDecl_(std::shared_ptr<node::IDecl> decl);
 };
 
+class PackBodyNDeclLinking : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+
+public:
+    std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
+
+    std::string analyseProgram_(
+        const std::vector<
+            std::shared_ptr<mdl::Module>>& program);
+};
+
 class TypeNameToRealType : public ISemanticsPart {
 public:
     std::string analyse(

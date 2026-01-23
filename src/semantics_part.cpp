@@ -306,7 +306,7 @@ std::string NameConflictCheck::analyseDecl_(
                         proc->params().end());
         allDecls.insert(allDecls.end(), 
                         proc->decls()->begin(), 
-                        proc->decls()->end());
+                    proc->decls()->end());
     } else {
         if (auto record = 
                 std::dynamic_pointer_cast<node::RecordDecl>(decl)) 
@@ -367,6 +367,136 @@ std::string NameConflictCheck::analyseDecl_(
 
     return "";
 } 
+
+// PackBodyNDeclLinking
+std::string PackBodyNDeclLinking::analyse(
+    const std::vector<std::shared_ptr<mdl::Module>>& program)
+{
+    auto res = analyseProgram_(program);
+    if (!res.empty()) {
+        return res;
+    }
+
+    for (auto&& mod : program) {
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(mod->unit().lock());
+        if (space) {
+            auto res = analyseContainer_(space->unit());
+            if (!res.empty()) {
+                std::stringstream ss;
+                ss << mod->fileName();
+                ss << ":";
+                ss << res;
+                return ss.str();
+            }
+        } else {
+            throw std::logic_error(
+                "Internal error in semantic_part.cpp");
+        }
+    }
+
+    return ISemanticsPart::analyseNext(program);
+}
+
+static void analysePackDecl(
+    std::shared_ptr<node::PackDecl> decl, 
+    std::map<attribute::QualifiedName, std::shared_ptr<node::PackDecl>>& map,
+    attribute::QualifiedName name)
+{   
+    name.push(decl->name());
+    map[name] = decl;
+    for (auto&& d : *decl->decls()) {
+        if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
+            analysePackDecl(pack, map, name);
+        }
+    }
+    for (auto&& d : *decl->privateDecls()) {
+        if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
+            analysePackDecl(pack, map, name);
+        }
+    }
+} 
+
+static std::string analysePackBody(    
+    std::shared_ptr<node::PackBody> body, 
+    std::map<attribute::QualifiedName, std::shared_ptr<node::PackDecl>>& map,
+    attribute::QualifiedName name)
+{   
+    name.push(body->name());
+    auto it = map.find(name);
+    if (it != map.end()) {
+        auto decl = it->second;
+        decl->setPackBody(body);
+        body->setPackDecl(decl);
+    } else {
+        std::stringstream ss;
+        ss << "It is impossible to link the package body: ";
+        ss << name.toString('.');
+        ss << " With its declaration";
+        return ss.str();
+    }
+
+    for (auto&& d : *body->decls()) {
+        if (auto body = std::dynamic_pointer_cast<node::PackBody>(d)) {
+            auto res = analysePackBody(body, map, name);
+            if (!res.empty()) {
+                return res;
+            }
+        }
+    }
+
+    return "";
+}
+
+std::string PackBodyNDeclLinking::analyseContainer_(
+    std::shared_ptr<node::IDecl> decl)
+{      
+    std::shared_ptr<node::DeclArea> decls;
+    if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(decl)) {
+        decls = proc->decls();
+    } else if (auto packBody = std::dynamic_pointer_cast<node::PackBody>(decl)) {
+        decls = packBody->decls();
+    } else {
+        return "";
+    }
+    
+    std::map<attribute::QualifiedName, std::shared_ptr<node::PackDecl>> map;
+    for (auto&& d : *decls) {
+        if (auto packDecl = std::dynamic_pointer_cast<node::PackDecl>(d)) {
+            analysePackDecl(packDecl, map, decl->name());
+        } else if (auto packBody = std::dynamic_pointer_cast<node::PackBody>(d)) {
+            auto res = analysePackBody(packBody, map, decl->name());
+            if (!res.empty()) {
+                return res;
+            }
+        }
+        auto res = analyseContainer_(d);
+        if (!res.empty()) {
+            return res;
+        }
+    }
+
+    return "";
+}
+
+std::string PackBodyNDeclLinking::analyseProgram_(
+    const std::vector<std::shared_ptr<mdl::Module>>& program) 
+{
+    std::map<attribute::QualifiedName, std::shared_ptr<node::PackDecl>> map;
+    for (auto&& mod : program) {
+        auto space = std::dynamic_pointer_cast<node::GlobalSpace>(mod->unit().lock());
+        assert(space && "No space in mod");
+        auto unit = space->unit();
+        if (auto packDecl = std::dynamic_pointer_cast<node::PackDecl>(unit)) {
+            analysePackDecl(packDecl, map, space->name());
+        } else if (auto packBody = std::dynamic_pointer_cast<node::PackBody>(unit)) {
+            auto res = analysePackBody(packBody, map, space->name());
+            if (!res.empty()) {
+                return res;
+            }
+        }
+    }
+}
 
 // TypeNameToRealType 
 std::string 
@@ -562,6 +692,7 @@ TypeNameToRealType::analyseDecl_(
                 if (record) var->resetType(record);
                 else if (als) var->resetType(als);
             } else if (func) {
+                // разрешение возвр. значение для ф-ции
                 if (record) func->resetRetType(record);
                 else if (als) func->resetRetType(als);
             }
@@ -1013,7 +1144,7 @@ OneClassInSubprogramCheck::analyse(
     }
     return ISemanticsPart::analyseNext(program);
 }
-// sdf
+
 std::string 
 OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
     std::vector<std::shared_ptr<node::IDecl>> decls;

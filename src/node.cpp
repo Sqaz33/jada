@@ -222,6 +222,18 @@ void ProcBody::reachable_(
     }
 }
 
+// ProcDecl
+ProcDecl::ProcDecl(const std::string& name, 
+                   const std::vector<std::shared_ptr<VarDecl>>& params) :
+    ProcBody(name, params, 
+             std::make_shared<DeclArea>(), 
+             std::make_shared<Body>(std::vector<std::shared_ptr<IStm>>()))
+{}
+
+void ProcDecl::setBody(std::shared_ptr<ProcBody> body) {
+    body_ = body;
+}
+
 // FuncBody
 FuncBody::FuncBody(const std::string& name, 
                    const std::vector<std::shared_ptr<VarDecl>>& params,
@@ -239,6 +251,20 @@ std::shared_ptr<IType> FuncBody::retType() {
 
 void FuncBody::resetRetType(std::shared_ptr<IType> type) {
     retType_ = type;
+}
+
+// FuncDecl 
+FuncDecl::FuncDecl(const std::string& name, 
+                   const std::vector<std::shared_ptr<VarDecl>>& params,
+                   std::shared_ptr<IType> retType) :
+    FuncBody(name, params, 
+             std::make_shared<DeclArea>(), 
+             std::make_shared<Body>(std::vector<std::shared_ptr<IStm>>()),
+             retType)
+{}
+
+void FuncDecl::setBody(std::shared_ptr<ProcBody> body) {
+    body_ = body;
 }
 
 // PackDecl
@@ -435,8 +461,8 @@ GlobalSpace::imports() const noexcept
 { return imports_; }
 
 const std::string& GlobalSpace::name() const noexcept {
-    assert(false);
-    *static_cast<std::string*>(nullptr);
+    static const std::string name__ = "global";
+    return name__; 
 }
 
 std::shared_ptr<IDecl> 

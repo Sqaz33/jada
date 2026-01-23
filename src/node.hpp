@@ -249,6 +249,12 @@ public:
 
 public: // INode interface
     void* codegen() override { return nullptr; } // TODO
+
+public:
+    void setBody(std::shared_ptr<ProcBody> body);
+
+private:
+    std::weak_ptr<ProcBody> body_;
 };
 
 class FuncBody : public ProcBody {
@@ -284,10 +290,14 @@ public:
 
 public: // INode interface
     void* codegen() override { return nullptr; } // TODO
+
+public:
+    void setBody(std::shared_ptr<ProcBody> body);
+    
+private:
+    std::weak_ptr<ProcBody> body_;
 };
 
-
-class PackBody;
 class PackDecl : public IDecl {
 public:
     PackDecl(const std::string& name, 
@@ -333,15 +343,18 @@ protected:
     std::weak_ptr<PackBody> packBody_;
 };
 
-// + разделение - объявление подпрог. в декле пака, тело в боди пака
-// + нужно слинковать боди пак и декл пак 
-// + проверить что в декле/боди нет боди/декла подпрог.
-// + если в одном спейсе - то на одном уровне сначала декл потом боди
-// + для поиска имен из боди пака нужно вызывать отедльную функцию из декла пака
-// + переопределить reachable для боди
-// + боди пак наследуется от декла пака 
+// + разделение - объявление подпрог. в декле пака, тело в боди пака *
+// + нужно слинковать боди пак и декл пак  *
+// + проверить что в декле/боди нет боди/декла подпрог. *
+// + если в одном спейсе - то на одном уровне сначала декл потом боди *
+// + для поиска имен из боди пака нужно вызывать отедльную функцию из декла пака *
+// + переопределить reachable для боди *
+// + боди пак наследуется от декла пака  *
+
 // + проверка переопределения имен в боди пака из декла пака
-// + декл подпрог наследуется от боди и вызывает его методы 
+// + проверка наличия боди подпрог. в боди пака для деклов подпрог. из декла пака  
+
+// + декл подпрог наследуется от боди и вызывает его методы * 
 class PackBody : public PackDecl {
 public:
     PackBody(const std::string& name, 

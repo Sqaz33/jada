@@ -83,6 +83,9 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::CircularImportCheck>();
     auto NCC = 
         std::make_shared<semantics_part::NameConflictCheck>();
+    // линковка боди и декла пакета
+    auto PBDL = 
+        std::make_shared<semantics_part::PackBodyNDeclLinking>();
     auto TNRT = 
         std::make_shared<semantics_part::TypeNameToRealType>();
     auto IVNCC = 
@@ -102,6 +105,7 @@ int semanticAnalysis() {
     sem.addPart(GSC);
     sem.addPart(CIC);
     sem.addPart(NCC);
+    sem.addPart(PBDL);
     sem.addPart(TNRT);
     sem.addPart(IVNCC);
     sem.addPart(OC);
