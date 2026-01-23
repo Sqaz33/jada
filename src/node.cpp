@@ -445,6 +445,9 @@ void RecordDecl::reachable_(
             break;
         }
     }
+    if (auto base = baseRecord_.lock()) {
+        base->reachable_(res, it, end, requester);
+    }
 }
 
 //TypeAliasDecl
@@ -833,8 +836,5 @@ bool SuperclassReference::compare(
         return class_ && r->class_ && class_ == r->class_;
     }
 }
-
-
-
 
 }

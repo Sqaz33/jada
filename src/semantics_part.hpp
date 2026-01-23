@@ -94,6 +94,17 @@ private:
         std::shared_ptr<node::RecordDecl> derivee = nullptr);
     std::string analyseParam_(std::shared_ptr<node::VarDecl> decl);  
 };
+
+class InheritsVarNameConlflicCheck : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+
+private:
+    std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
+};
+
 class OverloadCheck : public ISemanticsPart {
 public:
     std::string analyse(

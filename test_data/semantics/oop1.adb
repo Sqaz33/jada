@@ -20,6 +20,7 @@ procedure main is
       begin
          q.X := 1;
       end f;
+      
    end pack;
 
    procedure f(q: in pack.Base; q2: pack.base) is
@@ -28,8 +29,9 @@ procedure main is
    end f;
 
    procedure f(q: pack.base'class) is
+      x: Integer;
    begin
-      2134;
+      x := 1;
    end f;
 
 

@@ -671,6 +671,72 @@ TypeNameToRealType::analyseParam_(
     return "";
 }
 
+// InheritsVarNameConlflicCheck
+std::string
+InheritsVarNameConlflicCheck::analyse(
+    const std::vector<
+    std::shared_ptr<mdl::Module>>& program)
+{
+    for (auto mod : program) {
+        auto unit = mod->unit().lock();
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+        auto res = analyseContainer_(space->unit());
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << res;
+            return ss.str();
+        }
+    }
+    return ISemanticsPart::analyseNext(program);
+}
+
+std::string 
+InheritsVarNameConlflicCheck::analyseContainer_(
+    std::shared_ptr<node::IDecl> decl)
+{
+    std::shared_ptr<node::DeclArea> decls;
+    if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
+        decls = pack->decls();
+    } else if (auto proc = std::dynamic_pointer_cast<node::ProcDecl>(decl)) {
+        decls = proc->decls();
+    } else {
+        return "";
+    }
+
+    for (auto&& d : *decls) {
+        if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(d)) {
+            std::set<std::string> allVars;
+            auto curRec = rec;
+            while (curRec) {
+                for (auto&& v : *(curRec->decls())) {
+                    if (allVars.contains(v->name())) {
+                        std::stringstream ss;
+                        ss << "Redefining a name in a derived type";
+                        ss << ":";
+                        ss << " Base: ";
+                        ss << curRec->name();
+                        ss << ". Var: ";
+                        ss << v->name();
+                        return ss.str();
+                    }
+                    allVars.insert(v->name());
+                }
+                curRec = curRec->base().lock();
+            }
+        }
+
+        auto res = analyseContainer_(d);
+        if (!res.empty()) {
+            return res;
+        }
+    }
+
+    return "";
+}
+
 // OverloadCheck
 std::string 
 OverloadCheck::analyse(

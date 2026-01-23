@@ -85,6 +85,8 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::NameConflictCheck>();
     auto TNRT = 
         std::make_shared<semantics_part::TypeNameToRealType>();
+    auto IVNCC = 
+        std::make_shared<semantics_part::InheritsVarNameConlflicCheck>();
     auto OC = 
         std::make_shared<semantics_part::OverloadCheck>();
     auto CCD = 
@@ -101,6 +103,7 @@ int semanticAnalysis() {
     sem.addPart(CIC);
     sem.addPart(NCC);
     sem.addPart(TNRT);
+    sem.addPart(IVNCC);
     sem.addPart(OC);
     sem.addPart(CCD);
     sem.addPart(OCSC);
