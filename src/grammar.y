@@ -187,20 +187,20 @@ qualified_name:   NAME                                                  { $$ = a
                 | qualified_name DOT NAME                               { $$ = std::move($1); $$.push($3); }       
 
 proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC                                     { 
-                                                                                                                        $$.reset(new node::ProcDecl($2, {}, $4, $6));
+                                                                                                                        $$.reset(new node::ProcBody($2, {}, $4, $6));
                                                                                                                         helper::rightEnding = ($2 == $8) && helper::rightEnding;
                                                                                                                      }
                 | PROCEDURE NAME LPAR param_list RPAR IS optional_decl_area BEGIN_KW body END NAME SC                { 
-                                                                                                                        $$.reset(new node::ProcDecl($2, $4, $7, $9)); 
+                                                                                                                        $$.reset(new node::ProcBody($2, $4, $7, $9)); 
                                                                                                                         helper::rightEnding = ($2 == $11) && helper::rightEnding;
                                                                                                                      }
 
 func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { 
-                                                                                                                        $$.reset(new node::FuncDecl($2, {}, $6, $8, $4)); 
+                                                                                                                        $$.reset(new node::FuncBody($2, {}, $6, $8, $4)); 
                                                                                                                         helper::rightEnding = ($2 == $10) && helper::rightEnding;
                                                                                                                      }  
                 | FUNCTION NAME LPAR param_list RPAR RETURN type IS optional_decl_area BEGIN_KW body END NAME SC     { 
-                                                                                                                        $$.reset(new node::FuncDecl($2, $4, $9, $11, $7)); 
+                                                                                                                        $$.reset(new node::FuncBody($2, $4, $9, $11, $7)); 
                                                                                                                         helper::rightEnding = ($2 == $13) && helper::rightEnding;
                                                                                                                      }
 

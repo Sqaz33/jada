@@ -149,8 +149,8 @@ void VarDecl::setOut(bool out) noexcept {
     out_ = out;
 }
 
-// ProcDecl
-ProcDecl::ProcDecl(const std::string& name, 
+// ProcBody
+ProcBody::ProcBody(const std::string& name, 
                    const std::vector<std::shared_ptr<VarDecl>>& params,
                    std::shared_ptr<DeclArea> decls,
                    std::shared_ptr<Body> body) :
@@ -168,20 +168,20 @@ ProcDecl::ProcDecl(const std::string& name,
     body_->setParent(this);
 }
 
-const std::string& ProcDecl::name() const noexcept {
+const std::string& ProcBody::name() const noexcept {
     return name_;
 }
 
-std::shared_ptr<DeclArea> ProcDecl::decls() {
+std::shared_ptr<DeclArea> ProcBody::decls() {
     return decls_;
 }
 
 const std::vector<std::shared_ptr<VarDecl>>& 
-ProcDecl::params() const noexcept {
+ProcBody::params() const noexcept {
     return params_;
 }
 
-void ProcDecl::reachable_(
+void ProcBody::reachable_(
         std::vector<
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
@@ -211,7 +211,7 @@ void ProcDecl::reachable_(
                     insert = true;
                 }
                 res.back().push_back(decl);
-            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+            } else if (!std::dynamic_pointer_cast<ProcBody>(decl)) {
                 decl->reachable_(
                     res, std::next(it), end, requester);
             }   
@@ -222,15 +222,24 @@ void ProcDecl::reachable_(
     }
 }
 
-// FuncDecl
-FuncDecl::FuncDecl(const std::string& name, 
+// FuncBody
+FuncBody::FuncBody(const std::string& name, 
                    const std::vector<std::shared_ptr<VarDecl>>& params,
                    std::shared_ptr<DeclArea> decls,
                    std::shared_ptr<Body> body,
                    std::shared_ptr<IType> retType) :
-    ProcDecl(name, params, decls, body)
+    ProcBody(name, params, decls, body)
     , retType_(retType)
 { retType_->setParent(this); }
+
+
+std::shared_ptr<IType> FuncBody::retType() {
+    return retType_;
+}
+
+void FuncBody::resetRetType(std::shared_ptr<IType> type) {
+    retType_ = type;
+}
 
 // PackDecl
 PackDecl::PackDecl(const std::string& name, 
@@ -268,7 +277,7 @@ void PackDecl::reachable_(
                     insert = true;
                 }
                 res.back().push_back(decl);
-            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+            } else if (!std::dynamic_pointer_cast<ProcBody>(decl)) {
                 decl->reachable_(
                     res, std::next(it), end, requester);
             }   
@@ -299,7 +308,7 @@ void PackDecl::reachableForPackBody_(
                     insert = true;
                 }
                 res.back().push_back(decl);
-            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+            } else if (!std::dynamic_pointer_cast<ProcBody>(decl)) {
                 decl->reachable_(
                     res, std::next(it), end, requester);
             }   
@@ -313,6 +322,11 @@ void PackDecl::reachableForPackBody_(
 std::shared_ptr<DeclArea> PackDecl::decls() {
     return decls_;
 }
+
+std::shared_ptr<DeclArea> PackDecl::privateDecls() {
+    return privateDecls_;
+}
+
 
 void PackDecl::setPackBody(std::shared_ptr<PackBody> body) {
     packBody_ = body;
@@ -353,7 +367,7 @@ void PackBody::reachable_(
                     insert = true;
                 }
                 res.back().push_back(decl);
-            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+            } else if (!std::dynamic_pointer_cast<ProcBody>(decl)) {
                 decl->reachable_(
                     res, std::next(it), end, requester);
             }   
@@ -404,7 +418,7 @@ void GlobalSpace::reachable_(
                     insert = true;
                 }
                 res.back().push_back(decl);
-            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+            } else if (!std::dynamic_pointer_cast<ProcBody>(decl)) {
                 decl->reachable_(
                     res, std::next(it), end, requester);
             }   
@@ -529,7 +543,7 @@ void RecordDecl::reachable_(
                     insert = true;
                 }
                 res.back().push_back(decl);
-            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+            } else if (!std::dynamic_pointer_cast<ProcBody>(decl)) {
                 decl->reachable_(
                     res, std::next(it), end, requester);
             }   
@@ -851,15 +865,15 @@ bool ClassDecl::isDerivedOf(std::shared_ptr<ClassDecl> cls) {
     return false;
 }
 
-void ClassDecl::addMethod(std::shared_ptr<ProcDecl> method) {
-    if (auto func = std::dynamic_pointer_cast<FuncDecl>(method)) {
+void ClassDecl::addMethod(std::shared_ptr<ProcBody> method) {
+    if (auto func = std::dynamic_pointer_cast<FuncBody>(method)) {
         funcs_.emplace_back(func);
         return;
     }
     procs_.push_back(method);
 }
 
-std::shared_ptr<ProcDecl> ClassDecl::containsMethod(
+std::shared_ptr<ProcBody> ClassDecl::containsMethod(
     const std::string& name, 
     const std::vector<std::shared_ptr<IType>>& params,
     bool proc)

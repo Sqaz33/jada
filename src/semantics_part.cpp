@@ -17,8 +17,8 @@ std::string EntryPointCheck::analyse(
                 std::shared_ptr<mdl::Module>>& program) 
 {   
     auto unit = program[0]->unit().lock();
-    if (!std::dynamic_pointer_cast<node::ProcDecl>(unit) ||
-         std::dynamic_pointer_cast<node::FuncDecl>(unit)) 
+    if (!std::dynamic_pointer_cast<node::ProcBody>(unit) ||
+         std::dynamic_pointer_cast<node::FuncBody>(unit)) 
     {
         return program[0]->fileName()
                 + ": The entry point should be a procedure";
@@ -299,7 +299,7 @@ std::string NameConflictCheck::analyseDecl_(
     std::map<std::string, std::shared_ptr<node::IDecl>> nameNDecl;
     std::vector<std::shared_ptr<node::IDecl>> allDecls;
     if (auto proc = 
-            std::dynamic_pointer_cast<node::ProcDecl>(decl)) 
+            std::dynamic_pointer_cast<node::ProcBody>(decl)) 
     {   
         allDecls.insert(allDecls.end(), 
                         proc->params().begin(), 
@@ -332,15 +332,21 @@ std::string NameConflictCheck::analyseDecl_(
     for (auto&& d : allDecls) {
         auto it = nameNDecl.find(d->name());
         if (it != nameNDecl.end() && 
-            (!std::dynamic_pointer_cast<node::ProcDecl>(d) || 
-             !std::dynamic_pointer_cast<node::ProcDecl>(it->second)) ||
-             // проверку на боди и декл пака при совпадении имен 
-                ((std::dynamic_pointer_cast<node::PackDecl>(d) && 
-                 !std::dynamic_pointer_cast<node::PackBody>(it->second) &&
-                  std::dynamic_pointer_cast<node::PackDecl>(d) &&
-                 !std::dynamic_pointer_cast<node::PackBody>(it->second)) || 
-                 (std::dynamic_pointer_cast<node::PackBody>(d) && 
-                  std::dynamic_pointer_cast<node::PackBody>(it->second)))) 
+                (
+                    (!std::dynamic_pointer_cast<node::ProcBody>(d) || 
+                     !std::dynamic_pointer_cast<node::ProcBody>(it->second)) ||
+                // проверку на боди и декл пака при совпадении имен 
+                    (
+                        (std::dynamic_pointer_cast<node::PackDecl>(d) && 
+                        !std::dynamic_pointer_cast<node::PackBody>(it->second) &&
+                        std::dynamic_pointer_cast<node::PackDecl>(d) &&
+                        !std::dynamic_pointer_cast<node::PackBody>(it->second)) || 
+
+                        (std::dynamic_pointer_cast<node::PackBody>(d) && 
+                        std::dynamic_pointer_cast<node::PackBody>(it->second))
+                    )
+                )
+            )
         {
             std::stringstream ss;
             ss << "Name conflict: ";
@@ -397,7 +403,7 @@ TypeNameToRealType::analyseContainer_(
     // std::shared_ptr<node::DeclArea> decls;
     std::vector<std::shared_ptr<node::IDecl>> decls;
     if (auto proc = 
-            std::dynamic_pointer_cast<node::ProcDecl>(decl)) 
+            std::dynamic_pointer_cast<node::ProcBody>(decl)) 
     {
         for (auto&& par : proc->params()) {
             auto res = analyseParam_(par);
@@ -448,6 +454,16 @@ TypeNameToRealType::analyseContainer_(
             }
         }
     }
+
+    if (auto func = std::dynamic_pointer_cast<node::FuncBody>(decl)) {
+        auto res = analyseDecl_(decl);
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << res;
+            return ss.str();
+        }
+    }
+
     return "";
 }
 
@@ -458,6 +474,7 @@ TypeNameToRealType::analyseDecl_(
     std::shared_ptr<node::TypeAliasDecl> alias;
     std::shared_ptr<node::VarDecl> var;
     std::shared_ptr<node::TypeName> typeName;
+    std::shared_ptr<node::FuncBody> func;
     if (alias = 
             std::dynamic_pointer_cast<node::TypeAliasDecl>(decl)) 
     {
@@ -489,14 +506,30 @@ TypeNameToRealType::analyseDecl_(
                 std::dynamic_pointer_cast<node::RecordDecl>(decl)) 
     {
         return analyseRecord_(record);
+    } 
+    else if (func = std::dynamic_pointer_cast<node::FuncBody>(decl)) 
+    {
+        if (typeName = 
+                std::dynamic_pointer_cast<node::TypeName>(func->retType()));
+        else if (auto arrayType = 
+                    std::dynamic_pointer_cast<node::ArrayType>(func->retType()))
+        {
+            return "it is forbidden to use an" 
+                   " explicitly specified array" 
+                   " type as a return value for a function";
+        }
+    } 
+    else 
+    {
+        return "";
     }
-    
+
     if (typeName) {
         if (!typeName->hasName()) {
             std::stringstream ss;
             ss << "It is forbidden to" 
                   " use superclass reference" 
-                  " for aliases, vars, arrays: ";
+                  " for aliases, vars, arrays and return type: ";
             ss << alias->name();
             ss << " : ";
             ss << typeName->attribute().toString();
@@ -528,7 +561,10 @@ TypeNameToRealType::analyseDecl_(
             } else if (var) {
                 if (record) var->resetType(record);
                 else if (als) var->resetType(als);
-            } 
+            } else if (func) {
+                if (record) func->resetRetType(record);
+                else if (als) func->resetRetType(als);
+            }
             if (record || als) {
                 isTypeSet = true;
             }
@@ -713,7 +749,7 @@ InheritsVarNameConlflicCheck::analyseContainer_(
 {
     std::vector<std::shared_ptr<node::IDecl>> decls;
     if (auto proc = 
-            std::dynamic_pointer_cast<node::ProcDecl>(decl)) 
+            std::dynamic_pointer_cast<node::ProcBody>(decl)) 
     {
         decls.insert(decls.end(), proc->decls()->begin(), proc->decls()->end());
     } 
@@ -787,7 +823,7 @@ OverloadCheck::analyseContainer_(
 {
     std::vector<std::shared_ptr<node::IDecl>> decls;
     if (auto proc = 
-            std::dynamic_pointer_cast<node::ProcDecl>(decl)) 
+            std::dynamic_pointer_cast<node::ProcBody>(decl)) 
     {
         decls.insert(decls.end(), proc->decls()->begin(), proc->decls()->end());
     } 
@@ -812,14 +848,14 @@ OverloadCheck::analyseContainer_(
             for (std::size_t i = 0; i < decls.size() - 1; ++i) {
                 auto&& d1 = decls[i];
                 auto proc1 = 
-                        std::dynamic_pointer_cast<node::ProcDecl>(d1);
+                        std::dynamic_pointer_cast<node::ProcBody>(d1);
                 auto&& params1 = proc1->params();
-                auto isFunc1 = std::dynamic_pointer_cast<node::FuncDecl>(proc1);
+                auto isFunc1 = std::dynamic_pointer_cast<node::FuncBody>(proc1);
                 for (std::size_t j = i + 1; j < decls.size(); ++j) {
                     auto&& d2 = decls[j];
                     auto proc2 = 
-                        std::dynamic_pointer_cast<node::ProcDecl>(d2);
-                    auto isFunc2 = std::dynamic_pointer_cast<node::FuncDecl>(proc2);
+                        std::dynamic_pointer_cast<node::ProcBody>(d2);
+                    auto isFunc2 = std::dynamic_pointer_cast<node::FuncBody>(proc2);
                     
                     if ((isFunc1 && !isFunc2) || (!isFunc1 && isFunc2)) {
                         continue;
@@ -851,7 +887,7 @@ OverloadCheck::analyseContainer_(
 
     for (auto&& d : decls) {
         if (std::dynamic_pointer_cast<node::PackDecl>(d) || 
-            std::dynamic_pointer_cast<node::ProcDecl>(d))
+            std::dynamic_pointer_cast<node::ProcBody>(d))
         {
             auto res = analyseContainer_(d);
             if (!res.empty()) {
@@ -898,7 +934,7 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
         }
         declArea = pack->decls();
     } else {
-        if (auto proc = dynamic_cast<node::ProcDecl*>(decl)) {
+        if (auto proc = dynamic_cast<node::ProcBody*>(decl)) {
             for (auto&& d : *(proc->decls())) {
                 auto res = analyseContainer_(d.get());
                 if (!res.empty()) {
@@ -930,8 +966,8 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
                 classes.push_back(std::make_shared<node::ClassDecl>(rec));
                 rec->setClass(classes.back());
             }
-        } else if (auto proc = std::dynamic_pointer_cast<node::ProcDecl>(d)) {
-            bool isProc = !std::dynamic_pointer_cast<node::FuncDecl>(proc);    
+        } else if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(d)) {
+            bool isProc = !std::dynamic_pointer_cast<node::FuncBody>(proc);    
             auto name = proc->name();
             std::vector<std::shared_ptr<node::IType>> params;
             std::shared_ptr<node::ClassDecl> cls;
@@ -982,7 +1018,7 @@ std::string
 OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
     std::vector<std::shared_ptr<node::IDecl>> decls;
     if (auto proc = 
-            std::dynamic_pointer_cast<node::ProcDecl>(decl)) 
+            std::dynamic_pointer_cast<node::ProcBody>(decl)) 
     {
         decls.insert(decls.end(), proc->decls()->begin(), proc->decls()->end());
     } 
@@ -998,7 +1034,7 @@ OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) 
     }
 
     for (auto&& d : decls) {  
-        if (auto proc = std::dynamic_pointer_cast<node::ProcDecl>(d)) {
+        if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(d)) {
             bool containsClass = false;
             bool isMethod = false;
             for (auto p : proc->params()) {

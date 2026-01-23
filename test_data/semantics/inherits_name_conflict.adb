@@ -11,7 +11,7 @@ procedure main is
 
    type derivedDerived is new derived with record 
       Y: Integer;
-      Z: Integer;
+      X: Integer;
    end record;
 
    l: Integer;

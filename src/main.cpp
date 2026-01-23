@@ -156,7 +156,8 @@ int main(int argc, char** argv) try {
         // argv[1] = "../test_data/semantics/proc_func_overload.adb";
         // argv[1] = "../test_data/semantics/record_inherits.adb";
         // argv[1] = "../test_data/semantics/circular/main.adb";
-        argv[1] = "../test_data/semantics/oop1.adb";
+        // argv[1] = "../test_data/semantics/oop1.adb";
+        argv[1] = "../test_data/semantics/return_type.adb";
     }
     
     if (argc < 2) {

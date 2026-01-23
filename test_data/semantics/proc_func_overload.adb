@@ -2,7 +2,7 @@ with ada.text_io;
 
 procedure main is 
 
-   procedure X(l: Integer)  is
+   procedure X(l: Integer) is
       v: Integer;
    begin
       v := 1;

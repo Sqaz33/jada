@@ -72,7 +72,7 @@ namespace node {
 
 class IStm : public INode { /* ... */ };
 
-class ProcDecl;
+class ProcBody;
 class PackDecl;
 class PackBody;
 class RecordDecl;
@@ -88,7 +88,7 @@ public:
         std::shared_ptr<IDecl> requester = nullptr);
 
 protected:
-    friend class ProcDecl;
+    friend class ProcBody;
     friend class PackDecl;
     friend class PackBody;
     friend class RecordDecl;
@@ -204,9 +204,9 @@ private:
 //      если просто вызов - процедура
 // 2. разные проверки перегрузки
 // 3. можно объявлять функции и процедуры с одним именем в одном спейсе
-class ProcDecl : public IDecl {
+class ProcBody : public IDecl {
 public:
-    ProcDecl(const std::string& name, 
+    ProcBody(const std::string& name, 
              const std::vector<std::shared_ptr<VarDecl>>& params,
              std::shared_ptr<DeclArea> decls,
              std::shared_ptr<Body> body);
@@ -242,9 +242,18 @@ protected:
     std::shared_ptr<Body> body_;
 };
 
-class FuncDecl : public ProcDecl {
+class ProcDecl : public ProcBody {
 public:
-    FuncDecl(const std::string& name, 
+    ProcDecl(const std::string& name, 
+             const std::vector<std::shared_ptr<VarDecl>>& params);
+
+public: // INode interface
+    void* codegen() override { return nullptr; } // TODO
+};
+
+class FuncBody : public ProcBody {
+public:
+    FuncBody(const std::string& name, 
              const std::vector<std::shared_ptr<VarDecl>>& params ,
              std::shared_ptr<DeclArea> decls,
              std::shared_ptr<Body> body,
@@ -255,14 +264,28 @@ public: // INode interface
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
-    using ProcDecl::name;
+    using ProcBody::name;
+
+    std::shared_ptr<IType> retType();
+    void resetRetType(std::shared_ptr<IType> type);
 
 private:
     std::shared_ptr<IType> retType_;
 
-    friend void ProcDecl::print(graphviz::GraphViz& gv, 
+    friend void ProcBody::print(graphviz::GraphViz& gv, 
                                 graphviz::VertexType par) const;
 };
+
+class FuncDecl : public FuncBody {
+public:
+    FuncDecl(const std::string& name, 
+             const std::vector<std::shared_ptr<VarDecl>>& params,
+             std::shared_ptr<IType> retType);
+
+public: // INode interface
+    void* codegen() override { return nullptr; } // TODO
+};
+
 
 class PackBody;
 class PackDecl : public IDecl {
@@ -907,11 +930,11 @@ public:
 
     void addDerived(std::shared_ptr<ClassDecl> derived);
 
-    void addMethod(std::shared_ptr<ProcDecl> method);
+    void addMethod(std::shared_ptr<ProcBody> method);
 
     bool isDerivedOf(std::shared_ptr<ClassDecl> cls);
 
-    std::shared_ptr<ProcDecl> containsMethod(
+    std::shared_ptr<ProcBody> containsMethod(
         const std::string& name, 
         const std::vector<std::shared_ptr<IType>>& params,
         bool proc);
@@ -926,8 +949,8 @@ private:
 
 private:
     std::shared_ptr<RecordDecl> record_;
-    std::vector<std::weak_ptr<ProcDecl>> procs_;
-    std::vector<std::weak_ptr<FuncDecl>> funcs_;
+    std::vector<std::weak_ptr<ProcBody>> procs_;
+    std::vector<std::weak_ptr<FuncBody>> funcs_;
 
     std::weak_ptr<ClassDecl> base_;
     std::string name_;

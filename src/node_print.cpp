@@ -39,18 +39,18 @@ void VarDecl::print(graphviz::GraphViz& gv,
     }
 }
 
-void ProcDecl::printParam_(const std::shared_ptr<VarDecl> param, 
+void ProcBody::printParam_(const std::shared_ptr<VarDecl> param, 
                            graphviz::GraphViz& gv, 
                            graphviz::VertexType par) const
 { 
     param->print(gv, par);
 }
 
-void ProcDecl::print(graphviz::GraphViz& gv, 
+void ProcBody::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
 {
     std::string name = "Proc Decl";
-    if (dynamic_cast<const FuncDecl*>(this)) {
+    if (dynamic_cast<const FuncBody*>(this)) {
         name = "Func Decl";
     }
 
@@ -68,15 +68,15 @@ void ProcDecl::print(graphviz::GraphViz& gv,
     body_->print(gv, v);
 
     if (auto self = 
-            dynamic_cast<const FuncDecl*>(this)) {
+            dynamic_cast<const FuncBody*>(this)) {
         gv.nameNextEdge("ret");
         self->retType_->print(gv, v);
     }
 }
 
-void FuncDecl::print(graphviz::GraphViz& gv, 
+void FuncBody::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 
-{ ProcDecl::print(gv, par); }
+{ ProcBody::print(gv, par); }
 
 void PackDecl::print(graphviz::GraphViz& gv, 
                      graphviz::VertexType par) const 

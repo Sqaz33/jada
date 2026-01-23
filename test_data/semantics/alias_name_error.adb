@@ -1,13 +1,13 @@
-with ada.text_io;
+--  with ada.text_io;
 
-procedure main is 
-   type Type1 is record 
-      X: Integer;
-   end record; 
+--  procedure main is 
+--     type Type1 is record 
+--        X: Integer;
+--     end record; 
 
-   var1: Type1;
+--     var1: Type1;
 
-begin
-   var1.x := 1;
+--  begin
+--     var1.x := 1;
    
-end main;
+--  end main;
