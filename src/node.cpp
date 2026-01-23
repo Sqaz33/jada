@@ -234,11 +234,16 @@ FuncDecl::FuncDecl(const std::string& name,
 
 // PackDecl
 PackDecl::PackDecl(const std::string& name, 
-                   std::shared_ptr<DeclArea> decls):
+                   std::shared_ptr<DeclArea> decls,
+                   std::shared_ptr<DeclArea> privateDecls):
     name_(name)
     , decls_(decls)
+    , privateDecls_(privateDecls)
 {
     decls_->setParent(this);
+    if (privateDecls_) {
+        privateDecls_->setParent(this);
+    }
 }
 
 const std::string& PackDecl::name() const noexcept {
@@ -274,8 +279,96 @@ void PackDecl::reachable_(
     }
 }
 
+void PackDecl::reachableForPackBody_(
+    std::vector<
+        std::vector<std::shared_ptr<IDecl>>>& res,
+    std::vector<std::string>::const_iterator it,
+    std::vector<std::string>::const_iterator end,
+    std::shared_ptr<IDecl> requester) 
+{
+    if (it == end) return;
+
+    reachable_(res, it, end, requester);
+
+    bool insert = false;
+    for (auto decl : *privateDecls_) {
+        if (decl->name() == *it) {
+            if (std::distance(it, end) == 1) {
+                if (!insert) {
+                    res.emplace_back();
+                    insert = true;
+                }
+                res.back().push_back(decl);
+            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+                decl->reachable_(
+                    res, std::next(it), end, requester);
+            }   
+        }
+        if (decl == requester) {
+            break;
+        }
+    }
+}
+
 std::shared_ptr<DeclArea> PackDecl::decls() {
     return decls_;
+}
+
+void PackDecl::setPackBody(std::shared_ptr<PackBody> body) {
+    packBody_ = body;
+}
+
+// PackBody
+PackBody::PackBody(const std::string& name, 
+                   std::shared_ptr<DeclArea> decls) :
+    PackDecl(name, decls)
+{}
+
+std::vector<
+    std::vector<std::shared_ptr<IDecl>>> 
+PackBody::reachable(
+    const attribute::QualifiedName& name, 
+    std::shared_ptr<IDecl> requester) 
+{
+    if (requester->parent() != this) {
+        return {};
+    }
+
+    return IDecl::reachable(name, requester);
+}
+
+void PackBody::reachable_(
+    std::vector<
+        std::vector<std::shared_ptr<IDecl>>>& res,
+    std::vector<std::string>::const_iterator it,
+    std::vector<std::string>::const_iterator end,
+    std::shared_ptr<IDecl> requester) 
+{
+    bool insert = false;
+    for (auto decl : *decls_) {
+        if (decl->name() == *it) {
+            if (std::distance(it, end) == 1) {
+                if (!insert) {
+                    res.emplace_back();
+                    insert = true;
+                }
+                res.back().push_back(decl);
+            } else if (!std::dynamic_pointer_cast<ProcDecl>(decl)) {
+                decl->reachable_(
+                    res, std::next(it), end, requester);
+            }   
+        }
+        if (decl == requester) {
+            break;
+        }
+    }
+    auto pack = packDecl_.lock();
+    assert(pack && "no pack decl for pack body");
+    pack->reachableForPackBody_(res, it, end, requester);
+}
+
+void PackBody::setPackDecl(std::shared_ptr<PackDecl> decl) {
+    packDecl_ = decl;
 }
 
 // GlobalSpace

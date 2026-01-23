@@ -74,13 +74,14 @@ class IStm : public INode { /* ... */ };
 
 class ProcDecl;
 class PackDecl;
+class PackBody;
 class RecordDecl;
 class GlobalSpace;
 class IDecl : virtual public INode { 
 public: 
     virtual const std::string& name() const noexcept = 0;
 
-    std::vector<
+    virtual std::vector<
         std::vector<std::shared_ptr<IDecl>>> 
     reachable(
         const attribute::QualifiedName& name, 
@@ -89,6 +90,7 @@ public:
 protected:
     friend class ProcDecl;
     friend class PackDecl;
+    friend class PackBody;
     friend class RecordDecl;
     friend class GlobalSpace;
     virtual void reachable_(
@@ -262,10 +264,12 @@ private:
                                 graphviz::VertexType par) const;
 };
 
+class PackBody;
 class PackDecl : public IDecl {
 public:
     PackDecl(const std::string& name, 
-             std::shared_ptr<DeclArea> decls);
+             std::shared_ptr<DeclArea> decls,
+             std::shared_ptr<DeclArea> privateDecls = nullptr);
     
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -274,6 +278,7 @@ public: // INode interface
 
 public:
     std::shared_ptr<DeclArea> decls();
+    std::shared_ptr<DeclArea> privateDecls();
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
@@ -286,9 +291,64 @@ private:
         std::vector<std::string>::const_iterator end,
         std::shared_ptr<IDecl> requester) override;
 
-private:
+protected:
+    friend class PackBody;
+    void reachableForPackBody_(
+        std::vector<
+            std::vector<std::shared_ptr<IDecl>>>& res,
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        std::shared_ptr<IDecl> requester);
+
+public:
+    void setPackBody(std::shared_ptr<PackBody> body);
+
+protected:
     std::string name_;
     std::shared_ptr<DeclArea> decls_;
+    std::shared_ptr<DeclArea> privateDecls_;
+    std::weak_ptr<PackBody> packBody_;
+};
+
+// + разделение - объявление подпрог. в декле пака, тело в боди пака
+// + нужно слинковать боди пак и декл пак 
+// + проверить что в декле/боди нет боди/декла подпрог.
+// + если в одном спейсе - то на одном уровне сначала декл потом боди
+// + для поиска имен из боди пака нужно вызывать отедльную функцию из декла пака
+// + переопределить reachable для боди
+// + боди пак наследуется от декла пака 
+// + проверка переопределения имен в боди пака из декла пака
+// + декл подпрог наследуется от боди и вызывает его методы 
+class PackBody : public PackDecl {
+public:
+    PackBody(const std::string& name, 
+             std::shared_ptr<DeclArea> decls);
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override {};
+    void* codegen() override { return nullptr; } // TODO
+
+public:
+    std::vector<
+        std::vector<std::shared_ptr<IDecl>>> 
+    reachable(
+        const attribute::QualifiedName& name, 
+        std::shared_ptr<IDecl> requester = nullptr) override;
+
+private:
+    void reachable_(
+        std::vector<
+            std::vector<std::shared_ptr<IDecl>>>& res,
+        std::vector<std::string>::const_iterator it,
+        std::vector<std::string>::const_iterator end,
+        std::shared_ptr<IDecl> requester) override;
+
+public:
+    void setPackDecl(std::shared_ptr<PackDecl> decl);
+
+private:
+    std::weak_ptr<PackDecl> packDecl_;
 };
 
 class GlobalSpace : public IDecl {
