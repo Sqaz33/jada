@@ -1,7 +1,7 @@
 with ada.text_io;
 
 procedure main is 
-   type type1 is Integer;
+   type type1 is array(1..2) of Integer;
 
    function Func return type1 is
    begin

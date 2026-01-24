@@ -67,34 +67,35 @@ void printAst() {
 
 int semanticAnalysis() {
     semantics::ADASementics sem;
-    auto EPC = 
+    auto EPC = // проверка на точку входа - процедуру
         std::make_shared<semantics_part::EntryPointCheck>();
-    auto MNC = 
+    auto MNC = // проверка на соотв. имени файла и имени ед. комп.
         std::make_shared<semantics_part::ModuleNameCheck>();
-    auto OLC  = 
+    auto OLC  = // --- не нужно ---
         std::make_shared<semantics_part::OneLevelWithCheck>();
-    auto SIC = 
+    auto SIC = // провекра на импорт самого себя
         std::make_shared<semantics_part::SelfImportCheck>();
-    auto EMIC = 
+    auto EMIC = // проверка на импорт существ. модуля 
         std::make_shared<semantics_part::ExistingModuleImportCheck>();
-    auto GSC = 
+    auto GSC = // создание верхнего спейса в каждом модуле, занесение в него импортов
         std::make_shared<semantics_part::GlobalSpaceCreation>();
-    auto CIC =
+    auto CIC = // проверка импорта друг-друга
         std::make_shared<semantics_part::CircularImportCheck>();
-    auto NCC = 
+    auto NCC = // проверка конфликта имен в одном спейсе
         std::make_shared<semantics_part::NameConflictCheck>();
-    // линковка боди и декла пакета
-    auto PBDL = 
+    auto PBDL = // линковка боди и декла пакета
         std::make_shared<semantics_part::PackBodyNDeclLinking>();
-    auto TNRT = 
+    auto TNRT = // замена имени типа на указатель на реальную структуру из дерева
         std::make_shared<semantics_part::TypeNameToRealType>();
-    auto IVNCC = 
+    auto IVNCC = // проверка переопределения перменной в наслед. рекорде
         std::make_shared<semantics_part::InheritsVarNameConlflicCheck>();
-    auto OC = 
+    auto OC = // проверка перегрузки (разная для ф-ций и процедур)
         std::make_shared<semantics_part::OverloadCheck>();
-    auto CCD = 
+    auto SBDL // линковка декла и боди подпрогр. и проверка на неопределенные боди для деклов 
+        = std::make_shared<semantics_part::SubprogBodyNDeclLinking>();
+    auto CCD = // создания ооп класса из tagged типа и подпрог. в пакете
         std::make_shared<semantics_part::CreateClassDeclaration>();
-    auto OCSC = 
+    auto OCSC = // проверка на наличие только одного типа ооп класса в параметрах подпрогр. 
         std::make_shared<semantics_part::OneClassInSubprogramCheck>();
 
     sem.addPart(EPC);
@@ -109,6 +110,7 @@ int semanticAnalysis() {
     sem.addPart(TNRT);
     sem.addPart(IVNCC);
     sem.addPart(OC);
+    sem.addPart(SBDL);
     sem.addPart(CCD);
     sem.addPart(OCSC);
 

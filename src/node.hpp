@@ -335,6 +335,7 @@ protected:
 
 public:
     void setPackBody(std::shared_ptr<PackBody> body);
+    std::weak_ptr<PackBody> packBody();
 
 protected:
     std::string name_;

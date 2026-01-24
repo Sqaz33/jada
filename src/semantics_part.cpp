@@ -410,11 +410,14 @@ static void analysePackDecl(
             analysePackDecl(pack, map, name);
         }
     }
-    for (auto&& d : *decl->privateDecls()) {
-        if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
-            analysePackDecl(pack, map, name);
+    if (decl->privateDecls()) {
+        for (auto&& d : *decl->privateDecls()) {
+            if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
+                analysePackDecl(pack, map, name);
+            }
         }
     }
+
 } 
 
 static std::string analysePackBody(    
@@ -496,6 +499,7 @@ std::string PackBodyNDeclLinking::analyseProgram_(
             }
         }
     }
+    return "";
 }
 
 // TypeNameToRealType 
@@ -1030,6 +1034,127 @@ OverloadCheck::analyseContainer_(
             }
         }
     }
+
+    return "";
+}
+
+// SubprogrBodyNDeclLinking
+std::string SubprogBodyNDeclLinking::analyse(
+    const std::vector<std::shared_ptr<mdl::Module>>& program) 
+{
+    for (auto mod : program) {
+        auto unit = mod->unit().lock();
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+        auto res = analyseContainer_(space->unit());
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << res;
+            return ss.str();
+        }
+    }
+    return ISemanticsPart::analyseNext(program);
+}
+
+std::string SubprogBodyNDeclLinking::analyseContainer_(
+    std::shared_ptr<node::IDecl> decl)
+{
+    bool isPackDecl = false;
+    std::vector<std::shared_ptr<node::IDecl>> decls;
+    std::shared_ptr<node::PackDecl> pack;
+    if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(decl)) {
+        decls.insert(decls.end(), proc->decls()->begin(), proc->decls()->end());
+    } else if (pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
+        decls.insert(decls.end(), pack->decls()->begin(), pack->decls()->end());
+        if (auto priv = pack->privateDecls()) {
+            decls.insert(decls.end(), priv->begin(), priv->end());
+        }
+        isPackDecl = !std::dynamic_pointer_cast<node::PackBody>(decl);
+    } else {
+        return "";
+    }
+
+    std::map<std::string, std::vector<std::shared_ptr<node::IDecl>>> map;
+    if (isPackDecl) {
+        if (auto body = pack->packBody().lock()) {
+            for (auto&& d : *body->decls()) {
+                map[d->name()].push_back(d);
+            }
+        }        
+    }
+    for (auto&& d : decls) {
+        if (isPackDecl) {
+            auto it = map.find(d->name());
+
+            auto packDeclProc = std::dynamic_pointer_cast<node::ProcDecl>(d);
+            auto packDeclIsFunc = std::dynamic_pointer_cast<node::FuncDecl>(d);
+
+            if (packDeclProc) {
+                bool isLinking = false;
+
+                if (it != map.end()) {
+                    for (auto&& bodyD : it->second) {
+                        if (auto packBodyProc = std::dynamic_pointer_cast<node::ProcBody>(bodyD)) {
+                            auto packBodyIsFunc = std::dynamic_pointer_cast<node::FuncBody>(bodyD);
+
+                            if (!((packBodyIsFunc && 1) ^ (packDeclIsFunc && 1))) {
+                                auto&& params1 = packDeclProc->params();
+                                auto&& params2 = packBodyProc->params();
+
+                                if (params1.size() == params2.size()) {
+                                    bool flag = false;
+                                    for (std::size_t i = 0; i < params1.size(); ++i) {
+                                        flag = params1[i]->type()->compare(params2[i]->type());
+                                        if (!flag) {
+                                            break;
+                                        }
+                                    }
+
+                                    if (flag && packBodyIsFunc && packDeclIsFunc) {
+                                        auto type1 = packDeclIsFunc->retType();
+                                        auto type2 = packBodyIsFunc->retType();
+                                        flag = type1->compare(type2);
+                                    }
+
+                                    if (flag) {
+                                        if (packBodyIsFunc) {
+                                            packDeclIsFunc->setBody(packBodyIsFunc);
+                                        } else {
+                                            packDeclProc->setBody(packBodyProc);
+                                        }
+                                        isLinking = true;
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+                if (!isLinking) {
+                    std::stringstream ss;
+                    ss << "For subprogram: ";
+                    ss << packDeclProc->name();
+                    ss << ". There are no definitions in the package body";
+                    return ss.str();
+                }
+            } else if (it != map.end()) {
+                std::stringstream ss;
+                ss << "Redefining the declaration in the package body. Package: ";
+                ss << pack->name();
+                return ss.str();
+            }
+        }
+
+        auto res = analyseContainer_(d);
+        if (!res.empty()) {
+            return res;
+        }
+    }
+
+
 
     return "";
 }

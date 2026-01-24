@@ -353,9 +353,12 @@ std::shared_ptr<DeclArea> PackDecl::privateDecls() {
     return privateDecls_;
 }
 
-
 void PackDecl::setPackBody(std::shared_ptr<PackBody> body) {
     packBody_ = body;
+}
+
+std::weak_ptr<PackBody> PackDecl::packBody() {
+    return packBody_;
 }
 
 // PackBody
