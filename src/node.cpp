@@ -331,6 +331,10 @@ void PackDecl::reachableForPackBody_(
 
     reachable_(res, it, end, requester);
 
+    if (!privateDecls_) {
+        return;
+    }
+    
     bool insert = false;
     for (auto decl : *privateDecls_) {
         if (decl->name() == *it) {

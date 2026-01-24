@@ -16,11 +16,15 @@ procedure main is
          X: Integer;
       end record;
 
+      procedure f(q: in Base);
+      
+   end pack;
+
+   package body pack is
       procedure f(q: in Base) is
       begin
          q.X := 1;
       end f;
-      
    end pack;
 
    procedure f(q: in pack.Base; q2: pack.base) is
