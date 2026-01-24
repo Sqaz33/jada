@@ -275,6 +275,9 @@ PackDecl::PackDecl(const std::string& name,
     , decls_(decls)
     , privateDecls_(privateDecls)
 {
+    if (!decls_) {
+        decls_ = std::make_shared<node::DeclArea>();
+    }
     decls_->setParent(this);
     if (privateDecls_) {
         privateDecls_->setParent(this);
@@ -296,7 +299,10 @@ void PackDecl::reachable_(
 
     bool insert = false;
     for (auto decl : *decls_) {
-        if (decl->name() == *it) {
+        if (decl->name() == *it || (requester->parent() == this && *it == name_)) {
+            if (requester->parent() == this && *it == name_) {
+                ++it;
+            }
             if (std::distance(it, end) == 1) {
                 if (!insert) {
                     res.emplace_back();
@@ -387,6 +393,9 @@ void PackBody::reachable_(
     std::vector<std::string>::const_iterator end,
     std::shared_ptr<IDecl> requester) 
 {
+    if (requester->parent() != this) {
+        return;
+    } 
     bool insert = false;
     for (auto decl : *decls_) {
         if (decl->name() == *it) {

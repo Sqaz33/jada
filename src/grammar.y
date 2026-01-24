@@ -91,13 +91,17 @@
 %nonassoc UMINUS
 
 %nterm<std::shared_ptr<node::IDecl>> decl
+%nterm<std::shared_ptr<node::IDecl>> pack_decl_decl
 %nterm<std::shared_ptr<node::IDecl>> var_decl
 %nterm<std::shared_ptr<node::With>> with
 %nterm<std::shared_ptr<node::Use>> use
 %nterm<attribute::QualifiedName> qualified_name
 %nterm<attribute::Attribute> getting_attribute
+%nterm<std::shared_ptr<node::IDecl>> proc_body
+%nterm<std::shared_ptr<node::IDecl>> func_body
 %nterm<std::shared_ptr<node::IDecl>> proc_decl
 %nterm<std::shared_ptr<node::IDecl>> func_decl
+%nterm<std::shared_ptr<node::IDecl>> pack_body
 %nterm<std::shared_ptr<node::IDecl>> pack_decl
 %nterm<std::shared_ptr<node::IDecl>> type_decl
 %nterm<std::shared_ptr<node::IDecl>> record_decl
@@ -134,6 +138,7 @@
 %nterm<std::shared_ptr<node::IDecl>> type_alias_decl
 %nterm<std::shared_ptr<node::DeclArea>> optional_decl_area
 %nterm<std::shared_ptr<node::DeclArea>> decl_area
+%nterm<std::shared_ptr<node::DeclArea>> pack_decl_decl_area
 %nterm<OptionalImports> optional_imports
 %nterm<OptionalImports> imports
 %nterm<std::shared_ptr<node::IStm>> mb_call
@@ -174,12 +179,23 @@ imports:          with                                                  { $$ = O
 
 decl_area:        decl                                                  { $$.reset(new node::DeclArea()); $$->addDecl($1); }  
                 | decl_area decl                                        { $$ = $1; $$->addDecl($2); }
- 
+
+pack_decl_decl_area: pack_decl_decl                                     { $$.reset(new node::DeclArea()); $$->addDecl($1); }  
+                |    pack_decl_decl_area pack_decl_decl                 { $$ = $1; $$->addDecl($2); }
+
 decl:             var_decl
-                | proc_decl  
-                | func_decl
-                | pack_decl  
+                | proc_body  
+                | func_body
+                | pack_decl
+                | pack_body  
                 | type_decl
+
+pack_decl_decl:   var_decl
+                | proc_decl 
+                | func_decl
+                | pack_decl
+                | type_decl
+
 
 var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
                 | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
@@ -187,7 +203,7 @@ var_decl:         NAME COLON type ASG expr SC                           { $$.res
 qualified_name:   NAME                                                  { $$ = attribute::QualifiedName($1); } 
                 | qualified_name DOT NAME                               { $$ = std::move($1); $$.push($3); }       
 
-proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC                                     { 
+proc_body:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC                                     { 
                                                                                                                         $$.reset(new node::ProcBody($2, {}, $4, $6));
                                                                                                                         helper::rightEnding = ($2 == $8) && helper::rightEnding;
                                                                                                                      }
@@ -196,7 +212,7 @@ proc_decl:        PROCEDURE NAME IS optional_decl_area BEGIN_KW body END NAME SC
                                                                                                                         helper::rightEnding = ($2 == $11) && helper::rightEnding;
                                                                                                                      }
 
-func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { 
+func_body:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body END NAME SC                          { 
                                                                                                                         $$.reset(new node::FuncBody($2, {}, $6, $8, $4)); 
                                                                                                                         helper::rightEnding = ($2 == $10) && helper::rightEnding;
                                                                                                                      }  
@@ -205,9 +221,28 @@ func_decl:        FUNCTION NAME RETURN type IS optional_decl_area BEGIN_KW body 
                                                                                                                         helper::rightEnding = ($2 == $13) && helper::rightEnding;
                                                                                                                      }
 
-pack_decl:        PACKAGE NAME IS decl_area END NAME SC                                                              { 
+proc_decl:        PROCEDURE NAME SC                                                                                  { $$.reset(new node::ProcDecl($2)); }
+                | PROCEDURE NAME LPAR param_list RPAR SC                                                             { $$.reset(new node::ProcDecl($2, $4)); }
+
+func_decl:        FUNCTION NAME RETURN type SC                                                                       { $$.reset(new node::FuncDecl($2, {}, $4)); }  
+                | FUNCTION NAME LPAR param_list RPAR RETURN type SC                                                  { $$.reset(new node::FuncDecl($2, $4, $7)); }
+
+pack_decl:        PACKAGE NAME IS pack_decl_decl_area PRIVATE pack_decl_decl_area END NAME SC                        { 
+                                                                                                                        $$.reset(new node::PackDecl($2, $4, $6)); 
+                                                                                                                        helper::rightEnding = ($2 == $8) && helper::rightEnding;
+                                                                                                                     }
+                | PACKAGE NAME IS pack_decl_decl_area END NAME SC                                                    {  
                                                                                                                         $$.reset(new node::PackDecl($2, $4)); 
                                                                                                                         helper::rightEnding = ($2 == $6) && helper::rightEnding;
+                                                                                                                     }
+                | PACKAGE NAME IS PRIVATE pack_decl_decl_area END NAME SC                                            { 
+                                                                                                                        $$.reset(new node::PackDecl($2, nullptr, $5)); 
+                                                                                                                        helper::rightEnding = ($2 == $7) && helper::rightEnding;
+                                                                                                                     }
+
+pack_body:        PACKAGE BODY NAME IS decl_area END NAME SC                                                         { 
+                                                                                                                        $$.reset(new node::PackBody($3, $5)); 
+                                                                                                                        helper::rightEnding = ($3 == $7) && helper::rightEnding;
                                                                                                                      }
 
 type_decl:        record_decl                    
@@ -262,8 +297,8 @@ type_alias_decl:  TYPE NAME IS array_type SC                            { $$.res
                   
 
 
-compile_unit:     proc_decl                                             
-                | func_decl                 
+compile_unit:     proc_body                                             
+                | func_body                 
                 | pack_decl 
 
 /* types */

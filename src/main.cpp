@@ -164,7 +164,10 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/circular/main.adb";
         // argv[1] = "../test_data/semantics/oop1.adb";
         // argv[1] = "../test_data/semantics/return_type.adb";
-        argv[1] = "../test_data/semantics/bool.adb";
+        // argv[1] = "../test_data/semantics/bool.adb";
+        // argv[1] = "../test_data/semantics/inner_package_body_decl.adb";
+        // argv[1] = "../test_data/semantics/simple_pack.adb";
+        argv[1] = "../test_data/semantics/pack_private.adb";
     }
     
     if (argc < 2) {

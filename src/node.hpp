@@ -249,7 +249,7 @@ protected:
 class ProcDecl : public ProcBody {
 public:
     ProcDecl(const std::string& name, 
-             const std::vector<std::shared_ptr<VarDecl>>& params);
+             const std::vector<std::shared_ptr<VarDecl>>& params = {});
 
 public: // INode interface
     void* codegen() override { return nullptr; } // TODO

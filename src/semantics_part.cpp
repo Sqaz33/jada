@@ -334,13 +334,13 @@ std::string NameConflictCheck::analyseDecl_(
         if (it != nameNDecl.end() && 
                 (
                     (!std::dynamic_pointer_cast<node::ProcBody>(d) || 
-                     !std::dynamic_pointer_cast<node::ProcBody>(it->second)) ||
+                     !std::dynamic_pointer_cast<node::ProcBody>(it->second)) &&
                 // проверку на боди и декл пака при совпадении имен 
                     (
                         (std::dynamic_pointer_cast<node::PackDecl>(d) && 
                         !std::dynamic_pointer_cast<node::PackBody>(it->second) &&
-                        std::dynamic_pointer_cast<node::PackDecl>(d) &&
-                        !std::dynamic_pointer_cast<node::PackBody>(it->second)) || 
+                        std::dynamic_pointer_cast<node::PackDecl>(it->second) &&
+                        !std::dynamic_pointer_cast<node::PackBody>(d)) || 
 
                         (std::dynamic_pointer_cast<node::PackBody>(d) && 
                         std::dynamic_pointer_cast<node::PackBody>(it->second))
@@ -445,6 +445,8 @@ static std::string analysePackBody(
             if (!res.empty()) {
                 return res;
             }
+        } else if (auto decl = std::dynamic_pointer_cast<node::PackBody>(d)) {
+            analysePackDecl(decl, map, name);
         }
     }
 
@@ -457,6 +459,8 @@ std::string PackBodyNDeclLinking::analyseContainer_(
     std::shared_ptr<node::DeclArea> decls;
     if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(decl)) {
         decls = proc->decls();
+    } else if (auto func = std::dynamic_pointer_cast<node::FuncBody>(decl)) {
+        decls = func->decls();
     } else if (auto packBody = std::dynamic_pointer_cast<node::PackBody>(decl)) {
         decls = packBody->decls();
     } else {
@@ -464,18 +468,25 @@ std::string PackBodyNDeclLinking::analyseContainer_(
     }
     
     std::map<attribute::QualifiedName, std::shared_ptr<node::PackDecl>> map;
+    std::shared_ptr<node::PackDecl> packDecl;
     for (auto&& d : *decls) {
-        if (auto packDecl = std::dynamic_pointer_cast<node::PackDecl>(d)) {
+        if ((packDecl = std::dynamic_pointer_cast<node::PackDecl>(d)) && 
+            !std::dynamic_pointer_cast<node::PackBody>(d)) 
+        {
             analysePackDecl(packDecl, map, decl->name());
-        } else if (auto packBody = std::dynamic_pointer_cast<node::PackBody>(d)) {
+        } 
+        else if (auto packBody = std::dynamic_pointer_cast<node::PackBody>(d)) 
+        {
             auto res = analysePackBody(packBody, map, decl->name());
             if (!res.empty()) {
                 return res;
             }
         }
-        auto res = analyseContainer_(d);
-        if (!res.empty()) {
-            return res;
+        if (!std::dynamic_pointer_cast<node::PackDecl>(d)) {
+            auto res = analyseContainer_(d);
+            if (!res.empty()) {
+                return res;
+            }
         }
     }
 
@@ -979,7 +990,7 @@ OverloadCheck::analyseContainer_(
     }
 
     for (auto&& [_, decls] : nameNDecls) {
-        if (decls.size() > 1) {
+        if (decls.size() > 1 && !std::dynamic_pointer_cast<node::PackDecl>(decls.front())) {
             for (std::size_t i = 0; i < decls.size() - 1; ++i) {
                 auto&& d1 = decls[i];
                 auto proc1 = 
@@ -1104,7 +1115,7 @@ std::string SubprogBodyNDeclLinking::analyseContainer_(
                                 auto&& params2 = packBodyProc->params();
 
                                 if (params1.size() == params2.size()) {
-                                    bool flag = false;
+                                    bool flag = true;
                                     for (std::size_t i = 0; i < params1.size(); ++i) {
                                         flag = params1[i]->type()->compare(params2[i]->type());
                                         if (!flag) {
