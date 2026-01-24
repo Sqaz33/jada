@@ -107,6 +107,7 @@
 %nterm<std::shared_ptr<node::IType>> string_type
 %nterm<std::shared_ptr<node::IType>> array_type
 %nterm<std::shared_ptr<node::IType>> type
+%nterm<std::shared_ptr<node::IType>> type_with_no_arr
 %nterm<std::vector<std::pair<int, int>>> array_range
 %nterm<std::vector<std::pair<int, int>>> static_ranges
 %nterm<std::pair<int, int>> static_range
@@ -256,7 +257,10 @@ param:            NAME COLON type                                       {
 optional_decl_area: %empty                                              { $$ = nullptr; }
                 |   decl_area                                           
 
-type_alias_decl:  TYPE NAME IS type SC                                  { $$.reset(new node::TypeAliasDecl($2, $4)); }        
+type_alias_decl:  TYPE NAME IS array_type SC                            { $$.reset(new node::TypeAliasDecl($2, $4)); }     
+                | TYPE NAME IS NEW type_with_no_arr SC                  { $$.reset(new node::TypeAliasDecl($2, $5)); }        
+                  
+
 
 compile_unit:     proc_decl                                             
                 | func_decl                 
@@ -264,7 +268,7 @@ compile_unit:     proc_decl
 
 /* types */
 /* ################################################################################ */
-type:             INTEGERTY                                             { 
+type_with_no_arr: INTEGERTY                                             { 
                                                                            $$.reset(new node::SimpleLiteralType(
                                                                                     node::SimpleType::INTEGER)); 
                                                                         }
@@ -279,6 +283,8 @@ type:             INTEGERTY                                             {
                 | qualified_name                                        { $$.reset(new node::TypeName($1)); }
                 | string_type                                            
                 | getting_attribute                                     { $$.reset(new node::TypeName($1)); }   
+
+type:             type_with_no_arr 
                 | array_type          
 
 
