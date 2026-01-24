@@ -12,7 +12,7 @@
 %locations
 %param {FlexLexer* lexer}
 %define api.value.type variant
-/* %define parse.trace */  /* uncom for trace */ 
+/* %define parse.trace */   /* uncom for trace */ 
 
 %code requires
 {

@@ -49,15 +49,17 @@ bool parseProgram(std::filesystem::path path) {
 
         yyFlexLexer lexer(&ifs);
         yy::parser p(&lexer);
+        // p.set_debug_level(1);
         if(p.parse()) {
             return false;
         }
 
+        
         path.replace_filename(mdl + ".ads");
-        ifs.open(path, std::ios::in);
+        std::ifstream ifs2(path, std::ios::in);
         curModuleFileExtension = "ads";
-        if (ifs.is_open()) {
-            yyFlexLexer lexer(&ifs);
+        if (ifs2.is_open()) {
+            yyFlexLexer lexer(&ifs2);
             yy::parser p(&lexer);
             if(p.parse()) {
                 return false;

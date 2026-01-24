@@ -137,11 +137,7 @@ std::string GlobalSpaceCreation::analyse(
         const std::vector<
             std::shared_ptr<mdl::Module>>& program) 
 {
-    std::vector<std::shared_ptr<node::IDecl>> units;
-    std::transform(
-        program.begin(), program.end(),
-        std::inserter(units, units.end()),
-        [] (auto&& mod) { return mod->unit().lock(); });
+
 
     std::map<std::string, std::shared_ptr<mdl::Module>> map;
     for (auto&& mod : program) {
@@ -153,7 +149,13 @@ std::string GlobalSpaceCreation::analyse(
         }
     }
 
-    for (auto&& [_, mod] : map) {
+    std::vector<std::shared_ptr<node::IDecl>> units;
+    std::transform(
+        map.begin(), map.end(),
+        std::inserter(units, units.end()),
+        [] (auto&& mod) { return mod.second->unit().lock(); });
+
+    for (auto&& mod : program) {
         auto unit = mod->unit().lock();
         auto gp = 
             std::make_shared<node::GlobalSpace>(unit);
@@ -526,7 +528,14 @@ std::string PackBodyNDeclLinking::analyseProgram_(
         auto unit = space->unit();
         if (auto packDecl = std::dynamic_pointer_cast<node::PackDecl>(unit)) {
             analysePackDecl(packDecl, map, space->name());
-        } else if (auto packBody = std::dynamic_pointer_cast<node::PackBody>(unit)) {
+        }
+    }
+
+    for (auto&& mod : program) {
+        auto space = std::dynamic_pointer_cast<node::GlobalSpace>(mod->unit().lock());
+        assert(space && "No space in mod");
+        auto unit = space->unit();
+        if (auto packBody = std::dynamic_pointer_cast<node::PackBody>(unit)) {
             auto res = analysePackBody(packBody, map, space->name());
             if (!res.empty()) {
                 return res;
