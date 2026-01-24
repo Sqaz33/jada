@@ -882,7 +882,7 @@ void JVMClassMethod::createInvokespecial(
 
     std::uint16_t ref;
     if (method->selfClass_.lock() == selfClass_.lock()) {
-        ref = methodRef_;
+        ref = method->methodRef_;
     } else {
         ref = classes_[
             method->selfClass_.lock().get()];
@@ -901,7 +901,7 @@ void JVMClassMethod::createInvokevirtual(
 
     std::uint16_t ref;
     if (method->selfClass_.lock() == selfClass_.lock()) {
-        ref = methodRef_;
+        ref = method->methodRef_;
     } else {
         ref = classes_[
             method->selfClass_.lock().get()];
@@ -925,13 +925,13 @@ void JVMClassMethod::createInvokestatic(
 
     std::uint16_t ref;
     if (method->selfClass_.lock() == selfClass_.lock()) {
-        ref = methodRef_;
+        ref = method->methodRef_;
     } else {
         ref = classes_[
             method->selfClass_.lock().get()];
     }
 
-    instr::Instr ins(OpCode::invokevirtual);
+    instr::Instr ins(OpCode::invokestatic);
     ins.pushTwoBytes(ref);
     code_->insertInstr(bb, std::move(ins));
 }
