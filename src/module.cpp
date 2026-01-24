@@ -6,12 +6,14 @@ Module::Module(std::shared_ptr<node::IDecl> unit,
                std::vector<std::shared_ptr<node::With>> with,
                std::vector<std::shared_ptr<node::Use>> use,
                const std::string& name,
-               const std::string& fileName) :
+               const std::string& fileName,
+               const std::string& fileExtension) :
     unit_(unit)
     , with_(with)
     , use_(use)
     , name_(name)
     , fileName_(fileName)
+    , fileExtension_(fileExtension)
 {}
 
  void Module::print(graphviz::GraphViz& gv, 
@@ -46,6 +48,10 @@ Module::use() const noexcept {
 
 const std::string& Module::fileName() const noexcept {
     return fileName_;
+}
+
+const std::string& Module::fileExtension() const noexcept {
+    return fileExtension_;
 }
 
 const std::string& Module::name() const noexcept {

@@ -21,4 +21,5 @@ namespace helper {
     extern std::queue<std::string> modulesForPars;
     extern std::string curModule;
     extern bool rightEnding;
+    extern std::string curModuleFileExtension;
 } // namespace helper

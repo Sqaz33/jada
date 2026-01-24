@@ -31,8 +31,9 @@ bool parseProgram(std::filesystem::path path) {
         std::string mdl = modulesForPars.front();
         modulesForPars.pop();
         utility::toLower(mdl);
+        
         path.replace_filename(mdl + ".adb");
-
+        curModuleFileExtension = "adb";
         std::ifstream ifs(path, std::ios::in);
 
         if (!ifs.is_open()) {
@@ -50,6 +51,17 @@ bool parseProgram(std::filesystem::path path) {
         yy::parser p(&lexer);
         if(p.parse()) {
             return false;
+        }
+
+        path.replace_filename(mdl + ".ads");
+        ifs.open(path, std::ios::in);
+        curModuleFileExtension = "ads";
+        if (ifs.is_open()) {
+            yyFlexLexer lexer(&ifs);
+            yy::parser p(&lexer);
+            if(p.parse()) {
+                return false;
+            }
         }
     }
     return true;
@@ -134,7 +146,7 @@ void addAdaStdLib(
         libUnit, 
         std::vector<std::shared_ptr<node::With>>(), 
         std::vector<std::shared_ptr<node::Use>>(), 
-        "ada.text_io", "ada.text_io.adb");
+        "ada.text_io", "ada.text_io.ads", "ads");
     helper::modules.push_back(mod);
 }
 
@@ -167,7 +179,8 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/bool.adb";
         // argv[1] = "../test_data/semantics/inner_package_body_decl.adb";
         // argv[1] = "../test_data/semantics/simple_pack.adb";
-        argv[1] = "../test_data/semantics/pack_private.adb";
+        // argv[1] = "../test_data/semantics/pack_private.adb";
+        argv[1] = "../test_data/semantics/pack_linking/main.adb";
     }
     
     if (argc < 2) {

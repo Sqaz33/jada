@@ -44,6 +44,19 @@ std::string ModuleNameCheck::analyse(
             ss << unit->name();
             return ss.str();
         }
+
+        bool packDecl = 
+            std::dynamic_pointer_cast<node::PackDecl>(unit) && 
+            !std::dynamic_pointer_cast<node::PackBody>(unit);
+        bool isAds = mod->fileExtension() == "ads";
+        if (isAds ^ packDecl) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << "Files with the ads extension must" 
+                  " contain the package declaration";
+            return ss.str();
+        }
     }
 
     return ISemanticsPart::analyseNext(program);
@@ -130,7 +143,17 @@ std::string GlobalSpaceCreation::analyse(
         std::inserter(units, units.end()),
         [] (auto&& mod) { return mod->unit().lock(); });
 
+    std::map<std::string, std::shared_ptr<mdl::Module>> map;
     for (auto&& mod : program) {
+        auto it = map.find(mod->name());
+        if (it != map.end() && it->second->fileExtension() == "adb") {
+            map[mod->name()] = mod;
+        } else if (it == map.end()) {
+            map[mod->name()] = mod;
+        }
+    }
+
+    for (auto&& [_, mod] : map) {
         auto unit = mod->unit().lock();
         auto gp = 
             std::make_shared<node::GlobalSpace>(unit);

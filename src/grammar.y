@@ -46,6 +46,7 @@
       extern std::string curModuleFileName;
       extern std::string curModuleName;
       extern bool rightEnding;
+      extern std::string curModuleFileExtension;
   } // namespace helper
 }
 
@@ -150,7 +151,8 @@
 program: optional_imports compile_unit                                  { 
                                                                           auto mod = std::make_shared<mdl::Module>(
                                                                             $2, $1.first, $1.second, 
-                                                                            helper::curModuleName, helper::curModuleFileName);
+                                                                            helper::curModuleName, helper::curModuleFileName,     
+                                                                            helper::curModuleFileExtension);
                                                                           helper::modules.push_back(mod);
                                                                         }
 
@@ -298,8 +300,9 @@ type_alias_decl:  TYPE NAME IS array_type SC                            { $$.res
 
 
 compile_unit:     proc_body                                             
-                | func_body                 
+                | func_body           
                 | pack_decl 
+                | pack_body
 
 /* types */
 /* ################################################################################ */

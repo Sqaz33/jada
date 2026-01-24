@@ -14,4 +14,5 @@ namespace helper {
     std::string curModuleFileName;
     std::string curModuleName;
     bool rightEnding = true;
+    std::string curModuleFileExtension;
 }
