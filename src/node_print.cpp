@@ -204,7 +204,11 @@ void Op::print(graphviz::GraphViz& gv,
         { OpType::DIV, "DIV" },
         { OpType::MOD, "MOD" },
         { OpType::UMINUS, "UMINUS" },
-        { OpType::DOT, "DOT"}
+        { OpType::DOT, "DOT"},
+        { OpType::AND, "AND"},
+        { OpType::OR, "OR"},
+        { OpType::XOR, "XOR"},
+        { OpType::NOT, "NOT"}
     };
 
     auto v = gv.addVertex("Op", 

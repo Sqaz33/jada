@@ -52,7 +52,11 @@ enum class OpType {
     DIV,
     MOD,
     UMINUS,
-    DOT
+    DOT,
+    AND,
+    OR,
+    XOR,
+    NOT
 };
 
 enum class SimpleType {

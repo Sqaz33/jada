@@ -142,7 +142,7 @@ void addAdaStdLib(
 
 int yyFlexLexer::yywrap() { return 1; }
 
-int main(int argc, char** argv) try {
+int main(int argc, char** argv) { // try {
     namespace fs = std::filesystem;
 
     if (argc == 2 && std::string("-h") == argv[1]) {
@@ -163,7 +163,8 @@ int main(int argc, char** argv) try {
         // argv[1] = "../test_data/semantics/record_inherits.adb";
         // argv[1] = "../test_data/semantics/circular/main.adb";
         // argv[1] = "../test_data/semantics/oop1.adb";
-        argv[1] = "../test_data/semantics/return_type.adb";
+        // argv[1] = "../test_data/semantics/return_type.adb";
+        argv[1] = "../test_data/semantics/bool.adb";
     }
     
     if (argc < 2) {
@@ -203,13 +204,13 @@ int main(int argc, char** argv) try {
     addAdaStdLib(helper::modules);
 
     return semanticAnalysis();
-} catch (const std::exception& e) {
-    std::cerr << e.what() << '\n';
-    printErrors();
-    return 1;
+} // catch (const std::exception& e) { // TODO 
+//     std::cerr << e.what() << '\n';
+//     printErrors();
+//     return 1;
 
-} catch (...) {
-    std::cerr << "Unknown error\n";
-    printErrors();
-    return 1;
-}
+// } catch (...) {
+//     std::cerr << "Unknown error\n";
+//     printErrors();
+//     return 1;
+// }

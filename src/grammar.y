@@ -79,7 +79,7 @@
 %token<std::string> STRING
 %token<std::pair<std::string, std::string>> GETTING_ATTRIBUTE
 %left INPUT
-%left OR AND NOT
+%left AND OR XOR NOT
 %left EQ NEQ MORE LESS GTE LTE
 %left PLUS MINUS AMPER
 %left MUL DIV MOD
@@ -280,6 +280,10 @@ type_with_no_arr: INTEGERTY                                             {
                                                                            $$.reset(new node::SimpleLiteralType(
                                                                                     node::SimpleType::CHAR)); 
                                                                         }
+                | BOOLTY                                                {
+                                                                           $$.reset(new node::SimpleLiteralType(
+                                                                                    node::SimpleType::BOOL)); 
+                                                                        }
                 | qualified_name                                        { $$.reset(new node::TypeName($1)); }
                 | string_type                                            
                 | getting_attribute                                     { $$.reset(new node::TypeName($1)); }   
@@ -380,6 +384,10 @@ expr:             expr EQ expr                                          { $$.res
                 | MINUS expr %prec UMINUS                               { $$.reset(new node::Op(nullptr, node::OpType::UMINUS, $2)); }
                 | expr LPAR args RPAR                                   { $$.reset(new node::CallOrIdxExpr($1, $3));                 }
                 | expr DOT expr                                         { $$.reset(new node::Op($1, node::OpType::DOT, $3));         }
+                | LPAR expr AND expr RPAR                               { $$.reset(new node::Op($2, node::OpType::AND, $4));         }
+                | LPAR expr OR expr RPAR                                { $$.reset(new node::Op($2, node::OpType::OR, $4));          }
+                | LPAR expr XOR expr RPAR                               { $$.reset(new node::Op($2, node::OpType::XOR, $4));         }
+                | LPAR NOT expr RPAR                                    { $$.reset(new node::Op(nullptr, node::OpType::NOT, $3));    }
                 | literal                                               { $$ = $1;                                                   }
                 | NAME                                                  { $$.reset(new node::NameExpr($1));                          }
                 | GETTING_ATTRIBUTE                                     { 

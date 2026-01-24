@@ -205,6 +205,7 @@ BAD_STRING_LINE_FEED \"(([^\"]|\"\")*\n+([^\"]|\"\")*)*\"
 (?i:"or")             { return yy::parser::token_type::OR; } 
 (?i:"not")            { return yy::parser::token_type::NOT; } 
 (?i:"and")            { return yy::parser::token_type::AND; } 
+(?i:"xor")            { return yy::parser::token_type::XOR; } 
 
       
 {NAME}                { 

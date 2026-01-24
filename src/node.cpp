@@ -710,7 +710,9 @@ Op::Op(std::shared_ptr<IExpr> lhs,
     , opType_(opType)
     , rhs_(rhs)
 {
-    lhs_->setParent(this);
+    if (lhs) {
+        lhs_->setParent(this);
+    }
     rhs_->setParent(this);
 }
 
