@@ -171,4 +171,15 @@ private:
     std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
 };
 
+// body 
+class LinkExprs : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+
+private:
+    std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
+};
+
 } // namespace semantics_part

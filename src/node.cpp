@@ -17,6 +17,14 @@ std::shared_ptr<INode> INode::self() {
     return shared_from_this();
 }
 
+void IExpr::setInBrackets() {
+    inBrackets_ = true;
+}
+
+bool IExpr::inBrackets() const noexcept {
+    return inBrackets_;
+}
+
 } 
 
 // Stms
@@ -774,6 +782,10 @@ Op::Op(std::shared_ptr<IExpr> lhs,
         lhs_->setParent(this);
     }
     rhs_->setParent(this);
+    if (opType_ == OpType::DOT && (rhs_->inBrackets() || lhs_->inBrackets())) {
+        throw std::runtime_error("А '.' between expressions," 
+                                 " one of which is in parentheses");
+    }
 }
 
 

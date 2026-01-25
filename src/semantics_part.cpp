@@ -1390,4 +1390,17 @@ OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) 
     return "";
 }
 
+
+// LinkExprs 
+std::string LinkExprs::analyse(
+        const std::vector<
+            std::shared_ptr<mdl::Module>>& program) 
+{
+
+}
+
+// если просто expr можеть 
+std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
+
+
 } // semantics_part

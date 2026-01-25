@@ -114,6 +114,11 @@ struct IExpr : INode {
     virtual bool compareTypes(
         const std::shared_ptr<IType> rhs) = 0;
     virtual std::shared_ptr<IType> type() = 0;
+
+    void setInBrackets();
+    bool inBrackets() const noexcept;
+private:
+    bool inBrackets_ = false;
 };
 
 class ILiteral : public IExpr { /*...*/ };

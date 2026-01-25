@@ -403,7 +403,7 @@ expr:             expr EQ expr                                          { $$.res
                 | expr MUL expr                                         { $$.reset(new node::Op($1, node::OpType::MUL, $3));         }
                 | expr DIV expr                                         { $$.reset(new node::Op($1, node::OpType::DIV, $3));         }
                 | expr MOD expr                                         { $$.reset(new node::Op($1, node::OpType::MOD, $3));         }
-                | LPAR expr RPAR                                        { $$ = $2;                                                   }
+                | LPAR expr RPAR                                        { $$ = $2; $$->setInBrackets();                              }
                 | MINUS expr %prec UMINUS                               { $$.reset(new node::Op(nullptr, node::OpType::UMINUS, $2)); }
                 | expr LPAR args RPAR                                   { $$.reset(new node::CallOrIdxExpr($1, $3));                 }
                 | expr DOT expr                                         { $$.reset(new node::Op($1, node::OpType::DOT, $3));         }
