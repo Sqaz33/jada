@@ -268,22 +268,36 @@ param_list:       param                                                 { $$ = s
                 | param_list SC param                                   { $$ = std::move($1); $$.push_back($3); }
 
 param:            NAME COLON type                                       { 
+                                                                          if (auto str = std::dynamic_pointer_cast<node::StringType>($3)) {
+                                                                            str->setInf();
+                                                                          }
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $3));
+                                                                          decl->setIn(true);
+                                                                          decl->setOut(false);
                                                                           $$ = decl; 
                                                                         }
                 | NAME COLON IN type                                    { 
+                                                                          if (auto str = std::dynamic_pointer_cast<node::StringType>($4)) {
+                                                                            str->setInf();
+                                                                          }
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           decl->setIn(true);
                                                                           decl->setOut(false);
                                                                           $$ = decl; 
                                                                         }
                 | NAME COLON OUT type                                   { 
+                                                                          if (auto str = std::dynamic_pointer_cast<node::StringType>($4)) {
+                                                                            str->setInf();
+                                                                          }
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           decl->setIn(false);
                                                                           decl->setOut(true);
                                                                           $$ = decl; 
                                                                         }
                 | NAME COLON IN OUT type                                { 
+                                                                          if (auto str = std::dynamic_pointer_cast<node::StringType>($5)) {
+                                                                            str->setInf();
+                                                                          }
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $5));
                                                                           decl->setIn(true);
                                                                           decl->setOut(true);
@@ -347,7 +361,12 @@ array_range:      LPAR static_ranges RPAR                               { $$ = s
 static_ranges:    static_range                                          { $$ = std::vector({$1}); }
                 | static_ranges COMMA static_range                      { $$ = std::move($1); $$.push_back($3); }
 
-static_range:     INTEGER DOT_DOT INTEGER                               { $$ = std::make_pair($1, $3); }
+static_range:     INTEGER DOT_DOT INTEGER                               { 
+                                                                          $$ = std::make_pair($1, $3); 
+                                                                          if ($1 != 1 || $1 > $3) {
+                                                                            throw std::logic_error("Error range");
+                                                                          }
+                                                                        }
 
 /* statements */
 /* ################################################################################ */
@@ -366,40 +385,6 @@ oper:             assign
                 | mb_call
 
 mb_call:        expr SC                                                 { $$.reset(new node::MBCall($1)); }
-
-/*
-call_or_indexing_or_var_stm:  call_or_indexing_or_var SC                { 
-                                                                          auto CIV = std::dynamic_pointer_cast<
-                                                                              node::CallOrIndexingOrVar>($1);
-                                                                          $$.reset(new node::CallOrIndexingOrVarStm(CIV)); 
-                                                                        }
-
-call_or_indexing_or_var:   CIV                                          { 
-                                                                          $$.reset(new node::CallOrIndexingOrVar());
-                                                                          std::dynamic_pointer_cast<
-                                                                              node::CallOrIndexingOrVar>($$)->addPart($1);
-                                                                        }
-                |          call_or_indexing_or_var DOT CIV              {  
-                                                                          $$ = std::move($1); 
-                                                                          std::dynamic_pointer_cast<
-                                                                              node::CallOrIndexingOrVar>($$)->addPart($3);
-                                                                        }
-
-CIV:                       NAME LPAR args RPAR                          { 
-                                                                          $$ = node::CallOrIndexingOrVar::NamePart(
-                                                                            $1, attribute::Attribute(), $3
-                                                                          );
-                                                                        }
-                |          GETTING_ATTRIBUTE LPAR args RPAR             { 
-                                                                          attribute::Attribute attr($1.first, $1.second);
-                                                                          $$ = node::CallOrIndexingOrVar::NamePart("", attr, $3);
-                                                                        }
-                |          NAME                                         { $$ = node::CallOrIndexingOrVar::NamePart($1); }
-                |          GETTING_ATTRIBUTE                            { 
-                                                                           attribute::Attribute attr($1.first, $1.second);
-                                                                           $$ = node::CallOrIndexingOrVar::NamePart("", attr); 
-                                                                        }                                                                                
-*/
 
 assign:           expr ASG expr SC                                      { $$.reset(new node::Assign($1, $3)); }
                                                                                

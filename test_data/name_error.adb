@@ -35,7 +35,7 @@ procedure main is
    end a;
 
 begin
-
+   a.x;
    ada.text_io.put_line(Integer'Image(1));
 
 end main;

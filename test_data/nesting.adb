@@ -1,4 +1,4 @@
-with pack; use pack;
+--  with pack; use pack;
 
 with ada.text_io;
 

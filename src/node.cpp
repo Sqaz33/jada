@@ -664,6 +664,27 @@ bool SimpleLiteralType::compare(const std::shared_ptr<IType> rhs) const {
     return false;
 }
 
+// AggregateType
+AggregateType::AggregateType(std::vector<SimpleType> type) :
+    type_(std::move(type))
+{}
+
+bool AggregateType::compare(const std::shared_ptr<IType> rhs) const {
+    if (auto aggr = std::dynamic_pointer_cast<AggregateType>(rhs)) {
+        auto rtype = aggr->type_;
+        if (type_.size() == rtype.size()) {
+            for (std::size_t i = 0; i < type_.size(); ++i) {
+                if (type_[i] != rtype[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+
 // ArrayType
 ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges, 
                      std::shared_ptr<IType> type) :
@@ -696,19 +717,44 @@ StringType::StringType(std::pair<int, int> range) :
 
 bool StringType::compare(const std::shared_ptr<IType> rhs) const {
     if (auto str = std::dynamic_pointer_cast<StringType>(rhs)) {
-        return range_ == str->range_;
+        return range_ == str->range_ || inf_ || str->inf_;
     }
     return false;
 }
 
+void StringType::setInf() noexcept {
+    inf_ = true;
+}
+
+std::pair<int, int> StringType::range() const {
+    return range_;
+}
+
 // Aggregate
-Aggregate::Aggregate(const std::vector<
-                        std::shared_ptr<ILiteral>>& inits) :
+Aggregate::Aggregate(const std::vector<std::shared_ptr<ILiteral>>& inits) :
     inits_(inits)
-{
+{   
+    std::vector<SimpleType> types;
     for (auto i : inits_) {
+        if (auto litTy = std::dynamic_pointer_cast<SimpleLiteral>(i)) {
+            types.push_back(std::dynamic_pointer_cast<SimpleLiteralType>(litTy->type())->type());
+        } else {
+            std::logic_error("In this implementation, aggregate" 
+                    " initialization by an aggregate" 
+                    " consisting only of primitive" 
+                    " type literals is available.");        
+        }
         i->setParent(this);
     }
+    type_ = std::make_shared<AggregateType>(std::move(types));
+}
+
+bool Aggregate::compareTypes(const std::shared_ptr<IType> rhs) {
+    return type_->compare(rhs);
+}
+
+std::shared_ptr<IType> Aggregate::type() {
+    return type_;
 }
 
 } // namespace node 
@@ -716,6 +762,7 @@ Aggregate::Aggregate(const std::vector<
 // Exprs
 namespace node {
 
+// Op
 Op::Op(std::shared_ptr<IExpr> lhs, 
        OpType opType, 
        std::shared_ptr<IExpr> rhs) :
@@ -729,14 +776,313 @@ Op::Op(std::shared_ptr<IExpr> lhs,
     rhs_->setParent(this);
 }
 
+
+bool Op::compareTypes(const std::shared_ptr<IType> comp) {
+    if (std::dynamic_pointer_cast<node::ArrayType>(rhs_->type())) {
+        return false;
+    }
+    auto ty = Op::type();
+    if (ty) {
+        return ty->compare(comp);
+    } else {
+        return false;
+    }
+}
+
+std::shared_ptr<IType> Op::type() {
+    std::shared_ptr<IType> type;
+    if (lhs_) {
+        auto ltype = lhs_->type();
+        auto rtype = rhs_->type();
+        if (!ltype || !rtype) {
+            return nullptr;
+        }
+        auto str1 = std::dynamic_pointer_cast<StringType>(ltype);
+        auto str2 = std::dynamic_pointer_cast<StringType>(rtype);
+        if (str1 && str2) {
+            auto [d1, lim1] = str1->range();
+            auto [d2, lim2] = str2->range(); 
+            type = std::make_shared<StringType>(std::make_pair(1, lim1 + lim2));
+        } else if (str1->compare(str2)) {
+            return nullptr;
+        } else {
+            type = rhs_->type();
+        }
+    } else {
+        type = rhs_->type();
+    }
+    return type;
+}
+
+// DotOpExpr
+void DotOpExpr::setLeft(std::shared_ptr<DotOpExpr> l) {
+    left_ = l;
+}
+
+void DotOpExpr::setRight(std::shared_ptr<DotOpExpr> r) {
+    r->setLeft(std::dynamic_pointer_cast<node::DotOpExpr>(self()));
+    right_ = r;
+}
+
+void DotOpExpr::setTail(std::shared_ptr<DotOpExpr> tail) {
+    if (!right_) {
+        setRight(tail);
+        return;
+    }
+    right_->setTail(tail);
+}
+
+std::shared_ptr<DotOpExpr> DotOpExpr::tail() {
+    if (right_) {
+        return right_->tail();
+    }
+    return std::dynamic_pointer_cast<DotOpExpr>(self());
+}
+
+std::shared_ptr<DotOpExpr> DotOpExpr::left() {
+    return left_.lock();
+}
+
+std::shared_ptr<DotOpExpr> DotOpExpr::right() {
+    return right_;
+}
+
+bool DotOpExpr::compareTypes(const std::shared_ptr<IType> rhs) {
+    auto ty = right_->type();
+    if (ty) {
+        return ty->compare(rhs);
+    }
+    return false;
+}
+
+
+// GetVarExpr
+GetVarExpr::GetVarExpr(
+    std::shared_ptr<IDecl> owner, 
+    std::shared_ptr<VarDecl> var) :
+    owner_(owner)
+    , var_(var)
+    , container_(
+        std::dynamic_pointer_cast<RecordDecl>(var_->type()) || 
+        std::dynamic_pointer_cast<PackDecl>(var_->type()))
+    , lhs_(var->out())
+    , rhs_(var->in())
+{}
+
+bool GetVarExpr::lhs() {
+    if (left_.expired() && right_) {  
+        auto cur = right_;
+        bool res = lhs_;
+        while (cur) {
+            res = res && cur->lhs();
+            cur = cur->right();
+        }
+        return res;
+    }
+    return lhs_;
+}
+
+bool GetVarExpr::rhs() {
+    if (right_) {  
+        auto cur = right_;
+        bool res = rhs_;
+        while (cur) {
+            res = res && cur->rhs();
+            cur = cur->right();
+        }
+        return res;
+    }
+    return rhs_;
+}
+
+bool GetVarExpr::container() {
+    if (right_) {  
+        auto t = tail();
+        return t->container();
+    }
+    return container_;
+}
+
+std::shared_ptr<IType> GetVarExpr::type() {
+    if (right_) {
+        return right_->type();
+    } 
+    return var_->type();
+}
+
+// GetArrElementExpr
+GetArrElementExpr::GetArrElementExpr(
+    std::shared_ptr<IDecl> owner, 
+    std::shared_ptr<VarDecl> arr,
+    const std::vector<std::shared_ptr<IExpr>>& idxs) :
+    owner_(owner)
+    , arr_(arr)
+    , idxs_(idxs)
+    , container_(
+        std::dynamic_pointer_cast<RecordDecl>(arr_->type()) || 
+        std::dynamic_pointer_cast<PackDecl>(arr_->type()))
+    , lhs_(arr->out())
+    , rhs_(arr->in())
+{}
+
+bool GetArrElementExpr::lhs() {
+    if (left_.expired() && right_) {  
+        auto cur = right_;
+        bool res = lhs_;
+        while (cur) {
+            res = res && cur->lhs();
+            cur = cur->right();
+        }
+        return res;
+    }
+    return lhs_;
+}
+
+bool GetArrElementExpr::rhs() {
+    if (right_) {  
+        auto cur = right_;
+        bool res = rhs_;
+        while (cur) {
+            res = res && cur->rhs();
+            cur = cur->right();
+        }
+        return res;
+    }
+    return rhs_;
+}
+
+bool GetArrElementExpr::container() {
+    if (right_) {  
+        auto t = tail();
+        return t->container();
+    }
+    return container_;
+}
+
+std::shared_ptr<IType> GetArrElementExpr::type() {
+    if (right_) {
+        return right_->type();
+    } 
+    auto ty = std::dynamic_pointer_cast<ArrayType>(arr_->type());
+    return ty->type();
+}
+
+// CallExpr
+CallExpr::CallExpr(
+    std::shared_ptr<IDecl> owner, 
+    std::shared_ptr<ProcBody> proc,
+    std::shared_ptr<FuncBody> func,
+    const std::vector<std::shared_ptr<IExpr>>& params) :
+    owner_(owner)
+    , proc_(proc)
+    , func_(func)
+    , params_(params)
+    , container_(func)
+    , noValue_(!func_)
+{}
+
+bool CallExpr::lhs() {
+    return false;
+}
+
+bool CallExpr::rhs() {
+    return !noValue_;
+}
+
+bool CallExpr::container() {
+    if (right_ && container_) {  
+        auto t = tail();
+        return t->container();
+    }
+    return container_;
+}
+
+bool CallExpr::setNoValue() {
+    if (func_ && !proc_) {
+        return false;
+    }
+    container_ = false;
+    noValue_ = true;
+    return true;
+}
+
+std::shared_ptr<IType> CallExpr::type() {
+    if (right_) {
+        return right_->type();
+    } 
+    if (!noValue_ && func_) {
+        return func_->retType();
+    }
+    return nullptr;
+}
+
+// CallMethodExpr
+CallMethodExpr::CallMethodExpr(
+    std::shared_ptr<ClassDecl> owner, 
+    std::shared_ptr<ProcBody> proc,
+    std::shared_ptr<FuncBody> func,
+    const std::vector<std::shared_ptr<IExpr>>& params) :
+    owner_(owner)
+    , proc_(proc)
+    , func_(func)
+    , params_(params)
+    , container_(func)
+    , noValue_(!func_)
+{}
+
+bool CallMethodExpr::lhs() {
+    return false;
+}
+
+bool CallMethodExpr::rhs() {
+    return !noValue_;
+}
+
+bool CallMethodExpr::container() {
+    if (right_ && container_) {  
+        auto t = tail();
+        return t->container();
+    }
+    return container_;
+}
+
+bool CallMethodExpr::setNoValue() {
+    if (func_ && !proc_) {
+        return false;
+    }
+    container_ = false;
+    noValue_ = true;
+    return true;
+}
+
+std::shared_ptr<IType> CallMethodExpr::type() {
+    if (right_) {
+        return right_->type();
+    } 
+    if (!noValue_ && func_) {
+        return func_->retType();
+    }
+    return nullptr;
+}
+
+// ImageCallExpr
+std::shared_ptr<IType> ImageCallExpr::type() {
+    auto strTy = std::make_shared<StringType>(std::make_pair(1, 1));
+    strTy->setInf();
+    return strTy;
+}
+
+// NameExpr
 NameExpr::NameExpr(const std::string& name) :
     name_(name)
 {}
 
+// AttributeExpr
 AttributeExpr::AttributeExpr(const attribute::Attribute& attr) :
     attr_(attr)
 {}
 
+// CallOrIdxExpr 
 CallOrIdxExpr::CallOrIdxExpr(
     std::shared_ptr<IExpr> name, 
     const std::vector<std::shared_ptr<node::IExpr>>& args) :
@@ -754,6 +1100,15 @@ CallOrIdxExpr::CallOrIdxExpr(
 // Exprs - Literals
 namespace node {
 
+// SimpleLiteral
+bool SimpleLiteral::compareTypes(const std::shared_ptr<IType> rhs) {
+    return type_->compare(rhs);
+}
+
+std::shared_ptr<IType> SimpleLiteral::type() { 
+    return type_;
+}
+
 // StringLiteral
 StringLiteral::StringLiteral(std::shared_ptr<StringType> type, 
                              const std::string& str) :
@@ -762,6 +1117,15 @@ StringLiteral::StringLiteral(std::shared_ptr<StringType> type,
 {
     type_->setParent(this);
 }
+
+bool StringLiteral::compareTypes(const std::shared_ptr<IType> rhs) {
+    return type_->compare(rhs);
+}
+
+std::shared_ptr<IType> StringLiteral::type() { 
+    return type_;
+}
+
 
 } // namespace node 
 

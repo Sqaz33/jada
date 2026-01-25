@@ -110,10 +110,10 @@ struct IType : virtual INode {
         const std::shared_ptr<IType> rhs) const = 0;
 };
 
-class IExpr : public INode { 
-public:
+struct IExpr : INode { 
     virtual bool compareTypes(
-        const std::shared_ptr<IExpr> rhs) const = 0;
+        const std::shared_ptr<IType> rhs) = 0;
+    virtual std::shared_ptr<IType> type() = 0;
 };
 
 class ILiteral : public IExpr { /*...*/ };
@@ -170,8 +170,6 @@ public:
             std::shared_ptr<IExpr> rval = nullptr);
     
 public:
-    bool compareTypes(std::shared_ptr<IType> rhs) const {};
-
     std::shared_ptr<IType> type();
     void resetType(std::shared_ptr<IType> type);
 
@@ -201,7 +199,7 @@ private:
     std::shared_ptr<IType> type_;
     std::shared_ptr<IExpr> rval_;
     bool in_ = true;
-    bool out_ = false;
+    bool out_ = true;
 };
 // TODO:
 // 1. при объявлении и функции и процедуры с одним именим - если rhs в assign - функция
@@ -556,7 +554,6 @@ private:
 };
 
 } // namespace node
- 
 
 // Typeinfo
 namespace node {
@@ -578,6 +575,22 @@ public: // INode interface
 
 private:
     SimpleType type_;
+};
+
+class AggregateType : public IType {
+public:
+    AggregateType(std::vector<SimpleType> type);
+
+public: // IType interface
+    bool compare(const std::shared_ptr<IType> rhs) const override;
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+               graphviz::VertexType par) const override {}
+    void* codegen() override { return nullptr; } // TODO
+
+private:
+    std::vector<SimpleType> type_;
 };
 
 class ArrayType : public IType {
@@ -616,14 +629,43 @@ public: // INode interface
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+public:
+    void setInf() noexcept;
+
+    std::pair<int, int> range() const;
 private:
     std::pair<int, int> range_; 
+    bool inf_;
 };
 
 } // namespace node
 
 // Exprs
 namespace node {
+
+// res string type
+// with ada.text_io;
+// procedure main is 
+//    S1 : String := "H";
+//    S2 : String := "W";
+//    S3 : String (1..2);
+// begin
+//    S3 := S1 & S2;
+// end main;
+
+
+// with ada.text_io; 
+// procedure main is 
+
+//    procedure p(s: string) is
+//    begin
+//       ada.text_io.put_line(s);
+//    end p;
+
+// begin
+//    p("hi"); // но здесь все ок
+// end main;
+
 
 class Op : public IExpr {
 public:
@@ -632,8 +674,9 @@ public:
        std::shared_ptr<IExpr> rhs);
 
 public: // IExpr interface
-    bool 
-    compareTypes(const std::shared_ptr<IExpr> rhs) const override {}; 
+    bool compareTypes(const std::shared_ptr<IType> rhs) override;
+    std::shared_ptr<IType> type() override;
+
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -646,6 +689,157 @@ private:
     std::shared_ptr<IExpr> rhs_;
 };
 
+class DotOpExpr : public IExpr {
+    void* codegen() override { return nullptr; } // TODO
+
+public:
+    void setLeft(std::shared_ptr<DotOpExpr> l);
+    void setRight(std::shared_ptr<DotOpExpr> r);
+
+    void setTail(std::shared_ptr<DotOpExpr> tail);
+    std::shared_ptr<DotOpExpr> tail();
+
+    std::shared_ptr<DotOpExpr> left();
+    std::shared_ptr<DotOpExpr> right();
+
+    virtual bool lhs() = 0; // нужно чтобы проверить всё выражение на lhs и rhs 
+    virtual bool rhs() = 0; 
+    virtual bool container() = 0;
+
+public: // IExpr interface
+    bool compareTypes(const std::shared_ptr<IType> rhs) override;
+
+protected:
+    std::weak_ptr<DotOpExpr> left_;
+    std::shared_ptr<DotOpExpr> right_;
+};
+
+class GetVarExpr : public DotOpExpr {
+public:
+    GetVarExpr(
+        std::shared_ptr<IDecl> owner, 
+        std::shared_ptr<VarDecl> var);
+public:    
+    bool lhs() override;
+    bool rhs() override;
+    bool container() override;
+
+public: // IExpr interface
+    std::shared_ptr<IType> type() override;
+
+private:
+    std::shared_ptr<IDecl> owner_; 
+    std::shared_ptr<VarDecl> var_;
+    bool lhs_;
+    bool rhs_;
+    bool container_;
+};
+
+class GetArrElementExpr : public DotOpExpr {
+public:
+    GetArrElementExpr(
+        std::shared_ptr<IDecl> owner, 
+        std::shared_ptr<VarDecl> arr,
+        const std::vector<std::shared_ptr<IExpr>>& idxs);
+        
+public:    
+    bool lhs() override;
+    bool rhs() override;
+    bool container() override;
+
+public: // IExpr interface
+    std::shared_ptr<IType> type() override;
+
+private:
+    std::shared_ptr<IDecl> owner_; 
+    std::shared_ptr<VarDecl> arr_;
+    std::vector<std::shared_ptr<IExpr>> idxs_;
+    bool container_;
+    bool lhs_;
+    bool rhs_;
+};
+
+class CallExpr : public DotOpExpr {
+public:
+    CallExpr(
+        std::shared_ptr<IDecl> owner, 
+        std::shared_ptr<ProcBody> proc,
+        std::shared_ptr<FuncBody> func,
+        const std::vector<std::shared_ptr<IExpr>>& params = {});
+
+public:    
+    bool lhs() override;
+    bool rhs() override;
+    bool container() override;
+
+public:
+    bool setNoValue();
+
+public: // IExpr interface
+    std::shared_ptr<IType> type() override;
+
+private:
+    std::shared_ptr<IDecl> owner_; 
+    std::shared_ptr<ProcBody> proc_;
+    std::shared_ptr<FuncBody> func_;
+    std::vector<std::shared_ptr<IExpr>> params_;
+    bool container_;
+    bool noValue_ = false;
+};
+
+class CallMethodExpr : public DotOpExpr {
+public:
+    CallMethodExpr(
+        std::shared_ptr<ClassDecl> owner, 
+        std::shared_ptr<ProcBody> proc,
+        std::shared_ptr<FuncBody> func,
+        const std::vector<std::shared_ptr<IExpr>>& params = {});
+
+public:    
+    bool lhs() override;
+    bool rhs() override;
+    bool container() override;
+
+public:
+    bool setNoValue();
+
+public: // IExpr interface
+    std::shared_ptr<IType> type() override;
+
+private:
+    std::shared_ptr<ClassDecl> owner_;
+    std::shared_ptr<ProcBody> proc_;
+    std::shared_ptr<FuncBody> func_;
+    std::vector<std::shared_ptr<IExpr>> params_;
+    bool noValue_ = false;
+    bool container_;
+};
+
+class ImageCallExpr : public DotOpExpr {
+public:
+    ImageCallExpr( 
+        std::shared_ptr<ProcDecl> owner,
+        SimpleType type,
+        std::shared_ptr<IExpr> param) :
+        owner_(owner)
+        , type_(type)
+        , param_(param)
+    {}
+
+public:    
+    bool lhs() override;
+    bool rhs() override;
+    bool container() override;
+
+public: // IExpr interface
+    std::shared_ptr<IType> type() override;
+
+private:
+    std::shared_ptr<ProcDecl> owner_;
+    SimpleType type_;
+    std::shared_ptr<IExpr> param_;
+};
+
 class NameExpr : public IExpr {
 public:
     NameExpr(const std::string& name);
@@ -655,9 +849,13 @@ public: // INode interface
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+
 public: // IExpr interface
-    bool 
-    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+    bool compareTypes(const std::shared_ptr<IType> rhs) override 
+    { assert(false); return false; }
+
+    std::shared_ptr<IType> type() override 
+    { assert(false); return nullptr; }
 
 private:
     std::string name_;
@@ -673,8 +871,11 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO 
 
 public: // IExpr interface
-    bool 
-    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+    bool compareTypes(const std::shared_ptr<IType> rhs) override 
+    { assert(false); return false; }
+
+    std::shared_ptr<IType> type() override 
+    { assert(false); return nullptr; }
 
 private:
     attribute::Attribute attr_;
@@ -693,8 +894,11 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO  
 
 public: // IExpr interface
-    bool 
-    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+    bool compareTypes(const std::shared_ptr<IType> rhs) override 
+    { assert(false); return false; }
+
+    std::shared_ptr<IType> type() override 
+    { assert(false); return nullptr; }
 
 private:
     void printArgs_(graphviz::GraphViz& gv, 
@@ -722,12 +926,12 @@ public:
     T get() const {
         return std::get<T>(value_);
     }
-
-    SimpleType type() const noexcept;
+    
+    SimpleType literalType() const noexcept;
 
 public: // IExpr interface
-    bool 
-    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+    bool compareTypes(const std::shared_ptr<IType> rhs) override;
+    std::shared_ptr<IType> type() override;
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -748,8 +952,8 @@ public:
                   const std::string& str);
 
 public: // IExpr interface
-    bool 
-    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+    bool compareTypes(const std::shared_ptr<IType> rhs) override;
+    std::shared_ptr<IType> type() override;
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -766,8 +970,8 @@ public:
     Aggregate(const std::vector<std::shared_ptr<ILiteral>>& inits);
 
 public: // IExpr interface
-    bool 
-    compareTypes(const std::shared_ptr<IExpr> rhs) const override {};
+    bool compareTypes(const std::shared_ptr<IType> rhs) override;
+    std::shared_ptr<IType> type() override;
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -779,6 +983,7 @@ private:
                      graphviz::VertexType par) const;
 
 private:
+    std::shared_ptr<AggregateType> type_;
     std::vector<std::shared_ptr<ILiteral>> inits_;
 };
 
