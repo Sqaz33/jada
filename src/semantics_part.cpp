@@ -1399,8 +1399,77 @@ std::string LinkExprs::analyse(
 
 }
 
-// если просто expr можеть 
-std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
 
+//  для assign:
+//      для правой части vardecl и assign нужно rval по итогу
+//      для левой части нужно lval по итогу
+
+// для mbcall
+//  нужно noval по итогу
+
+// для return
+//  нужно rval по итогу 
+
+// for 
+// создать переменную типа Integer
+
+// while 
+// нужно lval по итогу
+
+
+// * у всех expr родитель подпрог, либо пакет, либо рерорд
+// Получаем expr
+// 
+
+// op из dot -  последовательность из имен или имен с параметрами
+// * просто имя - переменная, часть квал. имени, вызов
+// * имя с параметрами - вызов или индексация
+
+// если mbcall
+std::string analyseContainer_(std::shared_ptr<node::IDecl> decl) {
+    std::shared_ptr<node::Body> body;
+}
+
+std::string LinkExprs::analyseVarDecl_(std::shared_ptr<node::VarDecl> var) {
+    auto rhs = var->rval();
+    if (!rhs) {
+        return "";
+    }
+
+    if (rhs) {
+        
+    }
+}
+
+// NameExpr
+// AttributeExpr
+// CallOrIdxExpr
+// Op
+std::pair<std::string, std::shared_ptr<node::IExpr>> 
+LinkExprs::analyseExpr_(std::shared_ptr<node::IExpr> expr) {
+    // auto op = 
+
+    // if (auto name = std::dynamic_pointer_cast<node::NameExpr>())
+}
+
+std::pair<std::string, std::shared_ptr<node::IExpr>> 
+LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) { // dotop либо op
+    auto oper = op->op();
+    auto left = op->left();
+    auto right = op->right();
+
+    if (oper == node::OpType::DOT) {
+        if (std::dynamic_pointer_cast<node::AttributeExpr>(left) || 
+            std::dynamic_pointer_cast<node::AttributeExpr>(right)) 
+        {
+            std::string res = "The full qualified name with" 
+                              " the attribute is not available" 
+                              " in this implementation.";
+            return {res, nullptr};
+        }
+        
+        if ()
+    }
+}
 
 } // semantics_part

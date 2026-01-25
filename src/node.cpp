@@ -778,10 +778,10 @@ Op::Op(std::shared_ptr<IExpr> lhs,
     , opType_(opType)
     , rhs_(rhs)
 {
-    if (lhs) {
-        lhs_->setParent(this);
-    }
-    rhs_->setParent(this);
+    // if (lhs) {
+    //     lhs_->setParent(this);
+    // }
+    // rhs_->setParent(this);
     if (opType_ == OpType::DOT && (rhs_->inBrackets() || lhs_->inBrackets())) {
         throw std::runtime_error("А '.' between expressions," 
                                  " one of which is in parentheses");

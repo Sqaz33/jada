@@ -172,7 +172,7 @@ int main(int argc, char** argv) { // try {
         argv = new char*[2]; // TODO: delete
         // argv[1] = "../test_data/complex.adb"; // TODO: delete
         // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
-        // argv[1] = "../test_data/semantics/type_replace_check.adb";
+        argv[1] = "../test_data/semantics/type_replace_check.adb";
         // argv[1] = "../test_data/semantics/proc_func_overload.adb";
         // argv[1] = "../test_data/semantics/record_inherits.adb";
         // argv[1] = "../test_data/semantics/circular/main.adb";
@@ -183,7 +183,7 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/simple_pack.adb";
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
-        argv[1] = "/mnt/d/jada/test_data/nesting.adb";
+        // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
     }
     
     if (argc < 2) {

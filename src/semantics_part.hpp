@@ -180,6 +180,15 @@ public:
 
 private:
     std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
+
+    std::string analyseVarDecl_(std::shared_ptr<node::VarDecl> var);
+    
+    std::pair<std::string, std::shared_ptr<node::IExpr>> 
+    analyseExpr_(std::shared_ptr<node::IExpr> expr);
+
+    std::pair<std::string, std::shared_ptr<node::IExpr>> 
+    analyseOp_(std::shared_ptr<node::Op> op);
+    
 };
 
 } // namespace semantics_part
