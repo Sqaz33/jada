@@ -34,6 +34,21 @@ Body::Body(const std::vector<std::shared_ptr<IStm>>& stms) :
     stms_(stms)
 {}
 
+std::vector<std::shared_ptr<IStm>>::iterator Body::begin() {
+    return stms_.begin();
+}
+
+std::vector<std::shared_ptr<IStm>>::iterator Body::end() {
+    return stms_.end();
+}
+
+void Body::setParent(INode* parent)  {
+    for (auto& stm : stms_) {
+        stm->setParent(parent);
+    }
+    parent_ = parent;
+}
+
 } // namespace node 
 
 // Decls 
@@ -777,17 +792,39 @@ Op::Op(std::shared_ptr<IExpr> lhs,
     lhs_(lhs)
     , opType_(opType)
     , rhs_(rhs)
-{
-    // if (lhs) {
-    //     lhs_->setParent(this);
-    // }
-    // rhs_->setParent(this);
-    if (opType_ == OpType::DOT && (rhs_->inBrackets() || lhs_->inBrackets())) {
-        throw std::runtime_error("А '.' between expressions," 
-                                 " one of which is in parentheses");
+{}
+
+void Op::setParent(INode* parent) {
+    INode::setParent(parent);
+    if (lhs_) {
+        lhs_->setParent(parent);
+    }
+    if (rhs_) {
+        rhs_->setParent(parent);
     }
 }
 
+std::shared_ptr<IExpr> Op::left() { 
+    return lhs_; 
+}
+
+std::shared_ptr<IExpr> Op::right() { 
+    return rhs_; 
+}
+
+OpType Op::op() { 
+    return opType_; 
+}
+
+void Op::setLeft(std::shared_ptr<IExpr> left) {
+    lhs_ = left;
+    lhs_->setParent(parent_);
+}
+
+void Op::setRight(std::shared_ptr<IExpr> right) {
+    rhs_ = right;
+    rhs_->setParent(parent_);
+}
 
 bool Op::compareTypes(const std::shared_ptr<IType> comp) {
     if (std::dynamic_pointer_cast<node::ArrayType>(rhs_->type())) {
@@ -1165,6 +1202,19 @@ If::If(std::shared_ptr<IExpr> cond,
     }
 }
 
+void If::setParent(INode* parent) {
+    INode::setParent(parent);
+    cond_->setParent(parent);
+    body_->setParent(parent);
+    if (els_) {
+        els_->setParent(parent);
+    }
+    for (auto&& [cond, body] : elsifs_) {
+        cond->setParent(parent);
+        body->setParent(parent);
+    } 
+}
+
 // For
 For::For(const std::string& init, 
          std::pair<std::shared_ptr<IExpr>, std::shared_ptr<IExpr>> range, 
@@ -1178,6 +1228,12 @@ For::For(const std::string& init,
     body_->setParent(this);
 }
 
+void For::setParent(INode* parent) {
+    INode::setParent(parent);
+    range_.first->setParent(parent);
+    range_.second->setParent(parent);
+}
+
 // While
 While::While(std::shared_ptr<IExpr> cond, 
             std::shared_ptr<Body> body) :
@@ -1188,6 +1244,12 @@ While::While(std::shared_ptr<IExpr> cond,
     body_->setParent(this);
 }
 
+void While::setParent(INode* parent) {
+    INode::setParent(parent);
+    cond_->setParent(parent);
+    body_->setParent(parent);
+}
+
 } // namespace node 
 
 // Stms - Other
@@ -1196,6 +1258,11 @@ namespace node {
 MBCall::MBCall(std::shared_ptr<IExpr> call) :
     call_(call)
 {}
+
+void MBCall::setParent(INode* parent) {
+    INode::setParent(parent);
+    call_->setParent(parent);
+}
 
 } // namespace node 
 
@@ -1241,17 +1308,25 @@ Assign::Assign(std::shared_ptr<IExpr> lval,
                std::shared_ptr<IExpr> rval) :
     lval_(lval)
     , rval_(rval)
-{
-    lval_->setParent(this);
-    rval_->setParent(this);
+{}
+
+void Assign::setParent(INode* parent) {
+    INode::setParent(parent);
+    lval_->setParent(parent);
+    rval_->setParent(parent);
 }
+
 
 // Return 
 Return::Return(std::shared_ptr<IExpr> retVal) : 
     retVal_(retVal) 
-{
-    if (retVal) {
-        retVal_->setParent(this);
+{}
+
+
+void Return::setParent(INode* parent) {
+    INode::setParent(parent);
+    if (retVal_) {
+        retVal_->setParent(parent);
     }
 }
 

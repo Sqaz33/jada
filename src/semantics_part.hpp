@@ -188,6 +188,8 @@ private:
 
     std::pair<std::string, std::shared_ptr<node::IExpr>> 
     analyseOp_(std::shared_ptr<node::Op> op);
+
+    std::string analyseOpExprErr_(std::shared_ptr<node::IExpr> expr);
     
 };
 

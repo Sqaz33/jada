@@ -1,4 +1,4 @@
-#pragma once
+  #pragma once
 
 #include "attribute.hpp"
 #include "location.hh"
@@ -139,16 +139,11 @@ public: // INode interface
     void* codegen() override { return nullptr; } // TODO
 
 public:
-    auto begin() { return stms_.begin(); }
-    auto end() { return stms_.end(); }
+    std::vector<std::shared_ptr<IStm>>::iterator begin();
+    std::vector<std::shared_ptr<IStm>>::iterator end();
 
 public:
-    void setParent(INode* parent) override {
-        for (auto& stm : stms_) {
-            stm->setParent(parent);
-        }
-        parent_ = parent;
-    }
+    void setParent(INode* parent) override;
 
 private:
     std::vector<std::shared_ptr<IStm>> stms_;
@@ -374,8 +369,8 @@ protected:
 // + переопределить reachable для боди *
 // + боди пак наследуется от декла пака  *
 
-// + проверка переопределения имен в боди пака из декла пака
-// + проверка наличия боди подпрог. в боди пака для деклов подпрог. из декла пака  
+// + проверка переопределения имен в боди пака из декла пака *
+// + проверка наличия боди подпрог. в боди пака для деклов подпрог. из декла пака  *
 
 // + декл подпрог наследуется от боди и вызывает его методы * 
 class PackBody : public PackDecl {
@@ -709,18 +704,15 @@ public: // INode interface
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
 
+    void setParent(INode* parent) override;
+
 public:
-    auto left() { return lhs_; }
-    auto right() { return rhs_; }
-    auto op() { return opType_; }
+    std::shared_ptr<IExpr> left() { return lhs_; }
+    std::shared_ptr<IExpr> right() { return rhs_; }
+    OpType op() { return opType_; }
 
-    void setLeft(std::shared_ptr<IExpr> left) {
-        lhs_ = left;
-    }
-
-    void setRight(std::shared_ptr<IExpr> right) {
-        rhs_ = right;
-    }
+    void setLeft(std::shared_ptr<IExpr> left);
+    void setRight(std::shared_ptr<IExpr> right);
 
 private:
     std::shared_ptr<IExpr> lhs_;
@@ -1071,6 +1063,7 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+    void setParent(INode* parent) override;
 
 private:
     void printElsif_(std::pair<std::shared_ptr<IExpr>, 
@@ -1105,6 +1098,7 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+    void setParent(INode* parent) override;
 
 public:
     auto init() { return init_; }
@@ -1127,7 +1121,9 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+    void setParent(INode* parent) override;
 
+public:
     auto cond() { return cond_; }
     auto body() { return body_; }
 
@@ -1140,6 +1136,7 @@ private:
 
 // Typeinfo - Other
 namespace node {
+
 class TypeName : public IType {
 public:
     TypeName(attribute::QualifiedName name);
@@ -1180,6 +1177,7 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+    void setParent(INode* parent) override;
 
 public:
     auto lval() { return lval_; }
@@ -1189,6 +1187,7 @@ private:
     std::shared_ptr<IExpr> lval_;
     std::shared_ptr<IExpr> rval_;
 };
+
 class MBCall : public IStm {
 public:
     MBCall(std::shared_ptr<IExpr> call);
@@ -1196,7 +1195,8 @@ public:
 public:
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODOW
+    void* codegen() override { return nullptr; } // TODO
+    void setParent(INode* parent) override;
 
 public:
     auto call() { return call_; }
@@ -1213,6 +1213,7 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+    void setParent(INode* parent) override;
 
 public:
     auto retVal() { return retVal_; }

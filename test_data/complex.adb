@@ -96,5 +96,7 @@ begin
         end loop;
     end loop;
    I := 1 + 2 + 3 + 4 + 5;
+   x := a.b(1).c.d;
+   z := 5 + a.b(1).c.d + 7 + 9;
 
 end TestLoops;

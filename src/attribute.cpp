@@ -10,7 +10,7 @@ QualifiedName::QualifiedName(const std::string& base) :
 {}
 
 void QualifiedName::push(const std::string& name) {
-    fullName_.push_back(name);
+    fullName_.push_back(name); 
 }
 
 bool QualifiedName::empty() const noexcept {
@@ -70,6 +70,5 @@ const std::string&
 Attribute::right() const noexcept {
     return right_;
 }
-
 
 } // namespace attribute

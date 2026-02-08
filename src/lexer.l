@@ -39,7 +39,7 @@ HEXDIGIT      [0-9A-Fa-f]
 INTEGER       {DIGIT}(_?{DIGIT})*
 BINARY        2#[01](_?[01])*#
 OCT           8#[0-7](_?[0-7])*#
-HEX           16#{HEXDIGIT}(_?{HEXDIGIT})*#`
+HEX           16#{HEXDIGIT}(_?{HEXDIGIT})*#
 FLOAT         {INTEGER}\.{INTEGER}([Ee][+-]?{INTEGER})?
 
 
