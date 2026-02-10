@@ -1461,16 +1461,7 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) { // dotop либо op
     auto left = op->left();
     auto right = op->right();
 
-    if (oper == node::OpType::DOT) {
-        if (std::dynamic_pointer_cast<node::AttributeExpr>(left) || 
-            std::dynamic_pointer_cast<node::AttributeExpr>(right)) 
-        {
-            std::string res = "The full qualified name with" 
-                              " the attribute is not available" 
-                              " in this implementation.";
-            return {res, nullptr};
-        }
-    }
+    
 }
 
 std::string 
@@ -1480,16 +1471,18 @@ LinkExprs::analyseOpExprErr_(std::shared_ptr<node::IExpr> expr) {
         return "";
     }
 
-    if (!std::dynamic_pointer_cast<node::NameExpr>(expr) && 
+    if (op->op() == node::OpType::DOT &&
+        !std::dynamic_pointer_cast<node::NameExpr>(expr) && 
         !std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) 
     {
         return "Invalid operands for Dot Op";
     }
 
-    if ((op->left() && op->left()->inBrackets()) || 
+    if (op->op() == node::OpType::DOT &&
+        (op->left() && op->left()->inBrackets()) || 
         (op->right() && op->right()->inBrackets())) 
     {
-        return "One of the operands of OP in parentheses";
+        return "One of the operands of Dot Op in parentheses";
     }
 
     auto res = analyseOpExprErr_(op->left());

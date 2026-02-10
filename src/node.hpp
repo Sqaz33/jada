@@ -857,29 +857,23 @@ private:
     bool container_;
 };
 
-class ImageCallExpr : public DotOpExpr {
+class ImageCallExpr : public IExpr {
 public:
-    ImageCallExpr( 
-        std::shared_ptr<ProcDecl> owner,
-        SimpleType type,
-        std::shared_ptr<IExpr> param) :
-        owner_(owner)
-        , type_(type)
-        , param_(param)
-    {}
-
-public:    
-    bool lhs() override;
-    bool rhs() override;
-    bool container() override;
+    ImageCallExpr(
+        std::shared_ptr<IExpr> param, 
+        SimpleLiteralType imageType);
 
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
+public:
+    std::shared_ptr<IExpr> param();
+    SimpleLiteralType imageType();
+
 private:
-    std::shared_ptr<ProcDecl> owner_;
-    SimpleType type_;
+    SimpleLiteralType imageType_;
     std::shared_ptr<IExpr> param_;
+    std::shared_ptr<StringType> stringType_;
 };
 
 class NameExpr : public IExpr {

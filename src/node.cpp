@@ -1115,10 +1115,27 @@ std::shared_ptr<IType> CallMethodExpr::type() {
 }
 
 // ImageCallExpr
+ImageCallExpr::ImageCallExpr(        
+    std::shared_ptr<IExpr> param, 
+    SimpleLiteralType imageType
+) :
+    param_(param)
+    , imageType_(imageType)
+    , stringType_(std::make_shared<StringType>(std::make_pair(1, 1)))
+{
+    stringType_->setInf();
+}
+
 std::shared_ptr<IType> ImageCallExpr::type() {
-    auto strTy = std::make_shared<StringType>(std::make_pair(1, 1));
-    strTy->setInf();
-    return strTy;
+    return stringType_;
+}
+
+std::shared_ptr<IExpr> ImageCallExpr::param() {
+    return param_;
+
+}
+SimpleLiteralType ImageCallExpr::imageType() {
+    return imageType_;
 }
 
 // NameExpr
