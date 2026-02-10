@@ -184,10 +184,11 @@ private:
     std::string analyseVarDecl_(std::shared_ptr<node::VarDecl> var);
     
     std::pair<std::string, std::shared_ptr<node::IExpr>> 
-    analyseExpr_(std::shared_ptr<node::IExpr> expr);
+    analyseExpr_(std::shared_ptr<node::IExpr> expr, 
+                 attribute::QualifiedName& base);
 
     std::pair<std::string, std::shared_ptr<node::IExpr>> 
-    analyseOp_(std::shared_ptr<node::Op> op);
+    analyseOp_(std::shared_ptr<node::Op> op, bool rval);
 
     std::string analyseOpExprErr_(std::shared_ptr<node::IExpr> expr);
     

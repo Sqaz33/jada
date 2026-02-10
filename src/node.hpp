@@ -89,7 +89,7 @@ public:
         std::vector<std::shared_ptr<IDecl>>> 
     reachable(
         const attribute::QualifiedName& name, 
-        std::shared_ptr<IDecl> requester = nullptr);
+        IDecl* requester = nullptr);
 
 protected:
     friend class ProcBody;
@@ -102,7 +102,7 @@ protected:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) = 0;
+        IDecl* requester) = 0;
 };
 
 struct IType : virtual INode { 
@@ -110,6 +110,8 @@ struct IType : virtual INode {
         const std::shared_ptr<IType> rhs) const = 0;
 };
 
+
+class VarDecl;
 struct IExpr : INode { 
     virtual bool compareTypes(
         const std::shared_ptr<IType> rhs) = 0;
@@ -117,8 +119,13 @@ struct IExpr : INode {
 
     void setInBrackets();
     bool inBrackets() const noexcept;
+
+    void setVarDecl(VarDecl* var) noexcept;
+    VarDecl* varDecl() noexcept;
+    
 private:
     bool inBrackets_ = false;
+    VarDecl* varDecl_;
 };
 
 class ILiteral : public IExpr { /*...*/ };
@@ -207,7 +214,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) override;
+        IDecl* requester) override;
 
 private:
     std::string name_;
@@ -250,7 +257,7 @@ protected:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) override;
+        IDecl* requester) override;
 
 protected:
     std::string name_;
@@ -339,7 +346,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) override;
+        IDecl* requester) override;
 
 protected:
     friend class PackBody;
@@ -348,7 +355,7 @@ protected:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester);
+        IDecl* requester);
 
 public:
     void setPackBody(std::shared_ptr<PackBody> body);
@@ -388,7 +395,7 @@ public:
         std::vector<std::shared_ptr<IDecl>>> 
     reachable(
         const attribute::QualifiedName& name, 
-        std::shared_ptr<IDecl> requester = nullptr) override;
+        IDecl* requester = nullptr) override;
 
 private:
     void reachable_(
@@ -396,7 +403,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) override;
+        IDecl* requester) override;
 
 public:
     void setPackDecl(std::shared_ptr<PackDecl> decl);
@@ -432,7 +439,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) override;
+        IDecl* requester) override;
     
 private:
     std::shared_ptr<IDecl> unit_;
@@ -519,7 +526,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) override;
+        IDecl* requester) override;
 
 private:
     std::weak_ptr<RecordDecl> baseRecord_;
@@ -561,7 +568,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) override;
+        IDecl* requester) override;
 
 private:
     std::string name_;
@@ -1254,7 +1261,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) override {};
+        IDecl* requester) override {};
 
 private:
     std::shared_ptr<RecordDecl> record_;
@@ -1280,7 +1287,7 @@ private:
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) { assert(false); } 
+        IDecl* requester) { assert(false); } 
 
 public: // IType interface
     bool compare(const std::shared_ptr<IType> rhs) const override;

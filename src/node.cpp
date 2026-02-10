@@ -25,6 +25,14 @@ bool IExpr::inBrackets() const noexcept {
     return inBrackets_;
 }
 
+void IExpr::setVarDecl(VarDecl* var) noexcept {
+    varDecl_ = var;
+}
+
+VarDecl* IExpr::varDecl() noexcept {
+    return varDecl_;
+}
+
 } 
 
 // Stms
@@ -60,7 +68,7 @@ std::vector<
     std::vector<std::shared_ptr<IDecl>>>  
 IDecl::reachable(
     const attribute::QualifiedName& name, 
-    std::shared_ptr<IDecl> requester)
+    IDecl* requester)
 {   
     if (dynamic_cast<VarDecl*>(this) || 
          dynamic_cast<TypeAliasDecl*>(this)) 
@@ -74,9 +82,7 @@ IDecl::reachable(
     reachable_(res, name.begin(), name.end(), requester);
     
     if (parent_) {
-        auto buf = dynamic_cast<IDecl*>
-                    (parent_)->reachable(name, 
-                            std::dynamic_pointer_cast<node::IDecl>(self()));
+        auto buf = dynamic_cast<IDecl*>(parent_)->reachable(name, this);
         res.insert(res.end(), buf.begin(), buf.end());
     }
 
@@ -133,6 +139,7 @@ VarDecl::VarDecl(const std::string& name,
     type_->setParent(this);
     if (rval_) {
         rval_->setParent(this);
+        rval->setVarDecl(this);
     }
 }
 
@@ -141,7 +148,7 @@ void VarDecl::reachable_(
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester)
+        IDecl* requester)
 { return; }
 
 const std::string& VarDecl::name() const noexcept {
@@ -209,7 +216,7 @@ void ProcBody::reachable_(
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) 
+        IDecl* requester) 
 {
     if (it == end) return;
 
@@ -239,7 +246,7 @@ void ProcBody::reachable_(
                     res, std::next(it), end, requester);
             }   
         }
-        if (decl == requester) {
+        if (decl.get() == requester) {
             break;
         }
     }
@@ -316,7 +323,7 @@ void PackDecl::reachable_(
             std::vector<std::shared_ptr<IDecl>>>& res,
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
-        std::shared_ptr<IDecl> requester) 
+        IDecl* requester) 
 {
     if (it == end) return;
 
@@ -337,7 +344,7 @@ void PackDecl::reachable_(
                     res, std::next(it), end, requester);
             }   
         }
-        if (decl == requester) {
+        if (decl.get() == requester) {
             break;
         }
     }
@@ -348,7 +355,7 @@ void PackDecl::reachableForPackBody_(
         std::vector<std::shared_ptr<IDecl>>>& res,
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    std::shared_ptr<IDecl> requester) 
+    IDecl* requester) 
 {
     if (it == end) return;
 
@@ -372,7 +379,7 @@ void PackDecl::reachableForPackBody_(
                     res, std::next(it), end, requester);
             }   
         }
-        if (decl == requester) {
+        if (decl.get() == requester) {
             break;
         }
     }
@@ -404,7 +411,7 @@ std::vector<
     std::vector<std::shared_ptr<IDecl>>> 
 PackBody::reachable(
     const attribute::QualifiedName& name, 
-    std::shared_ptr<IDecl> requester) 
+    IDecl* requester) 
 {
     if (requester->parent() != this) {
         return {};
@@ -418,7 +425,7 @@ void PackBody::reachable_(
         std::vector<std::shared_ptr<IDecl>>>& res,
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    std::shared_ptr<IDecl> requester) 
+    IDecl* requester) 
 {
     if (requester->parent() != this) {
         return;
@@ -437,7 +444,7 @@ void PackBody::reachable_(
                     res, std::next(it), end, requester);
             }   
         }
-        if (decl == requester) {
+        if (decl.get() == requester) {
             break;
         }
     }
@@ -460,7 +467,7 @@ void GlobalSpace::reachable_(
         std::vector<std::shared_ptr<IDecl>>>& res,
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    std::shared_ptr<IDecl> requester) 
+    IDecl* requester) 
 {
     if (it == end) return;
 
@@ -597,7 +604,7 @@ void RecordDecl::reachable_(
         std::vector<std::shared_ptr<IDecl>>>& res,
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    std::shared_ptr<IDecl> requester)
+    IDecl* requester)
 {   
     bool insert = false;
     for (auto decl : *decls_) {
@@ -613,7 +620,7 @@ void RecordDecl::reachable_(
                     res, std::next(it), end, requester);
             }   
         }
-        if (decl == requester) {
+        if (decl.get() == requester) {
             break;
         }
     }
@@ -662,7 +669,7 @@ void TypeAliasDecl::reachable_(
         std::vector<std::shared_ptr<IDecl>>>& res,
     std::vector<std::string>::const_iterator it,
     std::vector<std::string>::const_iterator end,
-    std::shared_ptr<IDecl> requester) 
+    IDecl* requester) 
 { return; }
 
 

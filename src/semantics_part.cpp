@@ -714,7 +714,7 @@ TypeNameToRealType::analyseDecl_(
         }
         auto parent = dynamic_cast<node::IDecl*>(decl->parent());
         auto declsInSpaces = 
-            parent->reachable(typeName->name(), decl);
+            parent->reachable(typeName->name(), decl.get());
         bool isTypeSet = false;
         if (!declsInSpaces.empty()) {
             auto&& decls = declsInSpaces.front();
@@ -779,7 +779,7 @@ TypeNameToRealType::analyseArrayType_(
         }
         bool isTypeSet = false;
         auto declsInSpaces = 
-            space->reachable(typeName->name(), parent);
+            space->reachable(typeName->name(), parent.get());
         if (!declsInSpaces.empty()) {
             auto&& decls = declsInSpaces.front();
             auto record = 
@@ -821,7 +821,7 @@ TypeNameToRealType::analyseRecord_(
     auto&& baseName = decl->baseName();
     auto&& space = dynamic_cast<node::IDecl*>(decl->parent());
     auto&& selfDecl = std::dynamic_pointer_cast<node::IDecl>(decl->self());
-    auto&& declsInSpaces = space->reachable(baseName, selfDecl);
+    auto&& declsInSpaces = space->reachable(baseName, selfDecl.get());
     bool isBaseSet = false;
 
     if (!declsInSpaces.empty()) {
@@ -1441,27 +1441,71 @@ std::string LinkExprs::analyseVarDecl_(std::shared_ptr<node::VarDecl> var) {
     }
 }
 
-//m 4 + 2 + 3 + 2 + 3 + 2 + 2 + 2
-//r 3 + 3 + 3 + 4 + 2 + 1 + 1 + 2 + 4
 
-// NameExpr
+// если DOT OP слева справа: либо DOT op, либо CallOrIdxExpr, либо NameExpr
+std::pair<std::string, std::shared_ptr<node::IExpr>> 
+LinkExprs::analyseOp_(std::shared_ptr<node::Op> op, bool rval) {
+    static attribute::QualifiedName name;
+    if (auto left = op->left()) {
+        if (std::dynamic_pointer_cast<node::Op>(left)) {
+            
+        }
+    }
+}
+
 // AttributeExpr
 // CallOrIdxExpr
 // Op
 std::pair<std::string, std::shared_ptr<node::IExpr>> 
-LinkExprs::analyseExpr_(std::shared_ptr<node::IExpr> expr) {
-    // auto op = 
+LinkExprs::analyseExpr_(
+    std::shared_ptr<node::IExpr> expr, 
+    attribute::QualifiedName& base) 
+{
+    if (auto nameExpr = std::dynamic_pointer_cast<node::NameExpr>(expr)) {
+        base.push(nameExpr->name());
+        if (auto par = dynamic_cast<node::IDecl*>(nameExpr->parent())) {
+            auto r = par->reachable(base, nameExpr->varDecl());
+            std::shared_ptr<node::FuncBody> func;
+            std::shared_ptr<node::ProcBody> proc;
+            for (auto&& d : r.front()) {
+                if (auto f = std::dynamic_pointer_cast<node::FuncBody>(d)) {
+                    func = f;
+                } else if (auto p = std::dynamic_pointer_cast<node::ProcBody>(d)) {
+                    proc = p;
+                } else if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
+                    return {"", std::make_shared<node::GetVarExpr>(nullptr, var)};
+                } else if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
+                    return {"", nullptr};
+                }
+            }
+            if (!func && !proc) {
+                std::stringstream ss;
+                ss << "An unresolved name in an expression: ";
+                ss << base.toString('.');
+                return {ss.str(), nullptr};
+            }
+            return {"", std::make_shared<node::CallExpr>(nullptr, proc, func)};
+        }
+    }
 
-    // if (auto name = std::dynamic_pointer_cast<node::NameExpr>())
+    return {"An unresolved name in an expression", nullptr};
 }
 
-std::pair<std::string, std::shared_ptr<node::IExpr>> 
-LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) { // dotop либо op
-    auto oper = op->op();
-    auto left = op->left();
-    auto right = op->right();
+static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
+    if (!leftOrRight) return "";
 
-    
+    std::shared_ptr<node::Op> op;
+    if (
+        (!std::dynamic_pointer_cast<node::NameExpr>(leftOrRight) && 
+         !std::dynamic_pointer_cast<node::CallOrIdxExpr>(leftOrRight)) ||
+        ((op = std::dynamic_pointer_cast<node::Op>(leftOrRight)) && 
+          op->op() != node::OpType::DOT) 
+       ) 
+    {
+        return "Invalid operands for Dot Op";
+    } 
+
+    return "";
 }
 
 std::string 
@@ -1471,11 +1515,12 @@ LinkExprs::analyseOpExprErr_(std::shared_ptr<node::IExpr> expr) {
         return "";
     }
 
-    if (op->op() == node::OpType::DOT &&
-        !std::dynamic_pointer_cast<node::NameExpr>(expr) && 
-        !std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) 
-    {
-        return "Invalid operands for Dot Op";
+    if (op->op() == node::OpType::DOT) {
+        auto res1 = analyseDotOpExpr(op->left());
+        auto res2 = analyseDotOpExpr(op->right());
+        if (!res1.empty() || !res2.empty()) {
+            return res1.empty() ? res2 : res1;
+        }
     }
 
     if (op->op() == node::OpType::DOT &&
