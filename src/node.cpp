@@ -179,6 +179,14 @@ void VarDecl::setOut(bool out) noexcept {
     out_ = out;
 }
 
+std::shared_ptr<node::IExpr> VarDecl::rval() {
+    return rval_;
+}
+
+void VarDecl::setRval(std::shared_ptr<node::IExpr> expr) {
+    rval_ = expr;
+}
+
 // ProcBody
 ProcBody::ProcBody(const std::string& name, 
                    const std::vector<std::shared_ptr<VarDecl>>& params,
@@ -910,7 +918,6 @@ bool DotOpExpr::compareTypes(const std::shared_ptr<IType> rhs) {
     }
     return false;
 }
-
 
 // GetVarExpr
 GetVarExpr::GetVarExpr(

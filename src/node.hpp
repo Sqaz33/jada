@@ -206,7 +206,8 @@ public: // IDecl interface
     const std::string& name() const noexcept override;
 
 public:
-    auto rval() { return rval_; }
+    std::shared_ptr<node::IExpr> rval();
+    void setRval(std::shared_ptr<node::IExpr> expr);
 
 private:
     void reachable_(
@@ -698,13 +699,6 @@ public:
 public: // IExpr interface
     bool compareTypes(const std::shared_ptr<IType> rhs) override;
     std::shared_ptr<IType> type() override;
-    void setParent(INode* parent) override {
-        parent_ = parent;
-        rhs_->setParent(parent_);
-        if (lhs_) {
-            lhs_->setParent(parent_);
-        }
-    }
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -714,9 +708,9 @@ public: // INode interface
     void setParent(INode* parent) override;
 
 public:
-    std::shared_ptr<IExpr> left() { return lhs_; }
-    std::shared_ptr<IExpr> right() { return rhs_; }
-    OpType op() { return opType_; }
+    std::shared_ptr<IExpr> left();
+    std::shared_ptr<IExpr> right();
+    OpType op();
 
     void setLeft(std::shared_ptr<IExpr> left);
     void setRight(std::shared_ptr<IExpr> right);
@@ -729,8 +723,11 @@ private:
 
 class DotOpExpr : public IExpr {
     void* codegen() override { return nullptr; } // TODO
-
+    void print(graphviz::GraphViz& gv, 
+                       graphviz::VertexType par) const override { assert(false); }
 public:
+    std::shared_ptr<IType> type() override { return nullptr; } // TODO
+
     void setLeft(std::shared_ptr<DotOpExpr> l);
     void setRight(std::shared_ptr<DotOpExpr> r);
 

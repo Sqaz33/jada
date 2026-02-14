@@ -51,6 +51,10 @@ QualifiedName::end() const {
     return fullName_.cend();
 }
 
+void QualifiedName::clear() {
+    fullName_.clear();
+}
+
 // Attribute:
 Attribute::Attribute(QualifiedName left, const std::string& right) :
     left_(std::move(left))

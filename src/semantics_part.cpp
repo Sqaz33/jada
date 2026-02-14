@@ -5,6 +5,7 @@
 #include <set>
 #include <iterator>
 #include <algorithm>
+#include <tuple>
 
 #include "node.hpp"
 #include "string_utility.hpp"
@@ -1426,6 +1427,9 @@ std::string LinkExprs::analyse(
 // * имя с параметрами - вызов или индексация
 
 // если mbcall
+
+// vardecl в параметрах
+
 std::string analyseContainer_(std::shared_ptr<node::IDecl> decl) {
     std::shared_ptr<node::Body> body;
 }
@@ -1437,58 +1441,136 @@ std::string LinkExprs::analyseVarDecl_(std::shared_ptr<node::VarDecl> var) {
     }
 
     if (rhs) {
-        
+        auto argsErr = analyseArgsExpr_(rhs);
+        if (!argsErr.empty()) {
+            return argsErr;
+        }
+        auto op = std::dynamic_pointer_cast<node::Op>(rhs);
+        attribute::QualifiedName _;
+        auto [err, newRhs] = op ? analyseOp_(op) : analyseExpr_(rhs, _);
+        if (!err.empty()) {
+            return err;
+        }
+        var->setRval(newRhs);
     }
+
+    return "";
 }
 
-
-// если DOT OP слева справа: либо DOT op, либо CallOrIdxExpr, либо NameExpr
 std::pair<std::string, std::shared_ptr<node::IExpr>> 
-LinkExprs::analyseOp_(std::shared_ptr<node::Op> op, bool rval) {
+LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
     static attribute::QualifiedName name;
+
+    auto getRes = [this](auto&& exprOrOP, auto&& qName) {
+        if (auto op = std::dynamic_pointer_cast<node::Op>(exprOrOP)) {
+            return analyseOp_(op);
+        } else {
+            return analyseExpr_(exprOrOP, qName);
+        }
+    };
+
+    if (op->op() != node::OpType::DOT) {
+        name.clear();
+    }
+    
+    std::shared_ptr<node::IExpr> leftRes, rightRes;
     if (auto left = op->left()) {
-        if (std::dynamic_pointer_cast<node::Op>(left)) {
-            
+        std::string err;
+        std::tie(err, leftRes) = getRes(left, name);
+        if (!err.empty()) {
+            return {err, nullptr};
+        }
+        if (op->op() != node::OpType::DOT) {
+            name.clear();
+        }
+        if (leftRes) {
+            op->setLeft(leftRes);
+        }
+    } 
+    if (auto right = op->right()) {
+        std::string err;
+        std::tie(err, leftRes) = getRes(right, name);
+        if (!err.empty()) {
+            return {err, nullptr};
+        }
+        if (rightRes) {
+            op->setRight(rightRes);
         }
     }
+
+    if (op->op() == node::OpType::DOT) {
+        auto resDotOp = leftRes ? 
+                          std::dynamic_pointer_cast<node::DotOpExpr>(leftRes) :
+                          std::dynamic_pointer_cast<node::DotOpExpr>(rightRes);
+        auto rightDotOp = std::dynamic_pointer_cast<node::DotOpExpr>(rightRes);
+        if (leftRes && rightRes) {
+            resDotOp->setTail(rightDotOp);
+        }
+        return {"", resDotOp};
+    }
+    return {"", op};
 }
 
-// AttributeExpr
-// CallOrIdxExpr
-// Op
 std::pair<std::string, std::shared_ptr<node::IExpr>> 
 LinkExprs::analyseExpr_(
     std::shared_ptr<node::IExpr> expr, 
     attribute::QualifiedName& base) 
 {
+    node::IDecl* par = nullptr;
+    std::vector<std::shared_ptr<node::IExpr>> args;
+    node::IDecl* requester = nullptr;
+
     if (auto nameExpr = std::dynamic_pointer_cast<node::NameExpr>(expr)) {
         base.push(nameExpr->name());
-        if (auto par = dynamic_cast<node::IDecl*>(nameExpr->parent())) {
-            auto r = par->reachable(base, nameExpr->varDecl());
-            std::shared_ptr<node::FuncBody> func;
-            std::shared_ptr<node::ProcBody> proc;
-            for (auto&& d : r.front()) {
-                if (auto f = std::dynamic_pointer_cast<node::FuncBody>(d)) {
-                    func = f;
-                } else if (auto p = std::dynamic_pointer_cast<node::ProcBody>(d)) {
-                    proc = p;
-                } else if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
-                    return {"", std::make_shared<node::GetVarExpr>(nullptr, var)};
-                } else if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
-                    return {"", nullptr};
-                }
-            }
-            if (!func && !proc) {
-                std::stringstream ss;
-                ss << "An unresolved name in an expression: ";
-                ss << base.toString('.');
-                return {ss.str(), nullptr};
-            }
-            return {"", std::make_shared<node::CallExpr>(nullptr, proc, func)};
-        }
+        par = dynamic_cast<node::IDecl*>(nameExpr->parent());
+        requester = nameExpr->varDecl();
+    } else if (auto callExpr = std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) {
+        auto name = std::dynamic_pointer_cast<node::NameExpr>(callExpr->name());
+        base.push(name->name());
+        par = dynamic_cast<node::IDecl*>(callExpr->parent());
+    } else {
+        return {"", expr};
     }
 
-    return {"An unresolved name in an expression", nullptr};
+    if (par) {
+        auto r = par->reachable(base, requester);
+        std::shared_ptr<node::FuncBody> func;
+        std::shared_ptr<node::ProcBody> proc;
+        for (auto&& d : r.front()) {
+            if (auto f = std::dynamic_pointer_cast<node::FuncBody>(d)) {
+                func = f;
+            } else if (auto p = std::dynamic_pointer_cast<node::ProcBody>(d)) {
+                proc = p;
+            } else if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
+                if (std::dynamic_pointer_cast<node::AggregateType>(var->type())) {
+                    if (args.empty()) {
+                        std::string res = "Incorrect indexing of the array ";
+                        res += base.toString('.') + var->name();
+                        return {res, nullptr};
+                    }
+                    return {"", std::make_shared<node::GetArrElementExpr>(var, args)};
+                }
+                if (!args.empty()) {
+                    std::string res = "The call is not a subprogram ";
+                    res += base.toString('.') + var->name();
+                    return {res, nullptr};
+                }
+                return {"", std::make_shared<node::GetVarExpr>(nullptr, var)};
+            } else if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
+                return {"", nullptr};
+            }
+        }
+        if (!func && !proc) {
+            std::stringstream ss;
+            ss << "An unresolved name in an expression ";
+            ss << base.toString('.');
+            return {ss.str(), nullptr};
+        }
+        return {"", std::make_shared<node::CallExpr>(nullptr, proc, func, args)};
+    }  
+    std::string res = "An unresolved name in an expression ";
+    res += base.toString('.');
+    return {res, nullptr};
 }
 
 static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
@@ -1504,6 +1586,14 @@ static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
     {
         return "Invalid operands for Dot Op";
     } 
+
+    if (auto call = std::dynamic_pointer_cast<node::CallOrIdxExpr>(leftOrRight)) {
+        if (!std::dynamic_pointer_cast<node::NameExpr>(call->name())) {
+            return "Using a subprogram call without" 
+                   " a qualifying name is" 
+                   " not supported in this implementation";
+        }
+    }
 
     return "";
 }
@@ -1534,6 +1624,36 @@ LinkExprs::analyseOpExprErr_(std::shared_ptr<node::IExpr> expr) {
     if (!res.empty()) return res;
     
     return analyseOpExprErr_(op->right());
+}
+
+std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
+    if (auto callOrIdx = 
+            std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) 
+    {
+        // работа с выражениями в аргументах
+        auto&& args = callOrIdx->args();
+        for (auto&& a : args) {
+            auto o = std::dynamic_pointer_cast<node::Op>(a);
+            attribute::QualifiedName _;
+            auto [err, newArg] = o ? analyseOp_(o) : analyseExpr_(a, _); 
+            if (!err.empty()) {
+                return err;
+            } 
+            auto err2 = analyseArgsExpr_(a);
+            if (!err2.empty()) {
+                return err2;
+            }
+            a = newArg;
+        }
+    } else if (auto op = std::dynamic_pointer_cast<node::Op>(expr)) {
+        auto res = analyseArgsExpr_(op->left());
+        if (!res.empty()) {
+            return res;
+        }
+        return analyseArgsExpr_(op->right());
+    }
+
+    return "";
 }
 
 } // semantics_part

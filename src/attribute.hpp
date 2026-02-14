@@ -21,6 +21,7 @@ public:
     std::size_t size() const noexcept;
     std::vector<std::string>::const_iterator begin() const;
     std::vector<std::string>::const_iterator end() const;
+    void clear();
     
     auto operator<=>(const QualifiedName&) const = default;
 private:
