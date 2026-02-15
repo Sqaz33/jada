@@ -1485,9 +1485,32 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
         }
         if (leftRes) {
             op->setLeft(leftRes);
+            // обработка рекорда
+            auto leftDotOps = std::dynamic_pointer_cast<node::DotOpExpr>(leftRes);
+            std::shared_ptr<node::DotOpExpr> tail;
+            if (leftDotOps){
+                tail = leftDotOps->tail();
+            }
+            if (op->op() == node::OpType::DOT && 
+                tail->container() && 
+                !std::dynamic_pointer_cast<node::PackNamePart>(tail)) 
+            {
+                auto res = analyseRecord_(leftDotOps, op->right());
+                if (!res.empty()) {
+                    return {res, nullptr};
+                }
+            }  
         }
     } 
-    if (auto right = op->right()) {
+    auto right = op->right();
+    if (right && !rightRes) {
+        auto leftDotOps = std::dynamic_pointer_cast<node::DotOpExpr>(leftRes);
+        if (leftDotOps && !leftDotOps->container()) {
+            std::string res = "Incorrect qualified name using: ";
+            res += name.toString('.');
+            return {res, nullptr};
+        }
+
         std::string err;
         std::tie(err, leftRes) = getRes(right, name);
         if (!err.empty()) {
@@ -1506,11 +1529,92 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
         if (leftRes && rightRes) {
             resDotOp->setTail(rightDotOp);
         }
+
         return {"", resDotOp};
     }
     return {"", op};
 }
 
+// TODO: добавить выбор перегрузки
+std::string LinkExprs::analyseRecord_(
+    std::shared_ptr<node::DotOpExpr> left, 
+    std::shared_ptr<node::IExpr> right)
+{
+    if (auto dotOp = std::dynamic_pointer_cast<node::Op>(right)) {
+        auto res = analyseRecord_(left, dotOp->left());
+        if (!res.empty()) {
+            return res;
+        }
+        return analyseRecord_(left, dotOp->right());
+    }
+
+    auto tail = left->tail();
+    if (!tail->container()) {
+        return "Incorrect use of a qualifying name";
+    }
+    
+    auto record = std::dynamic_pointer_cast<node::RecordDecl>(tail->type());
+    std::string name;
+    std::vector<std::shared_ptr<node::IExpr>> args({tail});
+    if (auto nameExpr = std::dynamic_pointer_cast<node::NameExpr>(right)) {
+        name = nameExpr->name();
+    } else {
+        auto idxOrCallExpr = 
+            std::dynamic_pointer_cast<node::CallOrIdxExpr>(right);
+        name = std::dynamic_pointer_cast<node::NameExpr>(
+            idxOrCallExpr->name())->name();
+        auto&& exprArgs = idxOrCallExpr->args();
+        args.insert(args.end(), exprArgs.begin(), exprArgs.end());
+    }
+
+    std::shared_ptr<node::VarDecl> varCandidate;
+    auto&& decls = record->decls();
+    auto it = std::find(decls->begin(), decls->end(), 
+            [](auto&& v) { return v->name() == nameExpr->name(); } );
+    if (it != decls->end()) {
+        varCandidate = std::dynamic_pointer_cast<node::VarDecl>(*it);
+    }
+
+    std::vector<std::shared_ptr<node::IType>> argsTypes;
+    std::transform(
+        args.begin(), 
+        args.end(), 
+        std::inserter(argsTypes, argsTypes.end()), 
+        [] (auto&& a) { return a->type(); });
+
+    std::shared_ptr<node::ProcBody> procCandidate;
+    std::shared_ptr<node::FuncBody> funcCandidate;
+    if (record->isTagged()) {
+        auto cls = record->cls().lock();
+        procCandidate = cls->containsMethod(name, argsTypes, true);
+        funcCandidate = std::dynamic_pointer_cast<node::FuncBody>(
+            cls->containsMethod(name, argsTypes, false));
+    }
+
+    if (varCandidate && (procCandidate || funcCandidate)) {
+        return "Ambiguous:"
+                " cannot determine whether" 
+                " this is a method call or a field access: "
+                + name;
+    } else if (!varCandidate && !procCandidate && !funcCandidate) {
+        return "Name cannot be resolved: " + name;
+    }
+
+    std::shared_ptr<node::DotOpExpr> rightDotOp;
+    if (varCandidate) {
+        rightDotOp = std::make_shared<node::GetVarExpr>(varCandidate);
+    } else if (procCandidate || funcCandidate) {
+        rightDotOp = std::make_shared<node::CallMethodExpr>(
+            nullptr, procCandidate, funcCandidate, args);
+    }
+
+    left->setTail(rightDotOp);
+
+    return "";
+}
+
+// получение конечной точки по пакетам (но не в рекордах)
+// TODO: добавить обработку image
 std::pair<std::string, std::shared_ptr<node::IExpr>> 
 LinkExprs::analyseExpr_(
     std::shared_ptr<node::IExpr> expr, 
@@ -1528,6 +1632,7 @@ LinkExprs::analyseExpr_(
         auto name = std::dynamic_pointer_cast<node::NameExpr>(callExpr->name());
         base.push(name->name());
         par = dynamic_cast<node::IDecl*>(callExpr->parent());
+        args = callExpr->args();
     } else {
         return {"", expr};
     }
@@ -1536,13 +1641,13 @@ LinkExprs::analyseExpr_(
         auto r = par->reachable(base, requester);
         std::shared_ptr<node::FuncBody> func;
         std::shared_ptr<node::ProcBody> proc;
-        for (auto&& d : r.front()) {
-            if (auto f = std::dynamic_pointer_cast<node::FuncBody>(d)) {
-                func = f;
-            } else if (auto p = std::dynamic_pointer_cast<node::ProcBody>(d)) {
-                proc = p;
-            } else if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
-                if (std::dynamic_pointer_cast<node::AggregateType>(var->type())) {
+
+        if (r.front().size() == 1) {
+            auto&& d = r.front()[0];
+            if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
+                if (std::dynamic_pointer_cast<node::AggregateType>(var->type())
+                    || std::dynamic_pointer_cast<node::StringType>(var->type())) 
+                {
                     if (args.empty()) {
                         std::string res = "Incorrect indexing of the array ";
                         res += base.toString('.') + var->name();
@@ -1555,11 +1660,57 @@ LinkExprs::analyseExpr_(
                     res += base.toString('.') + var->name();
                     return {res, nullptr};
                 }
-                return {"", std::make_shared<node::GetVarExpr>(nullptr, var)};
+                return {"", std::make_shared<node::GetVarExpr>(var)};
             } else if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
-                return {"", nullptr};
+                if (!args.empty()) {
+                    std::string res = "Incorrect qualified name using: ";
+                    res += base.toString('.') + pack->name();
+                    return {res, nullptr};
+                }
+                return {"", std::make_shared<node::PackNamePart>(pack)};
             }
         }
+
+        auto eqArgs = [] (auto&& subp, auto&& args) {
+            auto subpArgs = subp->params();
+            if (subpArgs.size() != args.size()) {
+                return false;
+            }
+
+            std::vector<std::shared_ptr<node::IType>> argsTypes;
+            std::transform(args.begin(), args.end(), 
+                        std::inserter(argsTypes, argsTypes.end()), 
+                        [] (auto&& a) { return a->type(); });
+            
+            std::vector<std::shared_ptr<node::IType>> subpArgsTypes;
+            std::transform(subpArgs.begin(), subpArgs.end(), 
+                std::inserter(subpArgsTypes, subpArgsTypes.end()), 
+                [] (auto&& a) { return a->type(); });
+
+
+            for (int i = 0; i < args.size(); ++i) {
+                if (!argsTypes[i]->compare(subpArgsTypes[i])) {
+                    return false;
+                }
+            } 
+            
+            return true;
+        };
+
+        for (auto&& space : r) {
+            for (auto&& d : space) {
+                if (auto f = std::dynamic_pointer_cast<node::FuncBody>(d)) {
+                    if (!func && eqArgs(f, args)) {
+                        func = f;
+                    }
+                } else if (auto p = std::dynamic_pointer_cast<node::ProcBody>(d)) {
+                   if (!proc && eqArgs(p, args)) {
+                        proc = p;
+                    }
+                }
+            }
+        }
+
         if (!func && !proc) {
             std::stringstream ss;
             ss << "An unresolved name in an expression ";

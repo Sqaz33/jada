@@ -1489,6 +1489,20 @@ std::shared_ptr<ProcBody> ClassDecl::containsMethod(
     }
 }
 
+std::shared_ptr<ProcBody> ClassDecl::proc(const std::string& name) {
+    auto it = std::find(procs_.begin(), procs_.end(), 
+    [&name] (auto&& p) { return p.lock()->name() == name});
+    
+    return it == procs_.end() ? nullptr : it->lock();
+}  
+
+std::shared_ptr<FuncBody> ClassDecl::func(const std::string& name) {
+    auto it = std::find(funcs_.begin(), funcs_.end(), 
+    [&name] (auto&& p) { return p.lock()->name() == name});
+    
+    return it == funcs_.end() ? nullptr : it->lock();
+}
+
 // SuperclassReference
 SuperclassReference::SuperclassReference(
     const attribute::Attribute& ref) :

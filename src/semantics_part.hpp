@@ -188,6 +188,9 @@ private:
                  attribute::QualifiedName& base);
     std::pair<std::string, std::shared_ptr<node::IExpr>> 
     analyseOp_(std::shared_ptr<node::Op> op);
+    std::string analyseRecord_(
+        std::shared_ptr<node::DotOpExpr> left, 
+        std::shared_ptr<node::IExpr> right);
     std::string analyseOpExprErr_(std::shared_ptr<node::IExpr> expr);
     std::string analyseArgsExpr_(std::shared_ptr<node::IExpr> expr);
 };

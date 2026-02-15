@@ -781,7 +781,21 @@ private:
 
 class PackNamePart : public DotOpExpr {
 public:
-    PackNamePart(std::shared_ptr<PackDecl>);
+    PackNamePart(std::shared_ptr<PackDecl> pack);
+
+public: 
+    bool lhs() override;
+    bool rhs() override;
+    bool container() override;
+
+public:
+    std::string packName() const;
+
+public:
+    std::shared_ptr<IType> type() override;
+
+private:
+    std::shared_ptr<PackDecl> pack_;
 };
 
 class GetArrElementExpr : public DotOpExpr {
@@ -1254,6 +1268,9 @@ public:
         const std::string& name, 
         const std::vector<std::shared_ptr<IType>>& params,
         bool proc);
+    
+    std::shared_ptr<ProcBody> proc(const std::string& name);
+    std::shared_ptr<FuncBody> func(const std::string& name);
         
 private:
     void reachable_(
