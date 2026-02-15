@@ -921,13 +921,11 @@ bool DotOpExpr::compareTypes(const std::shared_ptr<IType> rhs) {
 
 // GetVarExpr
 GetVarExpr::GetVarExpr(
-    std::shared_ptr<IDecl> owner, 
-    std::shared_ptr<VarDecl> var) :
-    owner_(owner)
-    , var_(var)
-    , container_(
-        std::dynamic_pointer_cast<RecordDecl>(var_->type()) || 
-        std::dynamic_pointer_cast<PackDecl>(var_->type()))
+    std::shared_ptr<VarDecl> var, 
+    std::shared_ptr<VarDecl> recordInst):
+    var_(var)
+    , recordInst_(recordInst_)
+    , container_(std::dynamic_pointer_cast<RecordDecl>(var_->type()))
     , lhs_(var->out())
     , rhs_(var->in())
 {}
@@ -971,6 +969,57 @@ std::shared_ptr<IType> GetVarExpr::type() {
         return right_->type();
     } 
     return var_->type();
+}
+
+// PackNamePart
+PackNamePart::PackNamePart(std::shared_ptr<PackDecl> pack) :
+    pack_(pack)
+{}
+
+bool PackNamePart::lhs() {
+    if (left_.expired() && right_) {  
+        auto cur = right_;
+        bool res = true;
+        while (cur) {
+            res = res && cur->lhs();
+            cur = cur->right();
+        }
+        return res;
+    }
+    return false;
+}
+
+bool PackNamePart::rhs() {
+    if (right_) {  
+        auto cur = right_;
+        bool res = true;
+        while (cur) {
+            res = res && cur->rhs();
+            cur = cur->right();
+        }
+        return res;
+    }
+    return false;
+}
+
+bool PackNamePart::container() {
+    if (right_) {  
+        auto t = tail();
+        return t->container();
+    }
+    return true;
+}
+
+std::string PackNamePart::packName() const {
+    return pack_->name();
+}
+
+std::shared_ptr<IType> GetVarExpr::type() {
+    if (right_) {
+        return right_->type();
+    } 
+    assert(false);
+    return nullptr;
 }
 
 // GetArrElementExpr

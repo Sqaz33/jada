@@ -720,14 +720,12 @@ private:
     OpType opType_;
     std::shared_ptr<IExpr> rhs_;
 };
-
+/////////////////////////////////////////////////////////////////////////////
 class DotOpExpr : public IExpr {
     void* codegen() override { return nullptr; } // TODO
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override { assert(false); }
 public:
-    std::shared_ptr<IType> type() override { return nullptr; } // TODO
-
     void setLeft(std::shared_ptr<DotOpExpr> l);
     void setRight(std::shared_ptr<DotOpExpr> r);
 
@@ -763,8 +761,8 @@ protected:
 class GetVarExpr : public DotOpExpr {
 public:
     GetVarExpr(
-        std::shared_ptr<IDecl> owner, 
-        std::shared_ptr<VarDecl> var);
+        std::shared_ptr<VarDecl> var,
+        std::shared_ptr<VarDecl> recordInst = nullptr); 
 public:    
     bool lhs() override;
     bool rhs() override;
@@ -774,11 +772,16 @@ public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
 private:
-    std::shared_ptr<IDecl> owner_; 
     std::shared_ptr<VarDecl> var_;
+    std::shared_ptr<VarDecl> recordInst_; 
     bool lhs_;
     bool rhs_;
     bool container_;
+};
+
+class PackNamePart : public DotOpExpr {
+public:
+    PackNamePart(std::shared_ptr<PackDecl>);
 };
 
 class GetArrElementExpr : public DotOpExpr {
@@ -879,7 +882,7 @@ private:
     std::shared_ptr<IExpr> param_;
     std::shared_ptr<StringType> stringType_;
 };
-
+/////////////////////////////////////////////////////////////////////////////
 class NameExpr : public IExpr {
 public:
     NameExpr(const std::string& name);
