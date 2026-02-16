@@ -1429,7 +1429,7 @@ std::string LinkExprs::analyse(
 // если mbcall
 
 // vardecl в параметрах
-
+// TODO: проверка того, что вызов атрибута или имени
 std::string analyseContainer_(std::shared_ptr<node::IDecl> decl) {
     std::shared_ptr<node::Body> body;
 }
@@ -1535,7 +1535,6 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
     return {"", op};
 }
 
-// TODO: добавить выбор перегрузки
 std::string LinkExprs::analyseRecord_(
     std::shared_ptr<node::DotOpExpr> left, 
     std::shared_ptr<node::IExpr> right)
@@ -1614,7 +1613,6 @@ std::string LinkExprs::analyseRecord_(
 }
 
 // получение конечной точки по пакетам (но не в рекордах)
-// TODO: добавить обработку image
 std::pair<std::string, std::shared_ptr<node::IExpr>> 
 LinkExprs::analyseExpr_(
     std::shared_ptr<node::IExpr> expr, 
@@ -1629,6 +1627,33 @@ LinkExprs::analyseExpr_(
         par = dynamic_cast<node::IDecl*>(nameExpr->parent());
         requester = nameExpr->varDecl();
     } else if (auto callExpr = std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) {
+        // работа с image attr
+        if (auto attr = std::dynamic_pointer_cast<node::AttributeExpr>(callExpr->name())) {
+            node::SimpleType type;
+            auto attrLeft = attr->attr().left();
+            if (attrLeft.size() == 1) {
+                auto imgTy = attrLeft.toString();
+                bool err = false;
+                type = imgTy == "integer" ? node::SimpleType::INTEGER :
+                       imgTy == "boolean" ? node::SimpleType::BOOL    :
+                       imgTy == "float"   ? node::SimpleType::FLOAT   :
+                       (err = true, node::SimpleType::INTEGER);
+                if (err) {
+                    return {"unknown type for image" + imgTy, nullptr};
+                }
+                if (attr->attr().right() != "image") {
+                    return {"All attributes except image" 
+                            " are not available in" 
+                            " this implementation" 
+                            + attr->attr().right(), 
+                            nullptr};
+                } 
+                return {"", std::make_shared<node::ImageCallExpr>(callExpr->args(), type)};
+            } else {
+                return {"unknown type for image", nullptr};
+            }
+        }
+
         auto name = std::dynamic_pointer_cast<node::NameExpr>(callExpr->name());
         base.push(name->name());
         par = dynamic_cast<node::IDecl*>(callExpr->parent());
@@ -1708,6 +1733,12 @@ LinkExprs::analyseExpr_(
                         proc = p;
                     }
                 }
+                if (proc && func) {
+                    break;
+                }
+            }
+            if (proc && func) {
+                break;
             }
         }
 
@@ -1781,7 +1812,6 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
     if (auto callOrIdx = 
             std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) 
     {
-        // работа с выражениями в аргументах
         auto&& args = callOrIdx->args();
         for (auto&& a : args) {
             auto o = std::dynamic_pointer_cast<node::Op>(a);
