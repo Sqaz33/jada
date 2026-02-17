@@ -932,43 +932,34 @@ GetVarExpr::GetVarExpr(
 
 bool GetVarExpr::lhs() {
     if (left_.expired() && right_) {  
-        auto cur = right_;
-        bool res = lhs_;
-        while (cur) {
-            res = res && cur->lhs();
-            cur = cur->right();
-        }
-        return res;
+        return tail()->lhs();
     }
     return lhs_;
 }
 
 bool GetVarExpr::rhs() {
-    if (right_) {  
-        auto cur = right_;
-        bool res = rhs_;
-        while (cur) {
-            res = res && cur->rhs();
-            cur = cur->right();
-        }
-        return res;
+    if (left_.expired() && right_) {  
+        return tail()->rhs();
     }
     return rhs_;
 }
 
 bool GetVarExpr::container() {
-    if (right_) {  
-        auto t = tail();
-        return t->container();
+    if (left_.expired() && right_) {  
+        return tail()->container();
     }
     return container_;
 }
 
 std::shared_ptr<IType> GetVarExpr::type() {
-    if (right_) {
-        return right_->type();
+    if (left_.expired() && right_) {
+        return tail()->type();
     } 
     return var_->type();
+}
+
+std::shared_ptr<VarDecl> GetVarExpr::var() {
+    return var_;
 }
 
 // PackNamePart
@@ -978,34 +969,21 @@ PackNamePart::PackNamePart(std::shared_ptr<PackDecl> pack) :
 
 bool PackNamePart::lhs() {
     if (left_.expired() && right_) {  
-        auto cur = right_;
-        bool res = true;
-        while (cur) {
-            res = res && cur->lhs();
-            cur = cur->right();
-        }
-        return res;
+        return tail()->lhs();
     }
     return false;
 }
 
 bool PackNamePart::rhs() {
-    if (right_) {  
-        auto cur = right_;
-        bool res = true;
-        while (cur) {
-            res = res && cur->rhs();
-            cur = cur->right();
-        }
-        return res;
+    if (left_.expired() && right_) {  
+        return tail()->rhs();
     }
     return false;
 }
 
 bool PackNamePart::container() {
-    if (right_) {  
-        auto t = tail();
-        return t->container();
+    if (left_.expired() && right_) {  
+        return tail()->container();
     }
     return true;
 }
@@ -1014,10 +992,10 @@ std::string PackNamePart::packName() const {
     return pack_->name();
 }
 
-std::shared_ptr<IType> GetVarExpr::type() {
-    if (right_) {
-        return right_->type();
-    } 
+std::shared_ptr<IType> PackNamePart::type() {
+    if (left_.expired() && right_) {  
+        return tail()->type();
+    }
     assert(false);
     return nullptr;
 }
@@ -1039,44 +1017,35 @@ GetArrElementExpr::GetArrElementExpr(
 
 bool GetArrElementExpr::lhs() {
     if (left_.expired() && right_) {  
-        auto cur = right_;
-        bool res = lhs_;
-        while (cur) {
-            res = res && cur->lhs();
-            cur = cur->right();
-        }
-        return res;
+        return tail()->lhs();
     }
     return lhs_;
 }
 
 bool GetArrElementExpr::rhs() {
-    if (right_) {  
-        auto cur = right_;
-        bool res = rhs_;
-        while (cur) {
-            res = res && cur->rhs();
-            cur = cur->right();
-        }
-        return res;
+    if (left_.expired() && right_) {  
+        return tail()->rhs();
     }
     return rhs_;
 }
 
 bool GetArrElementExpr::container() {
-    if (right_) {  
-        auto t = tail();
-        return t->container();
+    if (left_.expired() && right_) {  
+        return tail()->container();
     }
     return container_;
 }
 
 std::shared_ptr<IType> GetArrElementExpr::type() {
-    if (right_) {
-        return right_->type();
-    } 
+    if (left_.expired() && right_) {  
+        return tail()->type();
+    }
     auto ty = std::dynamic_pointer_cast<ArrayType>(arr_->type());
     return ty->type();
+}
+
+std::shared_ptr<VarDecl> GetArrElementExpr::arr() {
+    return arr_;
 }
 
 // CallExpr
@@ -1094,17 +1063,22 @@ CallExpr::CallExpr(
 {}
 
 bool CallExpr::lhs() {
+    if (left_.expired() && right_) {  
+        return tail()->lhs();
+    }
     return false;
 }
 
 bool CallExpr::rhs() {
+    if (left_.expired() && right_) {  
+        return tail()->rhs();
+    }
     return !noValue_;
 }
 
 bool CallExpr::container() {
-    if (right_ && container_) {  
-        auto t = tail();
-        return t->container();
+    if (right_ && right_) {  
+        return tail()->container();
     }
     return container_;
 }
@@ -1116,6 +1090,19 @@ bool CallExpr::setNoValue() {
     container_ = false;
     noValue_ = true;
     return true;
+}
+
+const std::vector<std::shared_ptr<IExpr>>& 
+CallExpr::params() const noexcept {
+    return params_;
+}
+
+std::shared_ptr<ProcBody> CallExpr::proc() {
+    return proc_;
+}
+
+std::shared_ptr<FuncBody> CallExpr::func() {
+    return func_;
 }
 
 std::shared_ptr<IType> CallExpr::type() {
@@ -1143,17 +1130,22 @@ CallMethodExpr::CallMethodExpr(
 {}
 
 bool CallMethodExpr::lhs() {
+    if (left_.expired() && right_) {  
+        return tail()->lhs();
+    }
     return false;
 }
 
 bool CallMethodExpr::rhs() {
+    if (left_.expired() && right_) {  
+        return tail()->lhs();
+    }
     return !noValue_;
 }
 
 bool CallMethodExpr::container() {
-    if (right_ && container_) {  
-        auto t = tail();
-        return t->container();
+    if (right_ && right_) {  
+        return tail()->container();
     }
     return container_;
 }
@@ -1165,6 +1157,19 @@ bool CallMethodExpr::setNoValue() {
     container_ = false;
     noValue_ = true;
     return true;
+}
+
+const std::vector<std::shared_ptr<IExpr>>& 
+CallMethodExpr::params() const noexcept {
+    return params_;
+}
+
+std::shared_ptr<ProcBody> CallMethodExpr::proc() {
+    return proc_;
+}
+
+std::shared_ptr<FuncBody> CallMethodExpr::func() {
+    return func_;
 }
 
 std::shared_ptr<IType> CallMethodExpr::type() {

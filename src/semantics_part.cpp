@@ -1417,19 +1417,13 @@ std::string LinkExprs::analyse(
 // while 
 // нужно lval по итогу
 
-
-// * у всех expr родитель подпрог, либо пакет, либо рерорд
-// Получаем expr
-// 
-
-// op из dot -  последовательность из имен или имен с параметрами
-// * просто имя - переменная, часть квал. имени, вызов
-// * имя с параметрами - вызов или индексация
-
-// если mbcall
-
-// vardecl в параметрах
-// TODO: проверка того, что вызов атрибута или имени
+// какие проверки и линки есть (для вызова из блоков анализа):
+/*
+ * 1. Линковка аргументов вызовов (с анализом на ошибки)
+ * 2. Анализ неправильных операций
+ * 3. Линковка операций
+ * 4. Линковка выражений
+*/
 std::string analyseContainer_(std::shared_ptr<node::IDecl> decl) {
     std::shared_ptr<node::Body> body;
 }
@@ -1648,9 +1642,9 @@ LinkExprs::analyseExpr_(
                             + attr->attr().right(), 
                             nullptr};
                 } 
-                return {"", std::make_shared<node::ImageCallExpr>(callExpr->args(), type)};
+                return {"", std::make_shared<node::ImageCallExpr>(callExpr->args()[0], type)};
             } else {
-                return {"unknown type for image", nullptr};
+                return {"Unknown argument type for image", nullptr};
             }
         }
 
@@ -1815,7 +1809,14 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
         auto&& args = callOrIdx->args();
         for (auto&& a : args) {
             auto o = std::dynamic_pointer_cast<node::Op>(a);
+            if (o) {
+                auto oRes = analyseOpExprErr_(o);
+                if (!oRes.empty()) {
+                    return oRes;
+                }    
+            }
             attribute::QualifiedName _;
+
             auto [err, newArg] = o ? analyseOp_(o) : analyseExpr_(a, _); 
             if (!err.empty()) {
                 return err;
@@ -1832,6 +1833,114 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
             return res;
         }
         return analyseArgsExpr_(op->right());
+    }
+
+    return "";
+}
+
+// a.b = 1; (CE если a не out)
+// a.b = x; или a.b = f(x); (CE, если x не in)
+// lhs - где находиться выражение в assign
+// noValue - только для первого по влож. вызова
+std::string LinkExprs::analyseInOutAndNoValCall_(
+    const std::vector<std::shared_ptr<node::VarDecl>>& args, 
+    std::shared_ptr<node::IExpr> expr, bool lhs, bool noValue,  
+    bool first
+)
+{       
+    if (args.empty()) {
+        return "";
+    }
+
+    std::shared_ptr<node::Op> op;
+    if ((op = std::dynamic_pointer_cast<node::Op>(expr))) 
+    {
+        auto res = analyseInOutAndNoValCall_(args, op->left(), lhs, noValue, false);
+        if (!res.empty()) {
+            return res;
+        }
+
+        return analyseInOutAndNoValCall_(args, op->right(), lhs, noValue, false);
+    } 
+
+    if (auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(expr)) {
+        // вызов, индексация, обращение к переменной
+        auto call = std::dynamic_pointer_cast<node::CallExpr>(dotOp);
+        auto callMethod = std::dynamic_pointer_cast<node::CallMethodExpr>(dotOp);
+        auto getVar = std::dynamic_pointer_cast<node::GetVarExpr>(dotOp);
+        auto idx = std::dynamic_pointer_cast<node::GetArrElementExpr>(dotOp);
+        // проверка на out/in для lhs/rhs в assign 
+        if (first && (getVar || idx)) {
+            auto var = getVar ? getVar->var() : idx->arr();
+            auto it = std::find(args.begin(), args.end(), var);
+            if (it != args.end() && lhs && !noValue && !var->out()) {
+                return "Assigning a non-out variable " + var->name();
+            } else if (it != args.end() && !lhs && !noValue && !var->in()) {
+                return "Reading a non-in variable " + var->name();
+            }
+        }
+
+        if (first) {
+            auto tail = dotOp->tail();
+            call = std::dynamic_pointer_cast<node::CallExpr>(tail);
+            callMethod = std::dynamic_pointer_cast<node::CallMethodExpr>(tail);
+            getVar = std::dynamic_pointer_cast<node::GetVarExpr>(tail);
+            idx = std::dynamic_pointer_cast<node::GetArrElementExpr>(tail);
+            // проверка на noValue (должны быть колы с процедурами)
+            if (noValue) {
+                if (!((call && !call->proc()) || (callMethod && !callMethod->proc()))) {
+                    return "Not a value expression is not a procedure call";  
+                } 
+            } else {
+                // проверка на value при lhs/rhs 
+                if (!(call && call->func()) && !(callMethod && callMethod->func()) &&
+                    !getVar && !idx) 
+                {
+                    return "Calling a procedure" 
+                           " or accessing a package" 
+                           " in an expression with the value";  
+                }
+                // проверка на lhs выражение (при присваивании)
+                if (lhs && !getVar && !idx) {
+                    return "Assigning rval to an expression";
+                }
+            }
+
+        }
+
+        // проверка аргументов вызова или индексации
+        std::vector<std::shared_ptr<node::IExpr>> callArgs;
+        if (call) callArgs = call->params();
+        else if (callMethod) callArgs = callMethod->params();
+        for (auto&& a : callArgs){
+            auto res = analyseInOutAndNoValCall_(args, a, false, false, false);
+            if (!res.empty()) {
+                return res;
+            }
+        }
+
+        // проверка аргументов вызовов или индексаций справа
+        auto r = dotOp->right();
+        if (r) {
+            auto res = 
+                analyseInOutAndNoValCall_(args, r, false, false, false);
+            if (!res.empty()) {
+                return res;
+            }
+        }
+
+    // проверка аргументов image
+    // проверка что не lhs
+    // проверка при noValue
+    } else if (auto img = std::dynamic_pointer_cast<node::ImageCallExpr>(expr)) {
+        if (lhs) {
+            return "Assigning rval to an expression";
+        }
+        if (noValue) {
+            return "Not a value expression is not a procedure call";
+        }
+        return analyseInOutAndNoValCall_(
+            args, img->param(), false, false, false);
     }
 
     return "";

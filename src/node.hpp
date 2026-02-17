@@ -771,6 +771,9 @@ public:
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
+public:
+    std::shared_ptr<VarDecl> var();
+
 private:
     std::shared_ptr<VarDecl> var_;
     std::shared_ptr<VarDecl> recordInst_; 
@@ -810,6 +813,9 @@ public:
     bool rhs() override;
     bool container() override;
 
+public:
+    std::shared_ptr<VarDecl> arr();
+
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
@@ -837,7 +843,10 @@ public:
 
 public:
     bool setNoValue();
-
+    const std::vector<std::shared_ptr<IExpr>>& params() const noexcept;
+    std::shared_ptr<ProcBody> proc();
+    std::shared_ptr<FuncBody> func();
+    
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
@@ -863,8 +872,12 @@ public:
     bool rhs() override;
     bool container() override;
 
-public:
+public:    
     bool setNoValue();
+    const std::vector<std::shared_ptr<IExpr>>& params() const noexcept;
+    std::shared_ptr<ProcBody> proc();
+    std::shared_ptr<FuncBody> func();
+
 
 public: // IExpr interface
     std::shared_ptr<IType> type() override;

@@ -193,6 +193,10 @@ private:
         std::shared_ptr<node::IExpr> right);
     std::string analyseOpExprErr_(std::shared_ptr<node::IExpr> expr);
     std::string analyseArgsExpr_(std::shared_ptr<node::IExpr> expr);
+    std::string analyseInOutAndNoValCall_(
+        const std::vector<std::shared_ptr<node::VarDecl>>& args, 
+        std::shared_ptr<node::IExpr> expr, bool lhs, bool noValue, 
+        bool first = true);
 };
 
 } // namespace semantics_part
