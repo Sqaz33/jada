@@ -1397,9 +1397,21 @@ std::string LinkExprs::analyse(
         const std::vector<
             std::shared_ptr<mdl::Module>>& program)     
 {
-
+    for (auto mod : program) {
+        auto unit = mod->unit().lock();
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+        auto res = analyseContainer_(space->unit());
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << res;
+            return ss.str();
+        }
+    }
+    return ISemanticsPart::analyseNext(program);
 }
-
 
 //  для assign:
 //      для правой части vardecl и assign нужно rval по итогу
@@ -1424,28 +1436,227 @@ std::string LinkExprs::analyse(
  * 3. Линковка операций
  * 4. Линковка выражений
 */
-std::string analyseContainer_(std::shared_ptr<node::IDecl> decl) {
+std::string LinkExprs::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
+    std::vector<std::shared_ptr<node::VarDecl>> args;
     std::shared_ptr<node::Body> body;
-}
+    std::shared_ptr<node::DeclArea> decls;
 
-std::string LinkExprs::analyseVarDecl_(std::shared_ptr<node::VarDecl> var) {
-    auto rhs = var->rval();
-    if (!rhs) {
+    if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(decl)) {
+        args = proc->params();
+        body = proc->body();
+        decls = proc->decls();
+    } else if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
+        decls = pack->decls();
+    } else if (auto record = std::dynamic_pointer_cast<node::RecordDecl>(decl)) {
+        decls = record->decls();
+    } else {
         return "";
     }
 
-    if (rhs) {
-        auto argsErr = analyseArgsExpr_(rhs);
-        if (!argsErr.empty()) {
-            return argsErr;
+    if (body) {
+        auto res = analyseBody_(body, decls, args);
+        if (!res.empty()) {
+            return res;
         }
-        auto op = std::dynamic_pointer_cast<node::Op>(rhs);
-        attribute::QualifiedName _;
-        auto [err, newRhs] = op ? analyseOp_(op) : analyseExpr_(rhs, _);
+    }
+
+
+    for (auto&& d : *decls) {
+        if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
+            auto rhs = var->rval();
+            if (rhs) {
+                // анализ dot op
+                auto op = std::dynamic_pointer_cast<node::Op>(rhs);
+                if (op) {
+                    auto opErr = analyseOpExprErr_(op);
+                    if (!opErr.empty()) {
+                        return opErr;
+                    }
+                }
+
+                // линковка аргументов вызовов
+                auto argsErr = analyseArgsExpr_(rhs);
+                if (!argsErr.empty()) {
+                    return argsErr;
+                }
+
+                // линковка
+                attribute::QualifiedName _;
+                auto [exprErr, newRhs] = op ? analyseOp_(op) : analyseExpr_(rhs, _);
+                if (!exprErr.empty()) {
+                    return exprErr;
+                }
+
+                // анализ in/out и rhs/lhs/novalue
+                auto inOutValErr = 
+                    analyseInOutRvalLvalNoVal(args, newRhs, false, false);
+                if (!inOutValErr.empty()) {
+                    return inOutValErr;
+                }
+                
+                var->setRval(newRhs);
+            }
+        } else {
+            auto res = analyseContainer_(d);
+            if (!res.empty()) {
+                return res;
+            }
+        }
+    }
+
+    return "";
+
+}
+
+std::string LinkExprs::analyseBody_(
+    std::shared_ptr<node::Body> body, 
+    std::shared_ptr<node::DeclArea> parDecls,
+    const std::vector<std::shared_ptr<node::VarDecl>>& args)
+{
+    if (!body) {
+        return "";
+    }
+
+    std::string err;
+    auto getRes = [this, &args, &err] 
+    (std::shared_ptr<node::IExpr> expr, bool lhs, bool noVal) -> std::shared_ptr<node::IExpr> {
+        // проверка dot op
+        auto op = std::dynamic_pointer_cast<node::Op>(expr);
+        if (op) {
+            err = analyseOpExprErr_(op);
+            if (!err.empty()) {
+                return nullptr;
+            }
+        }
+
+        // линковка аргументов вызовов
+        auto err = analyseArgsExpr_(expr);
         if (!err.empty()) {
-            return err;
+            return nullptr;
         }
-        var->setRval(newRhs);
+
+        // линковка
+        attribute::QualifiedName _;
+        std::shared_ptr<node::IExpr> newExpr;
+        std::tie(err, newExpr) = op ? analyseOp_(op) : analyseExpr_(expr, _);
+        if (!err.empty()) {
+            return nullptr;
+        }
+
+        // анализ in/out и rhs/lhs/novalue
+        err = analyseInOutRvalLvalNoVal(args, newExpr, lhs, noVal);
+        if (!err.empty()) {
+            return nullptr;
+        }
+
+        return newExpr;
+    };
+    // анализ статементов
+    for (auto&& stm : *body) {  
+        if (auto if_ = std::dynamic_pointer_cast<node::If>(stm)) {
+            auto newCond = getRes(if_->cond(), false, false);
+            if (!err.empty()) {
+                return err;
+            }
+            if_->setCond(newCond);
+
+            auto res = analyseBody_(if_->body(), parDecls, args);
+            if (!res.empty()) {
+                return res;
+            }
+
+            auto elseRes = analyseBody_(if_->bodyElse(), parDecls, args);
+            if (!elseRes.empty()) {
+                return elseRes;
+            }
+
+            for (auto&& [cond, body] : if_->elsifs()) {
+                auto newCond = getRes(cond, false, false);
+                if (!err.empty()) {
+                    return err;
+                }
+                cond = newCond;
+
+                auto res = analyseBody_(body, parDecls, args);
+                if (!res.empty()) { 
+                    return res;
+                }
+            }
+        } else if (auto while_ = std::dynamic_pointer_cast<node::While>(stm)) {
+            auto newCond = getRes(while_->cond(), false, false);
+            if (!err.empty()) {
+                return err;
+            }
+
+            while_->setCond(newCond);
+
+            auto res = analyseBody_(while_->body(), parDecls, args);
+            if (!res.empty()) {
+                return res;
+            }
+        } else if (auto for_ = std::dynamic_pointer_cast<node::For>(stm)) {
+            auto intTy = 
+                std::make_shared<node::SimpleLiteralType>(node::SimpleType::INTEGER);
+            auto var = std::make_shared<node::VarDecl>(for_->init(), intTy);
+            parDecls->addDeclToFront(var);
+
+            auto [expr1, expr2] = for_->range();
+
+            auto newExrp1 = getRes(expr1, false, false);
+            if (!err.empty()) {
+                return err;
+            }
+
+            auto newExrp2 = getRes(expr2, false, false);
+            if (!err.empty()) {
+                return err;
+            }
+            
+            parDecls->removeDecl(var);
+            for_->setRange({newExrp1, newExrp2});
+            var->setRval(newExrp1);
+            for_->setIter(var);
+
+            auto res = analyseBody_(for_->body(), parDecls, args);
+            if (!res.empty()) {
+                return res;
+            }
+        } else if (auto asg = std::dynamic_pointer_cast<node::Assign>(stm)) {
+            auto newLval = getRes(asg->lval(), true, false);
+            if (!err.empty()) {
+                return err;
+            }
+            asg->setLval(newLval);
+
+            auto newRval = getRes(asg->rval(), false, false);
+            if (!err.empty()) {
+                return err;
+            }
+            asg->setRval(newRval);
+        } else if (auto ret = std::dynamic_pointer_cast<node::Return>(stm)) {
+            auto retVal = ret->retVal();
+            if (retVal) {
+                auto newRetVAl = getRes(retVal, false, false);
+                if (!err.empty()) {
+                    return err;
+                }
+                ret->setRetVal(newRetVAl);
+            }
+        } else if (auto call = std::dynamic_pointer_cast<node::MBCall>(stm)) {
+            auto newCall = getRes(call->call(), false, true);
+            if (!err.empty()) {
+                return err;
+            }
+            call->setCall(newCall);
+            auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(newCall);
+            auto tail = dotOp->tail();
+            
+            if (auto tailCall = std::dynamic_pointer_cast<node::CallExpr>(tail)) {
+                tailCall->setNoValue();
+            } else {
+                std::dynamic_pointer_cast<node::CallMethodExpr>(tail)->setNoValue();
+            }
+        }
     }
 
     return "";
@@ -1708,7 +1919,20 @@ LinkExprs::analyseExpr_(
 
 
             for (int i = 0; i < args.size(); ++i) {
-                if (!argsTypes[i]->compare(subpArgsTypes[i])) {
+                auto&& subpArg = subpArgsTypes[i];
+                auto&& argsType = argsTypes[i];
+                std::shared_ptr<node::SuperclassReference> ref;
+                std::shared_ptr<node::RecordDecl> rec;
+                if ((ref = std::dynamic_pointer_cast<node::SuperclassReference>(subp)) &&
+                    (rec = std::dynamic_pointer_cast<node::RecordDecl>(argsType)))
+                {
+                    auto cls = rec->cls().lock();
+                    if (cls && cls->isDerivedOf(ref->cls())) {
+                        continue;
+                    } 
+                }
+
+                if (!argsType->compare(subpArg)) {
                     return false;
                 }
             } 
@@ -1817,14 +2041,16 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
             }
             attribute::QualifiedName _;
 
-            auto [err, newArg] = o ? analyseOp_(o) : analyseExpr_(a, _); 
-            if (!err.empty()) {
-                return err;
-            } 
             auto err2 = analyseArgsExpr_(a);
             if (!err2.empty()) {
                 return err2;
             }
+            
+            auto [err, newArg] = o ? analyseOp_(o) : analyseExpr_(a, _); 
+            if (!err.empty()) {
+                return err;
+            } 
+
             a = newArg;
         }
     } else if (auto op = std::dynamic_pointer_cast<node::Op>(expr)) {
@@ -1842,25 +2068,21 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
 // a.b = x; или a.b = f(x); (CE, если x не in)
 // lhs - где находиться выражение в assign
 // noValue - только для первого по влож. вызова
-std::string LinkExprs::analyseInOutAndNoValCall_(
+std::string LinkExprs::analyseInOutRvalLvalNoVal(
     const std::vector<std::shared_ptr<node::VarDecl>>& args, 
     std::shared_ptr<node::IExpr> expr, bool lhs, bool noValue,  
     bool first
 )
 {       
-    if (args.empty()) {
-        return "";
-    }
-
     std::shared_ptr<node::Op> op;
     if ((op = std::dynamic_pointer_cast<node::Op>(expr))) 
     {
-        auto res = analyseInOutAndNoValCall_(args, op->left(), lhs, noValue, false);
+        auto res = analyseInOutRvalLvalNoVal(args, op->left(), lhs, noValue, false);
         if (!res.empty()) {
             return res;
         }
 
-        return analyseInOutAndNoValCall_(args, op->right(), lhs, noValue, false);
+        return analyseInOutRvalLvalNoVal(args, op->right(), lhs, noValue, false);
     } 
 
     if (auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(expr)) {
@@ -1905,7 +2127,6 @@ std::string LinkExprs::analyseInOutAndNoValCall_(
                     return "Assigning rval to an expression";
                 }
             }
-
         }
 
         // проверка аргументов вызова или индексации
@@ -1913,7 +2134,7 @@ std::string LinkExprs::analyseInOutAndNoValCall_(
         if (call) callArgs = call->params();
         else if (callMethod) callArgs = callMethod->params();
         for (auto&& a : callArgs){
-            auto res = analyseInOutAndNoValCall_(args, a, false, false, false);
+            auto res = analyseInOutRvalLvalNoVal(args, a, false, false, false);
             if (!res.empty()) {
                 return res;
             }
@@ -1923,7 +2144,7 @@ std::string LinkExprs::analyseInOutAndNoValCall_(
         auto r = dotOp->right();
         if (r) {
             auto res = 
-                analyseInOutAndNoValCall_(args, r, false, false, false);
+                analyseInOutRvalLvalNoVal(args, r, false, false, false);
             if (!res.empty()) {
                 return res;
             }
@@ -1939,7 +2160,7 @@ std::string LinkExprs::analyseInOutAndNoValCall_(
         if (noValue) {
             return "Not a value expression is not a procedure call";
         }
-        return analyseInOutAndNoValCall_(
+        return analyseInOutRvalLvalNoVal(
             args, img->param(), false, false, false);
     }
 

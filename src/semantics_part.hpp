@@ -180,20 +180,28 @@ public:
 
 private:
     std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
-
-    std::string analyseVarDecl_(std::shared_ptr<node::VarDecl> var);
     
+    std::string analyseBody_(
+        std::shared_ptr<node::Body> body, 
+        std::shared_ptr<node::DeclArea> parDecls,
+        const std::vector<std::shared_ptr<node::VarDecl>>& args = {}); 
+
     std::pair<std::string, std::shared_ptr<node::IExpr>> 
     analyseExpr_(std::shared_ptr<node::IExpr> expr, 
-                 attribute::QualifiedName& base);
+                 attribute::QualifiedName& base); // * 3
+
     std::pair<std::string, std::shared_ptr<node::IExpr>> 
-    analyseOp_(std::shared_ptr<node::Op> op);
+    analyseOp_(std::shared_ptr<node::Op> op); // * 3 
+
     std::string analyseRecord_(
         std::shared_ptr<node::DotOpExpr> left, 
         std::shared_ptr<node::IExpr> right);
-    std::string analyseOpExprErr_(std::shared_ptr<node::IExpr> expr);
-    std::string analyseArgsExpr_(std::shared_ptr<node::IExpr> expr);
-    std::string analyseInOutAndNoValCall_(
+
+    std::string analyseOpExprErr_(std::shared_ptr<node::IExpr> expr); // * 1
+
+    std::string analyseArgsExpr_(std::shared_ptr<node::IExpr> expr); // * 2
+
+    std::string analyseInOutRvalLvalNoVal( // * 4
         const std::vector<std::shared_ptr<node::VarDecl>>& args, 
         std::shared_ptr<node::IExpr> expr, bool lhs, bool noValue, 
         bool first = true);

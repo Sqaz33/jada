@@ -95,6 +95,13 @@ void DeclArea::addDecl(std::shared_ptr<IDecl> decl) {
     decl->setParent(parent_);
 }
 
+void DeclArea::removeDecl(std::shared_ptr<IDecl> decl) {
+    auto it = std::find(decls_.begin(), decls_.end(), decl);
+    if (it != decls_.end()) {
+        decls_.erase(it);
+    }
+}
+
 void DeclArea::replaceDecl(
     const std::string& name, 
     std::shared_ptr<IDecl> decl) 
@@ -217,6 +224,10 @@ std::shared_ptr<DeclArea> ProcBody::decls() {
 const std::vector<std::shared_ptr<VarDecl>>& 
 ProcBody::params() const noexcept {
     return params_;
+}
+
+std::shared_ptr<node::Body> ProcBody::body() {
+    return body_;
 }
 
 void ProcBody::reachable_(
@@ -1349,6 +1360,14 @@ void MBCall::setParent(INode* parent) {
     call_->setParent(parent);
 }
 
+std::shared_ptr<IExpr> MBCall::call() {
+    return call_;
+}
+
+void MBCall::setCall(std::shared_ptr<IExpr> expr) {
+    call_ = expr;
+}
+
 } // namespace node 
 
 // Typeinfo - Other
@@ -1401,6 +1420,21 @@ void Assign::setParent(INode* parent) {
     rval_->setParent(parent);
 }
 
+std::shared_ptr<IExpr> Assign::lval() {
+    return lval_;
+}
+
+void Assign::setLval(std::shared_ptr<IExpr> lval) {
+    lval_ = lval;
+}
+
+std::shared_ptr<IExpr> Assign::rval() {
+    return rval_;
+}
+
+void Assign::setRval(std::shared_ptr<IExpr> rval) {
+    rval_ = rval;
+}
 
 // Return 
 Return::Return(std::shared_ptr<IExpr> retVal) : 

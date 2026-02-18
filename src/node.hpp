@@ -162,7 +162,11 @@ private:
 namespace node { 
 class DeclArea : public INode {
 public:
+    void addDeclToFront(std::shared_ptr<IDecl> decl) {
+        decls_.insert(decls_.begin(), decl);
+    }
     void addDecl(std::shared_ptr<IDecl> decl);
+    void removeDecl(std::shared_ptr<IDecl> decl);
 
     void replaceDecl(
         const std::string& name, 
@@ -247,6 +251,7 @@ public: // IDecl interface
 public:
     std::shared_ptr<DeclArea> decls();
     const std::vector<std::shared_ptr<VarDecl>>& params() const noexcept;
+    std::shared_ptr<node::Body> body();
 
 private:
     void printParam_(const std::shared_ptr<VarDecl> param, 
@@ -1103,9 +1108,11 @@ private:
 
 public:
     auto cond() { return cond_; }
+    void setCond(std::shared_ptr<IExpr> cond) { cond_ = cond; }
     auto body() { return body_; }
     auto bodyElse() { return els_; }
-    auto elsifs() { return elsifs_; } 
+    decltype(auto) elsifs() { return elsifs_; } 
+    
 
 private:
     std::shared_ptr<IExpr> cond_;
@@ -1130,11 +1137,21 @@ public: // INode interface
 
 public:
     auto init() { return init_; }
+    void setIter(std::shared_ptr<VarDecl> iter) {
+        iter_ = iter;
+    }
     auto range() { return range_; }
+    void setRange(
+        std::pair<std::shared_ptr<IExpr>, 
+                 std::shared_ptr<IExpr>> range) 
+    {
+        range_ = range;
+    }
     auto body() { return body_; }
 
 private:
     std::string init_;
+    std::shared_ptr<VarDecl> iter_;
     std::pair<std::shared_ptr<IExpr>,
                  std::shared_ptr<IExpr>> range_; 
     std::shared_ptr<Body> body_;
@@ -1153,6 +1170,9 @@ public: // INode interface
 
 public:
     auto cond() { return cond_; }
+    void setCond(std::shared_ptr<IExpr> cond) {
+        cond_ = cond;
+    }
     auto body() { return body_; }
 
 private:
@@ -1208,8 +1228,10 @@ public: // INode interface
     void setParent(INode* parent) override;
 
 public:
-    auto lval() { return lval_; }
-    auto rval() { return rval_; }
+    std::shared_ptr<IExpr> lval();
+    void setLval(std::shared_ptr<IExpr> lval);
+    std::shared_ptr<IExpr> rval();
+    void setRval(std::shared_ptr<IExpr> rval);
 
 private:
     std::shared_ptr<IExpr> lval_;
@@ -1227,7 +1249,8 @@ public:
     void setParent(INode* parent) override;
 
 public:
-    auto call() { return call_; }
+    std::shared_ptr<IExpr> call();
+    void setCall(std::shared_ptr<IExpr> expr);
 
 private:
     std::shared_ptr<IExpr> call_;
@@ -1245,6 +1268,9 @@ public: // INode interface
 
 public:
     auto retVal() { return retVal_; }
+    void setRetVal(std::shared_ptr<IExpr> ret) {
+        retVal_ = ret;
+    }
 
 private:
     std::shared_ptr<IExpr> retVal_;
