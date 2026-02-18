@@ -146,7 +146,6 @@ VarDecl::VarDecl(const std::string& name,
     type_->setParent(this);
     if (rval_) {
         rval_->setParent(this);
-        rval->setVarDecl(this);
     }
 }
 

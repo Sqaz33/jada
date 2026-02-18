@@ -5,12 +5,12 @@ procedure Main is
    Y: Integer := 1;
    X: Integer := Y;
 
-   procedure proc(V: Integer) is
-      x: Integer;
-      Y: Integer := 1;
-   begin
-      X := Y;
-   end proc;
+--   procedure proc(V: Integer) is
+--      x: Integer;
+--      Y: Integer := 1;
+--   begin
+--      X := Y;
+--   end proc;
 
 begin
 -- proc(1);

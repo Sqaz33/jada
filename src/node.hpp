@@ -205,6 +205,12 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO
+    void setParent(INode* parent) override {
+        INode::setParent(parent);
+        if (rval_) {
+            rval_->setParent(parent);
+        }
+    }
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
