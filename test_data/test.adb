@@ -6,10 +6,13 @@ procedure Main is
    X: Integer := Y;
 
    procedure proc(V: Integer) is
+      x: Integer;
+      Y: Integer := 1;
    begin
-      X := V;
+      X := Y;
    end proc;
 
 begin
-   proc(1);
+-- proc(1);
+   X := 1;
 end Main;

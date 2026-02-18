@@ -199,7 +199,11 @@ pack_decl_decl:   var_decl
                 | type_decl
 
 
-var_decl:         NAME COLON type ASG expr SC                           { $$.reset(new node::VarDecl($1, $3, $5)); }
+var_decl:         NAME COLON type ASG expr SC                           { 
+                                                                          auto var = new node::VarDecl($1, $3, $5);
+                                                                          $$.reset(var); 
+                                                                          $5->setVarDecl(var);
+                                                                        }
                 | NAME COLON type SC                                    { $$.reset(new node::VarDecl($1, $3)); }
 
 qualified_name:   NAME                                                  { $$ = attribute::QualifiedName($1); } 

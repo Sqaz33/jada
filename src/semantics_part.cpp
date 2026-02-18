@@ -1885,6 +1885,14 @@ LinkExprs::analyseExpr_(
         if (r.front().size() == 1) {
             auto&& d = r.front()[0];
             if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
+                auto procPar = dynamic_cast<node::ProcBody*>(var->parent());
+                auto curProc = dynamic_cast<node::ProcBody*>(expr->parent());
+                if (procPar && curProc != procPar) {
+                    return {
+                        "In this implementation, you cannot" 
+                        " take variables from the " 
+                        " external subprogram scope: " + base.toString('.'), nullptr};
+                }
                 if (std::dynamic_pointer_cast<node::AggregateType>(var->type())
                     || std::dynamic_pointer_cast<node::StringType>(var->type())) 
                 {
