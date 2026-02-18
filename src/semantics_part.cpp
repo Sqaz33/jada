@@ -1519,7 +1519,9 @@ std::string LinkExprs::analyseBody_(
 
     std::string err;
     auto getRes = [this, &args, &err] 
-    (std::shared_ptr<node::IExpr> expr, bool lhs, bool noVal) -> std::shared_ptr<node::IExpr> {
+    (std::shared_ptr<node::IExpr> expr, bool lhs, bool noVal) mutable 
+        -> std::shared_ptr<node::IExpr> 
+    {
         // проверка dot op
         auto op = std::dynamic_pointer_cast<node::Op>(expr);
         if (op) {
@@ -1530,7 +1532,7 @@ std::string LinkExprs::analyseBody_(
         }
 
         // линковка аргументов вызовов
-        auto err = analyseArgsExpr_(expr);
+        err = analyseArgsExpr_(expr);
         if (!err.empty()) {
             return nullptr;
         }
@@ -1757,7 +1759,7 @@ std::string LinkExprs::analyseRecord_(
         return "Incorrect use of a qualifying name";
     }
     
-    auto record = std::dynamic_pointer_cast<node::RecordDecl>(tail->type());
+    auto record = std::dynamic_pointer_cast<node::RecordDecl>(tail->type()); // TODO: мб тут ошибка
     std::string name;
     std::vector<std::shared_ptr<node::IExpr>> args({tail});
     if (auto nameExpr = std::dynamic_pointer_cast<node::NameExpr>(right)) {
@@ -1773,8 +1775,8 @@ std::string LinkExprs::analyseRecord_(
 
     std::shared_ptr<node::VarDecl> varCandidate;
     auto&& decls = record->decls();
-    auto it = std::find(decls->begin(), decls->end(), 
-            [](auto&& v) { return v->name() == nameExpr->name(); } );
+    auto it = std::find_if(decls->begin(), decls->end(), 
+            [&name](auto&& v) { return v->name() == name; } );
     if (it != decls->end()) {
         varCandidate = std::dynamic_pointer_cast<node::VarDecl>(*it);
     }
@@ -1852,8 +1854,9 @@ LinkExprs::analyseExpr_(
                             " this implementation" 
                             + attr->attr().right(), 
                             nullptr};
-                } 
-                return {"", std::make_shared<node::ImageCallExpr>(callExpr->args()[0], type)};
+                }
+                auto litType = std::make_shared<node::SimpleLiteralType>(type); 
+                return {"", std::make_shared<node::ImageCallExpr>(callExpr->args()[0], litType)};
             } else {
                 return {"Unknown argument type for image", nullptr};
             }
@@ -1872,6 +1875,13 @@ LinkExprs::analyseExpr_(
         std::shared_ptr<node::FuncBody> func;
         std::shared_ptr<node::ProcBody> proc;
 
+        if (r.empty()) {
+            std::stringstream ss;
+            ss << "An unresolved name in an expression ";
+            ss << base.toString('.');
+            return {ss.str(), nullptr};
+        }
+
         if (r.front().size() == 1) {
             auto&& d = r.front()[0];
             if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
@@ -1883,7 +1893,7 @@ LinkExprs::analyseExpr_(
                         res += base.toString('.') + var->name();
                         return {res, nullptr};
                     }
-                    return {"", std::make_shared<node::GetArrElementExpr>(var, args)};
+                    return {"", std::make_shared<node::GetArrElementExpr>(nullptr, var, args)};
                 }
                 if (!args.empty()) {
                     std::string res = "The call is not a subprogram ";
@@ -2110,7 +2120,9 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal(
             idx = std::dynamic_pointer_cast<node::GetArrElementExpr>(tail);
             // проверка на noValue (должны быть колы с процедурами)
             if (noValue) {
-                if (!((call && !call->proc()) || (callMethod && !callMethod->proc()))) {
+                auto callProc = call ? call->proc() : nullptr; 
+                auto callMethodProc = callMethod ? callMethod->proc() : nullptr;
+                if (!callProc && !callMethodProc) {
                     return "Not a value expression is not a procedure call";  
                 } 
             } else {

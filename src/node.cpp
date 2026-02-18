@@ -935,7 +935,7 @@ GetVarExpr::GetVarExpr(
     std::shared_ptr<VarDecl> var, 
     std::shared_ptr<VarDecl> recordInst):
     var_(var)
-    , recordInst_(recordInst_)
+    , recordInst_(recordInst)
     , container_(std::dynamic_pointer_cast<RecordDecl>(var_->type()))
     , lhs_(var->out())
     , rhs_(var->in())
@@ -1196,7 +1196,7 @@ std::shared_ptr<IType> CallMethodExpr::type() {
 // ImageCallExpr
 ImageCallExpr::ImageCallExpr(        
     std::shared_ptr<IExpr> param, 
-    SimpleLiteralType imageType
+    std::shared_ptr<SimpleLiteralType> imageType
 ) :
     param_(param)
     , imageType_(imageType)
@@ -1211,10 +1211,16 @@ std::shared_ptr<IType> ImageCallExpr::type() {
 
 std::shared_ptr<IExpr> ImageCallExpr::param() {
     return param_;
-
 }
-SimpleLiteralType ImageCallExpr::imageType() {
+
+std::shared_ptr<SimpleLiteralType> ImageCallExpr::imageType() {
     return imageType_;
+}
+
+bool ImageCallExpr::compareTypes(
+    const std::shared_ptr<IType> rhs) 
+{
+    return stringType_->compare(rhs);
 }
 
 // NameExpr
@@ -1529,15 +1535,15 @@ std::shared_ptr<ProcBody> ClassDecl::containsMethod(
 }
 
 std::shared_ptr<ProcBody> ClassDecl::proc(const std::string& name) {
-    auto it = std::find(procs_.begin(), procs_.end(), 
-    [&name] (auto&& p) { return p.lock()->name() == name});
+    auto it = std::find_if(procs_.begin(), procs_.end(), 
+    [&name] (auto&& p) { return p.lock()->name() == name;} );
     
     return it == procs_.end() ? nullptr : it->lock();
 }  
 
 std::shared_ptr<FuncBody> ClassDecl::func(const std::string& name) {
-    auto it = std::find(funcs_.begin(), funcs_.end(), 
-    [&name] (auto&& p) { return p.lock()->name() == name});
+    auto it = std::find_if(funcs_.begin(), funcs_.end(), 
+    [&name] (auto&& p) { return p.lock()->name() == name;});
     
     return it == funcs_.end() ? nullptr : it->lock();
 }

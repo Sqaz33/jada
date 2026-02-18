@@ -111,6 +111,7 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::CreateClassDeclaration>();
     auto OCSC = // проверка на наличие только одного типа ооп класса в параметрах подпрогр. 
         std::make_shared<semantics_part::OneClassInSubprogramCheck>();
+    auto LE = std::make_shared<semantics_part::LinkExprs>();
 
     sem.addPart(EPC);
     sem.addPart(MNC);
@@ -127,6 +128,7 @@ int semanticAnalysis() {
     sem.addPart(SBDL);
     sem.addPart(CCD);
     sem.addPart(OCSC);
+    sem.addPart(LE);
 
     auto[ok, msg] = sem.analyse(helper::modules);
     if (!ok) {
@@ -172,7 +174,7 @@ int main(int argc, char** argv) { // try {
         argv = new char*[2]; // TODO: delete
         // argv[1] = "../test_data/complex.adb"; // TODO: delete
         // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
-        argv[1] = "../test_data/semantics/type_replace_check.adb";
+        // argv[1] = "../test_data/semantics/type_replace_check.adb";
         // argv[1] = "../test_data/semantics/proc_func_overload.adb";
         // argv[1] = "../test_data/semantics/record_inherits.adb";
         // argv[1] = "../test_data/semantics/circular/main.adb";
@@ -184,6 +186,7 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
+        argv[1] = "/mnt/d/jada/test_data/test.adb";
     }
     
     if (argc < 2) {
@@ -208,7 +211,7 @@ int main(int argc, char** argv) { // try {
         return 1;
     }
         // TODO: delete
-    if (true || 3 == argc && 
+    if (/* true || */ 3 == argc && 
         std::string("--pAst-before-semantics") == argv[2]) 
     {
         printAst();

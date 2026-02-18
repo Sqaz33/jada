@@ -727,9 +727,13 @@ private:
 };
 /////////////////////////////////////////////////////////////////////////////
 class DotOpExpr : public IExpr {
-    void* codegen() override { return nullptr; } // TODO
+public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override { assert(false); }
+                        graphviz::VertexType par) const 
+    { assert(false); }
+    void* codegen() 
+    { assert(false); return nullptr;}
+
 public:
     void setLeft(std::shared_ptr<DotOpExpr> l);
     void setRight(std::shared_ptr<DotOpExpr> r);
@@ -883,7 +887,6 @@ public:
     std::shared_ptr<ProcBody> proc();
     std::shared_ptr<FuncBody> func();
 
-
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
@@ -900,17 +903,26 @@ class ImageCallExpr : public IExpr {
 public:
     ImageCallExpr(
         std::shared_ptr<IExpr> param, 
-        SimpleLiteralType imageType);
+        std::shared_ptr<SimpleLiteralType> imageType);
+
+public: // INode interface
+    void print(graphviz::GraphViz& gv, 
+                        graphviz::VertexType par) const 
+    { assert(false); }
+    void* codegen() 
+    { assert(false); return nullptr;}
 
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
+    bool compareTypes(
+        const std::shared_ptr<IType> rhs) override;
 
 public:
     std::shared_ptr<IExpr> param();
-    SimpleLiteralType imageType();
+    std::shared_ptr<SimpleLiteralType> imageType();
 
 private:
-    SimpleLiteralType imageType_;
+    std::shared_ptr<SimpleLiteralType> imageType_;
     std::shared_ptr<IExpr> param_;
     std::shared_ptr<StringType> stringType_;
 };
