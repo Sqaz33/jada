@@ -31,7 +31,8 @@ bool parseProgram(std::filesystem::path path) {
         std::string mdl = modulesForPars.front();
         modulesForPars.pop();
         utility::toLower(mdl);
-        
+
+        bool anyOpened = false;
         path.replace_filename(mdl + ".adb");
         curModuleFileExtension = "adb";
         std::ifstream ifs(path, std::ios::in);
@@ -41,33 +42,36 @@ bool parseProgram(std::filesystem::path path) {
             yyFlexLexer lexer(&ifs);
             yy::parser p(&lexer);
             // p.set_debug_level(1);
+            anyOpened = true;
             if(p.parse()) {
                 return false;
             }
-        } else {
-            path.replace_filename(mdl + ".ads");
-            std::ifstream ifs2(path, std::ios::in);
-            curModuleFileExtension = "ads";
-            if (ifs2.is_open()) {
-                curModuleName = mdl;
-                curModuleFileName = path;
-                yyFlexLexer lexer(&ifs2);
-                yy::parser p(&lexer);
-                // p.set_debug_level(1);
-                if(p.parse()) {
-                    return false;
-                }
-            } else {
-                std::stringstream ss;
-                ss << "Can`t open file ";
-                ss << path << "or .adb"; 
-                ss << " or file doesn't exist";
-                throw std::runtime_error(ss.str());
+        } 
+
+        path.replace_filename(mdl + ".ads");
+        std::ifstream ifs2(path, std::ios::in);
+        curModuleFileExtension = "ads";
+        if (ifs2.is_open()) {
+            curModuleName = mdl;
+            curModuleFileName = path;
+            yyFlexLexer lexer(&ifs2);
+            yy::parser p(&lexer);
+            // p.set_debug_level(1);
+            anyOpened = true;
+            if(p.parse()) {
+                return false;
             }
         }
-        
 
+        if (!anyOpened) {
+            std::stringstream ss;
+            ss << "Can`t open file ";
+            ss << path << "or .adb"; 
+            ss << " or file doesn't exist";
+            throw std::runtime_error(ss.str());
+        }
     }
+
     return true;
 }
 
@@ -189,7 +193,8 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
-        argv[1] = "/mnt/d/jada/test_data/test.adb";
+        // argv[1] = "/mnt/d/jada/test_data/test.adb";
+        argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
     }
     
     if (argc < 2) {

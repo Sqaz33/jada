@@ -529,7 +529,9 @@ std::string PackBodyNDeclLinking::analyseProgram_(
         auto space = std::dynamic_pointer_cast<node::GlobalSpace>(mod->unit().lock());
         assert(space && "No space in mod");
         auto unit = space->unit();
-        if (auto packDecl = std::dynamic_pointer_cast<node::PackDecl>(unit)) {
+        auto packDecl = std::dynamic_pointer_cast<node::PackDecl>(unit);
+        auto packBody = std::dynamic_pointer_cast<node::PackBody>(unit);
+        if (packDecl && !packBody) {
             analysePackDecl(packDecl, map, space->name());
         }
     }
@@ -2119,7 +2121,7 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal_(
             return "Assignment of an lvalue to a value";
         }
     }
-    
+
     std::shared_ptr<node::Op> op;
     if ((op = std::dynamic_pointer_cast<node::Op>(expr))) 
     {
