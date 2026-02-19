@@ -2,13 +2,20 @@ with Ada.Text_IO;
 use Ada.Text_IO;
 
 procedure Main is
-    X: Integer;
+   X: Integer;
+
+   arr: array(1..3) of Integer;
 
    procedure proc(V: Integer) is
       x: Integer;
       Y: Integer := 1;
    begin
       X := Y;
+   end proc;
+
+   function proc(V: Integer) return Integer is -- no err with this
+   begin
+      return 1;
    end proc;
 
    type TyN is record
@@ -26,6 +33,10 @@ procedure Main is
    end pack;
 
 begin
-   proc(pack.pack.L2.Y.Z);
-   X := pack.pack.L2.Y.Z;
+   -- X := Integer'Image(1);
+   -- 1;
+   X := proc(1);
+   proc(proc(1)); -- err
+   -- arr(1) := 1;
+   -- X := pack.pack.L2.Y.Z;
 end Main;

@@ -1499,7 +1499,7 @@ std::string LinkExprs::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
 
                 // анализ in/out и rhs/lhs/novalue
                 auto inOutValErr = 
-                    analyseInOutRvalLvalNoVal(args, newRhs, false, false);
+                    analyseInOutRvalLvalNoVal_(args, newRhs, false, false);
                 if (!inOutValErr.empty()) {
                     return inOutValErr;
                 }
@@ -1556,7 +1556,7 @@ std::string LinkExprs::analyseBody_(
         }
 
         // анализ in/out и rhs/lhs/novalue
-        err = analyseInOutRvalLvalNoVal(args, newExpr, lhs, noVal);
+        err = analyseInOutRvalLvalNoVal_(args, newExpr, lhs, noVal);
         if (!err.empty()) {
             return nullptr;
         }
@@ -1903,7 +1903,7 @@ LinkExprs::analyseExpr_(
                         " take variables from the " 
                         " external subprogram scope: " + base.toString('.'), nullptr};
                 }
-                if (std::dynamic_pointer_cast<node::AggregateType>(var->type())
+                if (std::dynamic_pointer_cast<node::ArrayType>(var->type())
                     || std::dynamic_pointer_cast<node::StringType>(var->type())) 
                 {
                     if (args.empty()) {
@@ -2079,6 +2079,11 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
                 return err;
             } 
 
+            auto rhsErr = analyseInOutRvalLvalNoVal_({}, newArg, false, false);
+            if (!rhsErr.empty()) {
+                return rhsErr;
+            }
+
             a = newArg;
         }
     } else if (auto op = std::dynamic_pointer_cast<node::Op>(expr)) {
@@ -2096,7 +2101,7 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
 // a.b = x; или a.b = f(x); (CE, если x не in)
 // lhs - где находиться выражение в assign
 // noValue - только для первого по влож. вызова
-std::string LinkExprs::analyseInOutRvalLvalNoVal(
+std::string LinkExprs::analyseInOutRvalLvalNoVal_(
     const std::vector<std::shared_ptr<node::VarDecl>>& args, 
     std::shared_ptr<node::IExpr> expr, bool lhs, bool noValue,  
     bool first
@@ -2105,12 +2110,12 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal(
     std::shared_ptr<node::Op> op;
     if ((op = std::dynamic_pointer_cast<node::Op>(expr))) 
     {
-        auto res = analyseInOutRvalLvalNoVal(args, op->left(), lhs, noValue, false);
+        auto res = analyseInOutRvalLvalNoVal_(args, op->left(), lhs, noValue, false);
         if (!res.empty()) {
             return res;
         }
 
-        return analyseInOutRvalLvalNoVal(args, op->right(), lhs, noValue, false);
+        return analyseInOutRvalLvalNoVal_(args, op->right(), lhs, noValue, false);
     } 
 
     if (auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(expr)) {
@@ -2164,7 +2169,7 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal(
         if (call) callArgs = call->params();
         else if (callMethod) callArgs = callMethod->params();
         for (auto&& a : callArgs){
-            auto res = analyseInOutRvalLvalNoVal(args, a, false, false, false);
+            auto res = analyseInOutRvalLvalNoVal_(args, a, false, false, false);
             if (!res.empty()) {
                 return res;
             }
@@ -2174,7 +2179,7 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal(
         auto r = dotOp->right();
         if (r) {
             auto res = 
-                analyseInOutRvalLvalNoVal(args, r, false, false, false);
+                analyseInOutRvalLvalNoVal_(args, r, false, false, false);
             if (!res.empty()) {
                 return res;
             }
@@ -2190,8 +2195,10 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal(
         if (noValue) {
             return "Not a value expression is not a procedure call";
         }
-        return analyseInOutRvalLvalNoVal(
+        return analyseInOutRvalLvalNoVal_(
             args, img->param(), false, false, false);
+    } else if (noValue) { // проверка на експр как стм
+        return "Not a value expression is not a procedure call";  
     }
 
     return "";
