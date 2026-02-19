@@ -1265,6 +1265,7 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
     for (auto&& d : decls) {  
         if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(d)) {
             if (rec->isTagged() && rec->cls().expired()) {
+                std::shared_ptr<node::ClassDecl> baseClass;
                 if (rec->isInherits()) {
                     assert(!rec->base().expired());
                     auto base = rec->base().lock();
@@ -1274,12 +1275,12 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
                         if (!res.empty()) {
                             return res;
                         }
-                        auto baseClass = base->cls().lock();
-                        rec->cls().lock()->setBase(baseClass);
                     }
+                    baseClass = base->cls().lock();
                 }
                 classes.push_back(std::make_shared<node::ClassDecl>(rec));
                 rec->setClass(classes.back());
+                rec->cls().lock()->setBase(baseClass);
             }
         } else if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(d)) {
             bool isProc = !std::dynamic_pointer_cast<node::FuncBody>(proc);    
@@ -1773,8 +1774,10 @@ std::string LinkExprs::analyseRecord_(
     if (!tail->container()) {
         return "Incorrect use of a qualifying name";
     }
-    
-    auto record = std::dynamic_pointer_cast<node::RecordDecl>(tail->type()); // TODO: мб тут ошибка
+
+    auto ref = std::dynamic_pointer_cast<node::SuperclassReference>(tail->type());
+    auto record = ref ? ref->cls()->record() : 
+        std::dynamic_pointer_cast<node::RecordDecl>(tail->type());
     std::string name;
     tail->setNoAnalyse();
     std::vector<std::shared_ptr<node::IExpr>> args({tail});
@@ -1789,13 +1792,7 @@ std::string LinkExprs::analyseRecord_(
         args.insert(args.end(), exprArgs.begin(), exprArgs.end());
     }
 
-    std::shared_ptr<node::VarDecl> varCandidate;
-    auto&& decls = record->decls();
-    auto it = std::find_if(decls->begin(), decls->end(), 
-            [&name](auto&& v) { return v->name() == name; } );
-    if (it != decls->end()) {
-        varCandidate = std::dynamic_pointer_cast<node::VarDecl>(*it);
-    }
+    auto varCandidate = record->getVarDecl(name);
 
     std::vector<std::shared_ptr<node::IType>> argsTypes;
     std::transform(
@@ -1953,20 +1950,18 @@ LinkExprs::analyseExpr_(
 
 
             for (int i = 0; i < args.size(); ++i) {
-                auto&& subpArg = subpArgsTypes[i];
-                auto&& argsType = argsTypes[i];
-                std::shared_ptr<node::SuperclassReference> ref;
-                std::shared_ptr<node::RecordDecl> rec;
-                if ((ref = std::dynamic_pointer_cast<node::SuperclassReference>(subp)) &&
-                    (rec = std::dynamic_pointer_cast<node::RecordDecl>(argsType)))
-                {
+                auto&& subpArgType = subpArgsTypes[i];
+                auto&& argType = argsTypes[i];
+                auto ref = std::dynamic_pointer_cast<node::SuperclassReference>(subpArgType);
+                auto rec = std::dynamic_pointer_cast<node::RecordDecl>(argType);
+                if (ref && rec) {
                     auto cls = rec->cls().lock();
                     if (cls && cls->isDerivedOf(ref->cls())) {
                         continue;
                     } 
                 }
 
-                if (!argsType->compare(subpArg)) {
+                if (!argType->compare(subpArgType)) {
                     return false;
                 }
             } 

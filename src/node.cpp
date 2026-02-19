@@ -936,7 +936,8 @@ GetVarExpr::GetVarExpr(
     std::shared_ptr<VarDecl> recordInst):
     var_(var)
     , recordInst_(recordInst)
-    , container_(std::dynamic_pointer_cast<RecordDecl>(var_->type()))
+    , container_(std::dynamic_pointer_cast<RecordDecl>(var_->type()) || 
+                 std::dynamic_pointer_cast<SuperclassReference>(var_->type()))
     , lhs_(var->out())
     , rhs_(var->in())
 {}
@@ -1504,6 +1505,15 @@ std::shared_ptr<ProcBody> ClassDecl::containsMethod(
             return false;
         }
         for (std::size_t i = 0; i < params.size(); ++i) {
+            auto rec1 = std::dynamic_pointer_cast<RecordDecl>(procParams[i]->type());
+            auto cls1 = rec1 ? rec1->cls().lock() : nullptr;
+            auto rec2 = std::dynamic_pointer_cast<RecordDecl>(params[i]);
+            auto cls2 = rec2 ? rec2->cls().lock() : nullptr;
+            if (cls1 && cls2 && !cls2->isDerivedOf(cls1)) {
+                return false;
+            } else if (cls1 && cls2) {
+                continue;
+            }
             auto type = procParams[i]->type();
             if (!type->compare(params[i])) {
                 return false;

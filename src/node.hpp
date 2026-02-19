@@ -537,6 +537,21 @@ public:
     std::weak_ptr<ClassDecl> cls();
     void setClass(std::shared_ptr<ClassDecl> cls);
 
+    std::shared_ptr<node::VarDecl> 
+    getVarDecl(const std::string& name) {
+        auto it = std::find_if(decls_->begin(), decls_->end(), 
+            [&name](auto&& v) { return v->name() == name; } );
+        if (it == decls_->end()) {
+            if (auto base = baseRecord_.lock()) {
+                return base->getVarDecl(name);
+            } 
+        } else {
+            return std::dynamic_pointer_cast<node::VarDecl>(*it);
+        }
+
+        return nullptr;
+    }
+
 private:
     void reachable_(
         std::vector<
@@ -1338,6 +1353,8 @@ public:
     
     std::shared_ptr<ProcBody> proc(const std::string& name);
     std::shared_ptr<FuncBody> func(const std::string& name);
+
+    auto record() { return record_; }
         
 private:
     void reachable_(
