@@ -51,10 +51,10 @@ std::vector<std::shared_ptr<IStm>>::iterator Body::end() {
 }
 
 void Body::setParent(INode* parent)  {
+    INode::setParent(parent);
     for (auto& stm : stms_) {
         stm->setParent(parent);
     }
-    parent_ = parent;
 }
 
 } // namespace node 
@@ -787,7 +787,8 @@ Aggregate::Aggregate(const std::vector<std::shared_ptr<ILiteral>>& inits) :
         if (auto litTy = std::dynamic_pointer_cast<SimpleLiteral>(i)) {
             types.push_back(std::dynamic_pointer_cast<SimpleLiteralType>(litTy->type())->type());
         } else {
-            std::logic_error("In this implementation, aggregate" 
+            throw std::logic_error(
+                    "In this implementation, aggregate" 
                     " initialization by an aggregate" 
                     " consisting only of primitive" 
                     " type literals is available.");        

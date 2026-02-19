@@ -26,6 +26,6 @@ procedure Main is
    end pack;
 
 begin
--- proc(1);
+   proc(pack.pack.L2.Y.Z);
    X := pack.pack.L2.Y.Z;
 end Main;

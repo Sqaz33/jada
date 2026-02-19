@@ -992,6 +992,14 @@ public: // INode interface
                 graphviz::VertexType par) const override;
     void* codegen() override { return nullptr; } // TODO  
 
+    void setParent(INode* parent) override {
+        INode::setParent(parent);
+        for (auto&& p : args_) {
+            p->setParent(parent);
+        } 
+    }
+
+
 public: // IExpr interface
     bool compareTypes(const std::shared_ptr<IType> rhs) override 
     { assert(false); return false; }
