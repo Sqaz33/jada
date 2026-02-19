@@ -28,8 +28,8 @@ procedure Main is
    end record;
 
    package pack is
-      package pack is -- err here
-         L2: Integer := proc(1);
+      package pack is 
+         L2: Ty;
       end pack;
    end pack;
 
@@ -71,7 +71,7 @@ procedure Main is
    --  end proc2;
 
 begin 
-   X := Integer'Image(1);
+   --  X := Integer'Image(1);
    -- 1;
    --  X := proc(proc(1));
    -- proc(proc(1)); -- err

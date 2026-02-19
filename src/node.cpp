@@ -347,10 +347,10 @@ void PackDecl::reachable_(
 
     bool insert = false;
     for (auto decl : *decls_) {
-        if (decl->name() == *it || (requester && requester->parent() == this && *it == name_)) {
-            if (requester && requester->parent() == this && *it == name_) {
-                ++it;
-            }
+        if (decl->name() == *it /* || (requester && requester->parent() == this && *it == name_) */) {
+            // if (requester && requester->parent() == this && *it == name_) {
+            //     ++it;
+            // }
             if (std::distance(it, end) == 1) {
                 if (!insert) {
                     res.emplace_back();
