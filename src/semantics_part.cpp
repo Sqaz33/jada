@@ -362,7 +362,7 @@ std::string NameConflictCheck::analyseDecl_(
                     (!std::dynamic_pointer_cast<node::ProcBody>(d) || 
                      !std::dynamic_pointer_cast<node::ProcBody>(it->second)) &&
                 // проверку на боди и декл пака при совпадении имен 
-                    (
+                    !(
                         (std::dynamic_pointer_cast<node::PackDecl>(d) && 
                         !std::dynamic_pointer_cast<node::PackBody>(it->second) &&
                         std::dynamic_pointer_cast<node::PackDecl>(it->second) &&
@@ -597,7 +597,7 @@ TypeNameToRealType::analyseContainer_(
     else if (auto record
                 = std::dynamic_pointer_cast<node::RecordDecl>(decl))
     {
-        decls.insert(decls.end(), proc->decls()->begin(), proc->decls()->end());
+        decls.insert(decls.end(), record->decls()->begin(), record->decls()->end());
     }
     else if (auto pack =
                 std::dynamic_pointer_cast<node::PackDecl>(decl))
@@ -683,6 +683,10 @@ TypeNameToRealType::analyseDecl_(
     else if (auto record = 
                 std::dynamic_pointer_cast<node::RecordDecl>(decl)) 
     {
+        auto res = analyseContainer_(record);
+        if (!res.empty()) {
+            return res;
+        }
         return analyseRecord_(record);
     } 
     else if (func = std::dynamic_pointer_cast<node::FuncBody>(decl)) 
@@ -737,6 +741,12 @@ TypeNameToRealType::analyseDecl_(
                 if (record) alias->resetOrigin(record);
                 else if (als) alias->resetOrigin(als);
             } else if (var) {
+                if (record.get() == var->parent()) {
+                    return "A record-type variable is" 
+                           " nested within its own record-type: " 
+                            + typeName->name().toString('.');
+                }
+
                 if (record) var->resetType(record);
                 else if (als) var->resetType(als);
             } else if (func) {
@@ -1687,9 +1697,6 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
         if (!err.empty()) {
             return {err, nullptr};
         }
-        if (op->op() != node::OpType::DOT) {
-            name.clear();
-        }
         if (leftRes) {
             op->setLeft(leftRes);
             // обработка рекорда
@@ -1698,24 +1705,27 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
             if (leftDotOps){
                 tail = leftDotOps->tail();
             }
-            if (op->op() == node::OpType::DOT && 
-                tail->container() && 
+        }
+    } 
+
+    if (auto right = op->right()) {
+        auto leftDotOps = std::dynamic_pointer_cast<node::DotOpExpr>(leftRes);
+        if (leftDotOps && !leftDotOps->container()) {
+            std::string res = "Incorrect qualified name using: ";
+            res += name.toString('.');
+            return {res, nullptr};
+        } else if (leftDotOps) {
+            auto tail = leftDotOps->tail();
+            if (tail->container() && 
                 !std::dynamic_pointer_cast<node::PackNamePart>(tail)) 
             {
                 auto res = analyseRecord_(leftDotOps, op->right());
                 if (!res.empty()) {
                     return {res, nullptr};
                 }
+                name.clear();
+                return {"", leftDotOps};
             }  
-        }
-    } 
-    auto right = op->right();
-    if (right && !rightRes) {
-        auto leftDotOps = std::dynamic_pointer_cast<node::DotOpExpr>(leftRes);
-        if (leftDotOps && !leftDotOps->container()) {
-            std::string res = "Incorrect qualified name using: ";
-            res += name.toString('.');
-            return {res, nullptr};
         }
 
         std::string err;
@@ -1994,12 +2004,12 @@ LinkExprs::analyseExpr_(
 static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
     if (!leftOrRight) return "";
 
-    std::shared_ptr<node::Op> op;
+    std::shared_ptr<node::Op> op = std::dynamic_pointer_cast<node::Op>(leftOrRight);
     if (
         (!std::dynamic_pointer_cast<node::NameExpr>(leftOrRight) && 
-         !std::dynamic_pointer_cast<node::CallOrIdxExpr>(leftOrRight)) ||
-        ((op = std::dynamic_pointer_cast<node::Op>(leftOrRight)) && 
-          op->op() != node::OpType::DOT) 
+         !std::dynamic_pointer_cast<node::CallOrIdxExpr>(leftOrRight) &&
+         !op) ||
+         (op && op->op() != node::OpType::DOT) 
        ) 
     {
         return "Invalid operands for Dot Op";

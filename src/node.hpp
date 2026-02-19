@@ -760,9 +760,6 @@ public: // IExpr interface
 public:
     void setParent(INode* parent) override {
         parent_ = parent;
-        if (auto left = left_.lock()) {
-            left->setParent(parent_);
-        }
         if (right_) {
             right_->setParent(parent_);
         }

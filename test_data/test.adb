@@ -2,17 +2,30 @@ with Ada.Text_IO;
 use Ada.Text_IO;
 
 procedure Main is
-   Y: Integer := 1;
-   X: Integer := Y;
+    X: Integer;
 
---   procedure proc(V: Integer) is
---      x: Integer;
---      Y: Integer := 1;
---   begin
---      X := Y;
---   end proc;
+   procedure proc(V: Integer) is
+      x: Integer;
+      Y: Integer := 1;
+   begin
+      X := Y;
+   end proc;
+
+   type TyN is record
+      Z: Integer;
+   end record;
+
+   type Ty is record
+      Y: TyN;
+   end record;
+
+   package pack is
+      package pack is -- err here
+         L2: Ty;
+      end pack;
+   end pack;
 
 begin
 -- proc(1);
-   X := 1;
+   X := pack.pack.L2.Y.Z;
 end Main;

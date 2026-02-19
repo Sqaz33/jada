@@ -347,8 +347,8 @@ void PackDecl::reachable_(
 
     bool insert = false;
     for (auto decl : *decls_) {
-        if (decl->name() == *it || (requester->parent() == this && *it == name_)) {
-            if (requester->parent() == this && *it == name_) {
+        if (decl->name() == *it || (requester && requester->parent() == this && *it == name_)) {
+            if (requester && requester->parent() == this && *it == name_) {
                 ++it;
             }
             if (std::distance(it, end) == 1) {
@@ -894,7 +894,7 @@ void DotOpExpr::setLeft(std::shared_ptr<DotOpExpr> l) {
 }
 
 void DotOpExpr::setRight(std::shared_ptr<DotOpExpr> r) {
-    r->setLeft(std::dynamic_pointer_cast<node::DotOpExpr>(self()));
+    // r->setLeft(std::dynamic_pointer_cast<node::DotOpExpr>(self())); TODO: ????
     right_ = r;
 }
 
