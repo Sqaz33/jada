@@ -673,7 +673,7 @@ private:
 
 class StringType : public IType {
 public:
-    StringType(std::pair<int, int> range);
+    StringType(std::pair<int, int> range = {-1, -1});
 
 public: // IType interface
     bool compare(const std::shared_ptr<IType> rhs) const override;
@@ -689,7 +689,7 @@ public:
     std::pair<int, int> range() const;
 private:
     std::pair<int, int> range_; 
-    bool inf_;
+    bool inf_ = false;
 };
 
 } // namespace node

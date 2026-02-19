@@ -112,6 +112,7 @@
 %nterm<std::shared_ptr<node::IType>> string_type
 %nterm<std::shared_ptr<node::IType>> array_type
 %nterm<std::shared_ptr<node::IType>> type
+%nterm<std::shared_ptr<node::IType>> inf_str_or_type
 %nterm<std::shared_ptr<node::IType>> type_with_no_arr
 %nterm<std::vector<std::pair<int, int>>> array_range
 %nterm<std::vector<std::pair<int, int>>> static_ranges
@@ -271,51 +272,44 @@ vars_decl:        var_decl                                              {
 param_list:       param                                                 { $$ = std::vector({$1}); }
                 | param_list SC param                                   { $$ = std::move($1); $$.push_back($3); }
 
-param:            NAME COLON type                                       { 
-                                                                          if (auto str = std::dynamic_pointer_cast<node::StringType>($3)) {
-                                                                            str->setInf();
-                                                                          }
+param:            NAME COLON inf_str_or_type                            { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $3));
                                                                           decl->setIn(true);
                                                                           decl->setOut(false);
                                                                           $$ = decl; 
                                                                         }
-                | NAME COLON IN type                                    { 
-                                                                          if (auto str = std::dynamic_pointer_cast<node::StringType>($4)) {
-                                                                            str->setInf();
-                                                                          }
+                | NAME COLON IN inf_str_or_type                         { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           decl->setIn(true);
                                                                           decl->setOut(false);
                                                                           $$ = decl; 
                                                                         }
-                | NAME COLON OUT type                                   { 
-                                                                          if (auto str = std::dynamic_pointer_cast<node::StringType>($4)) {
-                                                                            str->setInf();
-                                                                          }
+                | NAME COLON OUT inf_str_or_type                        { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           decl->setIn(false);
                                                                           decl->setOut(true);
                                                                           $$ = decl; 
                                                                         }
-                | NAME COLON IN OUT type                                { 
-                                                                          if (auto str = std::dynamic_pointer_cast<node::StringType>($5)) {
-                                                                            str->setInf();
-                                                                          }
+                | NAME COLON IN OUT inf_str_or_type                     { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $5));
                                                                           decl->setIn(true);
                                                                           decl->setOut(true);
                                                                           $$ = decl; 
                                                                         }
-                  
+
+inf_str_or_type: type
+               | STRINGTY                                               {
+                                                                          auto strTy = new node::StringType;
+                                                                          strTy->setInf();
+                                                                          $$.reset(strTy);
+                                                                        }
+
 
 optional_decl_area: %empty                                              { $$ = nullptr; }
                 |   decl_area                                           
 
 type_alias_decl:  TYPE NAME IS array_type SC                            { $$.reset(new node::TypeAliasDecl($2, $4)); }     
                 | TYPE NAME IS NEW type_with_no_arr SC                  { $$.reset(new node::TypeAliasDecl($2, $5)); }        
-                  
-
 
 compile_unit:     proc_body                                             
                 | func_body           

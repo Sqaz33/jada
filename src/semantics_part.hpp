@@ -207,10 +207,14 @@ private:
         bool first = true);
 };
 
+// asg и vardecl rhs - равные типы слева и справа, и не могут быть агрегаты
+// asg и vardecl rhs: без вложенных 
+// op: равные типы у left и right
+// for: типы у и l ренджа - Integer
+// if и elsifs: тип выражения - Boolean
 
-// // один тип 
-// class TypeCheck : public ISemanticsPart {
+class TypeCheck : public ISemanticsPart {
 
-// };
+};
 
 } // namespace semantics_part

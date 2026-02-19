@@ -1917,9 +1917,7 @@ LinkExprs::analyseExpr_(
                     || std::dynamic_pointer_cast<node::StringType>(var->type())) 
                 {
                     if (args.empty()) {
-                        std::string res = "Incorrect indexing of the array ";
-                        res += base.toString('.') + var->name();
-                        return {res, nullptr};
+                        return {"", std::make_shared<node::GetVarExpr>(var)};
                     }
                     return {"", std::make_shared<node::GetArrElementExpr>(nullptr, var, args)};
                 }
@@ -1968,7 +1966,7 @@ LinkExprs::analyseExpr_(
                     } 
                 }
 
-                if (!argType->compare(subpArgType)) {
+                if (!subpArgType->compare(argType)) {
                     return false;
                 }
             } 
@@ -2115,6 +2113,13 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal_(
     bool first
 )
 {       
+    if (first && lhs) {
+        auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(expr);
+        if (!dotOp || !dotOp->lhs()) {
+            return "Assignment of an lvalue to a value";
+        }
+    }
+    
     std::shared_ptr<node::Op> op;
     if ((op = std::dynamic_pointer_cast<node::Op>(expr))) 
     {
@@ -2209,7 +2214,7 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal_(
             args, img->param(), false, false, false);
     } else if (noValue) { // проверка на експр как стм
         return "Not a value expression is not a procedure call";  
-    }
+    } 
 
     return "";
 }

@@ -765,7 +765,7 @@ StringType::StringType(std::pair<int, int> range) :
 
 bool StringType::compare(const std::shared_ptr<IType> rhs) const {
     if (auto str = std::dynamic_pointer_cast<StringType>(rhs)) {
-        return range_ == str->range_ || inf_ || str->inf_;
+        return range_ == str->range_ || inf_;
     }
     return false;
 }
