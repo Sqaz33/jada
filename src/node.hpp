@@ -122,10 +122,15 @@ struct IExpr : INode {
 
     void setVarDecl(VarDecl* var) noexcept;
     VarDecl* varDecl() noexcept;
+
+    bool noAnalyse() { return noAnalyse_; }
+    void setNoAnalyse() { noAnalyse_ = true;} 
+
     
 private:
     bool inBrackets_ = false;
     VarDecl* varDecl_;
+    bool noAnalyse_ = false;
 };
 
 class ILiteral : public IExpr { /*...*/ };

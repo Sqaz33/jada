@@ -5,8 +5,6 @@
 
 namespace attribute {
     
-
-// TODO: добавить пару коснт итер 
 class QualifiedName {
 public:
     QualifiedName() = default;

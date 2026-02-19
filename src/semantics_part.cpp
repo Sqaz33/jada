@@ -359,10 +359,12 @@ std::string NameConflictCheck::analyseDecl_(
         auto it = nameNDecl.find(d->name());
         if (it != nameNDecl.end() && 
                 (
-                    (!std::dynamic_pointer_cast<node::ProcBody>(d) || 
-                     !std::dynamic_pointer_cast<node::ProcBody>(it->second)) &&
+                    ((!std::dynamic_pointer_cast<node::ProcBody>(d) || 
+                      !std::dynamic_pointer_cast<node::ProcBody>(it->second)) && 
+                      (!std::dynamic_pointer_cast<node::PackDecl>(d) && 
+                       !std::dynamic_pointer_cast<node::PackDecl>(it->second))) ||
                 // проверку на боди и декл пака при совпадении имен 
-                    !(
+                    (
                         (std::dynamic_pointer_cast<node::PackDecl>(d) && 
                         !std::dynamic_pointer_cast<node::PackBody>(it->second) &&
                         std::dynamic_pointer_cast<node::PackDecl>(it->second) &&
@@ -373,7 +375,7 @@ std::string NameConflictCheck::analyseDecl_(
                     )
                 )
             )
-        {
+        {   
             std::stringstream ss;
             ss << "Name conflict: ";
             ss << "name: " << d->name() << ". ";
@@ -1138,6 +1140,7 @@ std::string SubprogBodyNDeclLinking::analyseContainer_(
             }
         }        
     }
+
     for (auto&& d : decls) {
         if (isPackDecl) {
             auto it = map.find(d->name());
@@ -1160,7 +1163,9 @@ std::string SubprogBodyNDeclLinking::analyseContainer_(
                                 if (params1.size() == params2.size()) {
                                     bool flag = true;
                                     for (std::size_t i = 0; i < params1.size(); ++i) {
-                                        flag = params1[i]->type()->compare(params2[i]->type());
+                                        flag = params1[i]->type()->compare(params2[i]->type()) && 
+                                                params1[i]->in() == params2[i]->in() && 
+                                                params1[i]->out() == params2[i]->out();
                                         if (!flag) {
                                             break;
                                         }
@@ -1771,6 +1776,7 @@ std::string LinkExprs::analyseRecord_(
     
     auto record = std::dynamic_pointer_cast<node::RecordDecl>(tail->type()); // TODO: мб тут ошибка
     std::string name;
+    tail->setNoAnalyse();
     std::vector<std::shared_ptr<node::IExpr>> args({tail});
     if (auto nameExpr = std::dynamic_pointer_cast<node::NameExpr>(right)) {
         name = nameExpr->name();
@@ -2168,10 +2174,12 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal_(
         std::vector<std::shared_ptr<node::IExpr>> callArgs;
         if (call) callArgs = call->params();
         else if (callMethod) callArgs = callMethod->params();
-        for (auto&& a : callArgs){
-            auto res = analyseInOutRvalLvalNoVal_(args, a, false, false, false);
-            if (!res.empty()) {
-                return res;
+        for (auto&& a : callArgs) {
+            if (!a->noAnalyse()) {
+                auto res = analyseInOutRvalLvalNoVal_(args, a, false, false, false);
+                if (!res.empty()) {
+                   return res;
+                }
             }
         }
 
