@@ -1547,6 +1547,13 @@ std::string LinkExprs::analyseBody_(
             if (!err.empty()) {
                 return nullptr;
             }
+        } else if (auto call = std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) {
+            if (!std::dynamic_pointer_cast<node::NameExpr>(call->name()))  {
+                err = "Using a subprogram call without" 
+                      " a qualifying name is" 
+                      " not supported in this implementation";
+                return nullptr;
+            }
         }
 
         // линковка аргументов вызовов
@@ -2012,7 +2019,7 @@ LinkExprs::analyseExpr_(
 static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
     if (!leftOrRight) return "";
 
-    std::shared_ptr<node::Op> op = std::dynamic_pointer_cast<node::Op>(leftOrRight);
+    auto op = std::dynamic_pointer_cast<node::Op>(leftOrRight);
     if (
         (!std::dynamic_pointer_cast<node::NameExpr>(leftOrRight) && 
          !std::dynamic_pointer_cast<node::CallOrIdxExpr>(leftOrRight) &&
@@ -2036,8 +2043,8 @@ static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
 
 std::string 
 LinkExprs::analyseOpExprErr_(std::shared_ptr<node::IExpr> expr) {
-    std::shared_ptr<node::Op> op;
-    if (!(op = std::dynamic_pointer_cast<node::Op>(expr))) {
+    auto op = std::dynamic_pointer_cast<node::Op>(expr);
+    if (!op) {
         return "";
     }
 

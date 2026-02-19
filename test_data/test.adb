@@ -2,36 +2,36 @@ with Ada.Text_IO;
 use Ada.Text_IO;
 
 procedure Main is
-   X: Integer;
+   --  X: Integer;
 
-   arr: array(1..3) of Integer;
+   --  arr: array(1..3) of Integer;
 
-   procedure proc(V: Integer) is
-      x: Integer;
-      Y: Integer := 1;
-   begin
-      X := Y;
-   end proc;
+   --  procedure proc(V: Integer) is
+   --     x: Integer;
+   --     Y: Integer := 1;
+   --  begin
+   --     X := Y;
+   --  end proc;
 
-   function proc(V: Integer) return Integer is -- no err with this
-   begin
-      return 1;
-   end proc;
+   --  function proc(V: Integer) return Integer is -- no err with this
+   --  begin
+   --     return 1;
+   --  end proc;
 
 
-   type TyN is record
-      Z: Integer;
-   end record;
+   --  type TyN is record
+   --     Z: Integer;
+   --  end record;
 
-   type Ty is record
-      Y: TyN;
-   end record;
+   --  type Ty is record
+   --     Y: TyN;
+   --  end record;
 
-   package pack is
-      package pack is 
-         L2: Ty;
-      end pack;
-   end pack;
+   --  package pack is
+   --     package pack is 
+   --        L2: Ty;
+   --     end pack;
+   --  end pack;
 
    --  package pack is
    --     type cls is tagged record
@@ -93,7 +93,7 @@ begin
    --  X := proc(proc(1));
    -- proc(proc(1)); -- err
    -- arr(1) := 1;
-   X := pack.pack.L2.Y.Z;
+   --  X := pack.pack.L2.Y.Z;
    --  obj.proc;
    --  obj.X := 1;
    --  obj2.Y := 1;
@@ -107,4 +107,5 @@ begin
    --  1 + 1 := 1;
 
    --  func.X := 1;
+   f(1);
 end Main;
