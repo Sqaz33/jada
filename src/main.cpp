@@ -35,36 +35,38 @@ bool parseProgram(std::filesystem::path path) {
         path.replace_filename(mdl + ".adb");
         curModuleFileExtension = "adb";
         std::ifstream ifs(path, std::ios::in);
-
-        if (!ifs.is_open()) {
-            std::stringstream ss;
-            ss << "Can`t open file ";
-            ss << path;
-            ss << " or file doesn't exist";
-            throw std::runtime_error(ss.str());
-        }
-
-        curModuleName = mdl;
-        curModuleFileName = path;
-
-        yyFlexLexer lexer(&ifs);
-        yy::parser p(&lexer);
-        // p.set_debug_level(1);
-        if(p.parse()) {
-            return false;
-        }
-
-        
-        path.replace_filename(mdl + ".ads");
-        std::ifstream ifs2(path, std::ios::in);
-        curModuleFileExtension = "ads";
-        if (ifs2.is_open()) {
-            yyFlexLexer lexer(&ifs2);
+        if (ifs.is_open()) {
+            curModuleName = mdl;
+            curModuleFileName = path;
+            yyFlexLexer lexer(&ifs);
             yy::parser p(&lexer);
+            // p.set_debug_level(1);
             if(p.parse()) {
                 return false;
             }
+        } else {
+            path.replace_filename(mdl + ".ads");
+            std::ifstream ifs2(path, std::ios::in);
+            curModuleFileExtension = "ads";
+            if (ifs2.is_open()) {
+                curModuleName = mdl;
+                curModuleFileName = path;
+                yyFlexLexer lexer(&ifs2);
+                yy::parser p(&lexer);
+                // p.set_debug_level(1);
+                if(p.parse()) {
+                    return false;
+                }
+            } else {
+                std::stringstream ss;
+                ss << "Can`t open file ";
+                ss << path << "or .adb"; 
+                ss << " or file doesn't exist";
+                throw std::runtime_error(ss.str());
+            }
         }
+        
+
     }
     return true;
 }
@@ -111,6 +113,7 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::CreateClassDeclaration>();
     auto OCSC = // проверка на наличие только одного типа ооп класса в параметрах подпрогр. 
         std::make_shared<semantics_part::OneClassInSubprogramCheck>();
+    // линковка выражений и объявлений
     auto LE = std::make_shared<semantics_part::LinkExprs>();
 
     sem.addPart(EPC);
@@ -186,7 +189,7 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
-        argv[1] = "/mnt/d/jada/test_data/test.adb";
+        // argv[1] = "/mnt/d/jada/test_data/test.adb";
     }
     
     if (argc < 2) {
