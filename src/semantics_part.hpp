@@ -208,5 +208,9 @@ private:
 };
 
 
+// // один тип 
+// class TypeCheck : public ISemanticsPart {
+
+// };
 
 } // namespace semantics_part

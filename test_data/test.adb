@@ -13,10 +13,10 @@ procedure Main is
    --     X := Y;
    --  end proc;
 
-   --  function proc(V: Integer) return Integer is -- no err with this
-   --  begin
-   --     return 1;
-   --  end proc;
+   function proc1(V: Integer) return Integer is -- no err with this
+   begin
+      return 1;
+   end proc1;
 
 
    --  type TyN is record
@@ -77,10 +77,12 @@ begin
    -- proc(proc(1)); -- err
    -- arr(1) := 1;
    --  X := pack.pack.L2.Y.Z;
-   obj.proc;
-   obj.X := 1;
-   obj2.Y := 1;
+   --  obj.proc;
+   --  obj.X := 1;
+   --  obj2.Y := 1;
    
-   obj3.proc; 
-   proc2(obj); 
+   --  obj3.proc; 
+   --  proc2(obj); 
+   X := obj.X + 1 + obj2.X + 2 + 4 + 5 + obj67.M + proc1(1) + 1;
+   X := proc1(1);
 end Main;

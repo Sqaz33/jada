@@ -1712,17 +1712,20 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
                 tail = leftDotOps->tail();
             }
         }
+        if (op->op() != node::OpType::DOT) {
+            name.clear();
+        }
     } 
 
     if (auto right = op->right()) {
         auto leftDotOps = std::dynamic_pointer_cast<node::DotOpExpr>(leftRes);
-        if (leftDotOps && !leftDotOps->container()) {
+        if (op->op() == node::OpType::DOT && leftDotOps && !leftDotOps->container()) {
             std::string res = "Incorrect qualified name using: ";
             res += name.toString('.');
             return {res, nullptr};
         } else if (leftDotOps) {
             auto tail = leftDotOps->tail();
-            if (tail->container() && 
+            if (op->op() == node::OpType::DOT && tail->container() && 
                 !std::dynamic_pointer_cast<node::PackNamePart>(tail)) 
             {
                 auto res = analyseRecord_(leftDotOps, op->right());
@@ -1741,6 +1744,10 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
         }
         if (rightRes) {
             op->setRight(rightRes);
+        }
+
+        if (op->op() != node::OpType::DOT) {
+            name.clear();
         }
     }
 
