@@ -171,7 +171,6 @@ private:
     std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
 };
 
-// body 
 class LinkExprs : public ISemanticsPart {
 public:
     std::string analyse(

@@ -244,6 +244,7 @@ private:
 //      если просто вызов - процедура
 // 2. разные проверки перегрузки
 // 3. можно объявлять функции и процедуры с одним именем в одном спейсе
+class ClassDecl;
 class ProcBody : public IDecl {
 public:
     ProcBody(const std::string& name, 
@@ -263,11 +264,14 @@ public:
     std::shared_ptr<DeclArea> decls();
     const std::vector<std::shared_ptr<VarDecl>>& params() const noexcept;
     std::shared_ptr<node::Body> body();
+    auto cls() { return cls_.lock(); }
+    void setClass(std::shared_ptr<ClassDecl> cls) { cls_ = cls; }
 
 private:
     void printParam_(const std::shared_ptr<VarDecl> param, 
                      graphviz::GraphViz& gv, 
                      graphviz::VertexType v) const;
+
 protected:
     void reachable_(
         std::vector<
@@ -277,6 +281,7 @@ protected:
         IDecl* requester) override;
 
 protected:
+    std::weak_ptr<ClassDecl> cls_;
     std::string name_;
     std::vector<std::shared_ptr<VarDecl>> params_;
     std::shared_ptr<DeclArea> decls_;
@@ -1337,7 +1342,7 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override { assert(false); }; // TODO
 
-    void* codegen() override { return nullptr; } // TODO
+void* codegen() override { return nullptr; } // TODO
 
 public:
     void setBase(std::weak_ptr<ClassDecl> base);
@@ -1357,6 +1362,7 @@ public:
     std::shared_ptr<FuncBody> func(const std::string& name);
 
     auto record() { return record_; }
+    auto base() { return base_; }
         
 private:
     void reachable_(

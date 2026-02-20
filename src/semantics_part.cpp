@@ -1061,8 +1061,10 @@ OverloadCheck::analyseContainer_(
 
                     bool eq = false;
                     for (std::size_t k = 0; k < params1.size(); ++k) {
-                        eq = params1[k]->type()->compare(params2[k]->type());
-                        if (!eq) {
+                        auto type1 = params1[k]->type();
+                        auto type2 = params2[k]->type();
+
+                        if (!(eq = type1->compare(type2))) {
                             break;
                         }
                     }
@@ -1215,8 +1217,6 @@ std::string SubprogBodyNDeclLinking::analyseContainer_(
         }
     }
 
-
-
     return "";
 }
 
@@ -1298,6 +1298,7 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
                 }
             }
             if (cls && !cls->containsMethod(name, params, isProc)) {
+                proc->setClass(cls);
                 cls->addMethod(proc);
             } 
         }
@@ -1355,17 +1356,21 @@ OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) 
         if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(d)) {
             bool containsClass = false;
             bool isMethod = false;
+            int idx = 0;
             for (auto p : proc->params()) {
                 auto type = p->type();
                 if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(type)) {
                     if (auto cls = rec->cls().lock()) {
-                        isMethod = isMethod || cls->parent() == d->parent();
-                        if (containsClass && isMethod) {
+                        // один аргумент с типом тагед рекорда и на первом месте
+                        if (containsClass || idx++ > 0) {
                             std::stringstream ss;
                             ss << "A method cannot contain" 
                                   " more than 1 class in its arguments.";
                             ss << " Method: ";
                             ss << proc->name();
+                            ss << ". In this implementation,"
+                                  " the class argument must" 
+                                  " be placed first in the argument list.";
                             return ss.str();
                         }
                         containsClass = true;
@@ -1408,7 +1413,6 @@ OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) 
 
     return "";
 }
-
 
 // LinkExprs 
 std::string LinkExprs::analyse(
@@ -1984,16 +1988,17 @@ LinkExprs::analyseExpr_(
         for (auto&& space : r) {
             for (auto&& d : space) {
                 if (auto f = std::dynamic_pointer_cast<node::FuncBody>(d)) {
-                    if (!func && eqArgs(f, args)) {
+                    if (!func && eqArgs(f, args)) { 
                         func = f;
+                    } else if (eqArgs(f, args)) {
+                        return {"An ambiguous call " + func->name() , nullptr};
                     }
                 } else if (auto p = std::dynamic_pointer_cast<node::ProcBody>(d)) {
-                   if (!proc && eqArgs(p, args)) {
+                    if (!proc && eqArgs(p, args)) {
                         proc = p;
+                    } else if (eqArgs(p, args)) {
+                        return {"An ambiguous call: " + proc->name(), nullptr};
                     }
-                }
-                if (proc && func) {
-                    break;
                 }
             }
             if (proc && func) {
@@ -2006,6 +2011,9 @@ LinkExprs::analyseExpr_(
             ss << "An unresolved name in an expression ";
             ss << base.toString('.');
             return {ss.str(), nullptr};
+        }
+        if ((proc && proc->cls()) || (func && func->cls())) {
+            return {"", std::make_shared<node::CallMethodExpr>(nullptr, proc, func, args)};
         }
         return {"", std::make_shared<node::CallExpr>(nullptr, proc, func, args)};
     }  

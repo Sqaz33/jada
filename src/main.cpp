@@ -188,7 +188,7 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/proc_func_overload.adb";
         // argv[1] = "../test_data/semantics/record_inherits.adb";
         // argv[1] = "../test_data/semantics/circular/main.adb";
-        // argv[1] = "../test_data/semantics/oop1.adb";
+        argv[1] = "/mnt/d/jada/test_data/semantics/oop1.adb";
         // argv[1] = "../test_data/semantics/return_type.adb";
         // argv[1] = "../test_data/semantics/bool.adb";
         // argv[1] = "../test_data/semantics/inner_package_body_decl.adb";
@@ -196,7 +196,7 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
-        argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
+        // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
     }
     

@@ -1610,7 +1610,11 @@ SuperclassReference::cls() const noexcept {
 void SuperclassReference::setClass(
     std::shared_ptr<ClassDecl> cls) 
 {
-    class_ = cls;
+    auto cur = cls; 
+    while (!cur->base().expired()) {
+        cur = cur->base().lock();
+    }
+    class_ = cur;
 }
 
 bool SuperclassReference::compare(
@@ -1619,6 +1623,7 @@ bool SuperclassReference::compare(
     if (auto r = std::dynamic_pointer_cast<SuperclassReference>(rhs)) {
         return class_ && r->class_ && class_ == r->class_;
     }
+    return false;
 }
 
 }
