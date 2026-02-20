@@ -17,11 +17,11 @@ std::string EntryPointCheck::analyse(
         const std::vector<
                 std::shared_ptr<mdl::Module>>& program) 
 {   
-    auto unit = program[0]->unit().lock();
+    auto unit = program[1]->unit().lock();
     if (!std::dynamic_pointer_cast<node::ProcBody>(unit) ||
          std::dynamic_pointer_cast<node::FuncBody>(unit)) 
     {
-        return program[0]->fileName()
+        return program[1]->fileName()
                 + ": The entry point should be a procedure";
     }
     return ISemanticsPart::analyseNext(program);
@@ -32,7 +32,7 @@ std::string ModuleNameCheck::analyse(
         const std::vector<
                 std::shared_ptr<mdl::Module>>& program) 
 {   
-    for (auto&& mod : program | std::views::drop(1)) {
+    for (auto&& mod : program | std::views::drop(2)) {
         auto unit = mod->unit().lock();
         if (unit->name() != mod->name()) {
             std::stringstream ss;
@@ -68,7 +68,7 @@ std::string OneLevelWithCheck::analyse(
         const std::vector<
                 std::shared_ptr<mdl::Module>>& program) 
 {   
-    for (auto&& mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         for (auto&& with : mod->with()) {
             auto&& name = with->name();
             if (name.size() != 1 && 
@@ -91,7 +91,7 @@ std::string SelfImportCheck::analyse(
         const std::vector<
                 std::shared_ptr<mdl::Module>>& program) 
 {   
-    for (auto&& mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         for (auto&& with : mod->with()) {
             auto&& name = with->name();
             if (name.first() == mod->name()) {
@@ -117,7 +117,7 @@ std::string ExistingModuleImportCheck::analyse(
                    std::inserter(moduleNames, moduleNames.end()), 
                    [] (auto&& mod) { return mod->name(); });
 
-    for (auto&& mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         for (auto&& with : mod->with()) {
             auto&& name = with->name().toString('.');
             if (!moduleNames.contains(name)) {
@@ -138,8 +138,6 @@ std::string GlobalSpaceCreation::analyse(
         const std::vector<
             std::shared_ptr<mdl::Module>>& program) 
 {
-
-
     std::map<std::string, std::shared_ptr<mdl::Module>> map;
     for (auto&& mod : program) {
         auto it = map.find(mod->name());
@@ -150,11 +148,11 @@ std::string GlobalSpaceCreation::analyse(
         }
     }
 
-    std::vector<std::shared_ptr<node::IDecl>> units;
+    std::vector<std::shared_ptr<mdl::Module>> units;
     std::transform(
         map.begin(), map.end(),
         std::inserter(units, units.end()),
-        [] (auto&& mod) { return mod.second->unit().lock(); });
+        [] (auto&& mod) { return mod.second; });
 
     for (auto&& mod : program) {
         auto unit = mod->unit().lock();
@@ -189,9 +187,9 @@ std::string GlobalSpaceCreation::analyse(
 std::pair<bool, std::shared_ptr<node::With>> 
 GlobalSpaceCreation::addImportsPtrs_(
     std::shared_ptr<mdl::Module> mod,
-    const std::vector<std::shared_ptr<node::IDecl>>& units)
+    const std::vector<std::shared_ptr<mdl::Module>>& units)
 {
-    std::map<std::string, std::shared_ptr<node::IDecl>> map;
+    std::map<std::string, std::shared_ptr<mdl::Module>> map;
     std::transform(
         units.begin(), units.end(), 
         std::inserter(map, map.end()), 
@@ -207,7 +205,11 @@ GlobalSpaceCreation::addImportsPtrs_(
         if (auto space = 
             std::dynamic_pointer_cast<node::GlobalSpace>(unit)) 
         {
-            space->addImport(it->second);
+            auto unit = it->second->unit().lock();
+            if (auto space = std::dynamic_pointer_cast<node::GlobalSpace>(unit)) {
+                unit = space->unit();
+            }
+            space->addImport(unit);
         }
         else 
         {
@@ -235,7 +237,7 @@ GlobalSpaceCreation::addReduceImportPtrs_(std::shared_ptr<mdl::Module> mod) {
     }
 
     for (auto u : mod->use()) {
-        auto name = u->name().toString('.');
+        auto name = u->name().first() == "ada" ? "ada" : u->name().toString('.');
         auto it = imports.find(name);
         if (it == imports.end()) {
             return {false, u};
@@ -256,7 +258,7 @@ std::string CircularImportCheck::analyse(
     const std::vector<std::shared_ptr<mdl::Module>>& program)  
 {
     auto main = dynamic_cast<node::GlobalSpace*>(
-        program[0]->unit().lock().get());
+        program[1]->unit().lock().get());
     assert(main);
     std::vector<std::shared_ptr<node::IDecl>> onStack;
     if (!checkSpace_(main, onStack)) {
@@ -295,7 +297,7 @@ std::string NameConflictCheck::analyse(
     const std::vector<
         std::shared_ptr<mdl::Module>>& program)
 {
-    for (auto&& mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(mod->unit().lock());
         if (space) {
@@ -405,7 +407,7 @@ std::string PackBodyNDeclLinking::analyse(
         return res;
     }
 
-    for (auto&& mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(mod->unit().lock());
         if (space) {
@@ -556,7 +558,7 @@ TypeNameToRealType::analyse(
         const std::vector<
             std::shared_ptr<mdl::Module>>& program)
 {
-    for (auto& mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
@@ -920,7 +922,7 @@ InheritsVarNameConlflicCheck::analyse(
     const std::vector<
     std::shared_ptr<mdl::Module>>& program)
 {
-    for (auto mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
@@ -994,7 +996,7 @@ OverloadCheck::analyse(
     const std::vector<
         std::shared_ptr<mdl::Module>>& program) 
 {
-    for (auto mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
@@ -1102,7 +1104,7 @@ OverloadCheck::analyseContainer_(
 std::string SubprogBodyNDeclLinking::analyse(
     const std::vector<std::shared_ptr<mdl::Module>>& program) 
 {
-    for (auto mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
@@ -1224,7 +1226,7 @@ std::string SubprogBodyNDeclLinking::analyseContainer_(
 std::string CreateClassDeclaration::analyse(
     const std::vector<std::shared_ptr<mdl::Module>>& program) 
 {
-    for (auto mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
@@ -1317,7 +1319,7 @@ OneClassInSubprogramCheck::analyse(
     const std::vector<
         std::shared_ptr<mdl::Module>>& program) 
 {
-    for (auto mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
@@ -1419,7 +1421,7 @@ std::string LinkExprs::analyse(
         const std::vector<
             std::shared_ptr<mdl::Module>>& program)     
 {
-    for (auto mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);
@@ -2253,7 +2255,7 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal_(
 std::string TypeCheck::analyse(
         const std::vector<std::shared_ptr<mdl::Module>>& program)
 {
-    for (auto mod : program) {
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = 
                 std::dynamic_pointer_cast<node::GlobalSpace>(unit);

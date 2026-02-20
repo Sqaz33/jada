@@ -17,9 +17,10 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TestLoops is
    i : Integer;
+   x: Integer;
    sum : Integer := 0;
-   L: String(1..2) := "1234";
-   arr : array(1..10) of Integer := (1, 2, 3, 4);
+   L: String(1..4) := "1234";
+   arr : array(1..4) of Integer := (1, 2, 3, 4);
 
    arr2: array(1..3) of Integer;
 
@@ -32,14 +33,12 @@ procedure TestLoops is
 
    procedure Proc (X: IntArray) is 
    begin 
-      Put("Hi from ada");
-      New_Line;
+      Put_Line("Hi from ada");
    end Proc;
 
    procedure Proc (X: Integer) is 
    begin 
-      Put("Hi from ada");
-      New_Line;
+      Put_Line("Hi from ada");
    end Proc;
 
    procedure Sort(arr: IntArray; len: Integer) is 
@@ -96,7 +95,4 @@ begin
         end loop;
     end loop;
    I := 1 + 2 + 3 + 4 + 5;
-   x := a.b(1).c.d;
-   z := 5 + a.b(1).c.d + 7 + 9;
-
 end TestLoops;

@@ -49,7 +49,7 @@ public:
 private:
     std::pair<bool, std::shared_ptr<node::With>> 
         addImportsPtrs_(std::shared_ptr<mdl::Module> mdl,
-                        const std::vector<std::shared_ptr<node::IDecl>>& units);
+                        const std::vector<std::shared_ptr<mdl::Module>>& units);
 
     std::pair<bool,std::shared_ptr<node::Use>>
         addReduceImportPtrs_(std::shared_ptr<mdl::Module> mdl);

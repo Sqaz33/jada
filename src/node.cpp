@@ -885,13 +885,28 @@ bool Op::compareTypes(const std::shared_ptr<IType> comp) {
     }
     auto ty = type();
     if (ty) {
+        if (auto sTy = 
+            std::dynamic_pointer_cast<node::SimpleLiteralType>(comp))
+        {
+            if (sTy->type() == SimpleType::BOOL && 
+                (opType_ == OpType::MORE || 
+                 opType_ == OpType::LESS || 
+                 opType_ == OpType::LTE || 
+                 opType_ == OpType::GTE || 
+                 opType_ == OpType::EQ || 
+                 opType_ == OpType::NEQ)) 
+            { return true; }
+        }
         return ty->compare(comp);
     } else {
         return false;
     }
 }
 
-std::shared_ptr<IType> Op::type() {
+// TODO проверку операции nullptr если ошибочная
+// >,<,=,!= только с float, bool, integer, char
+// not and or xor только с bool 
+std::shared_ptr<IType> Op::type() { 
     if (lhs_) {
         auto ltype = lhs_->type();
         auto rtype = rhs_->type();

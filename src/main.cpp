@@ -150,11 +150,20 @@ int semanticAnalysis() {
 // ввод вывод с клавы стринка, инта, флоата, була
 void addAdaStdLib(
     std::vector<std::shared_ptr<mdl::Module>>& prog) 
-{   
+{     
+    auto strTy = std::make_shared<node::StringType>();
+    strTy->setInf();
+    std::vector v({std::make_shared<node::VarDecl>("str", strTy)});
+    auto PutLine = std::make_shared<node::ProcDecl>("put_line", v);
+    auto libAreaTextIO = std::make_shared<node::DeclArea>();
+    libAreaTextIO->addDecl(PutLine);
+    auto libUnitTextIO = 
+        std::make_shared<node::PackDecl>("text_io", libAreaTextIO);
+
     auto libArea = std::make_shared<node::DeclArea>();
-    // libArea->addDecl(std::make_shared<std::decl>)
+    libArea->addDecl(libUnitTextIO);
     auto libUnit = 
-        std::make_shared<node::PackDecl>("ada.text_io", libArea);
+        std::make_shared<node::PackDecl>("ada", libAreaTextIO);
 
     auto mod = std::make_shared<mdl::Module>(
         libUnit, 
@@ -163,7 +172,6 @@ void addAdaStdLib(
         "ada.text_io", "ada.text_io.ads", "ads");
     helper::modules.push_back(mod);
 }
-
 } // namespace
 
 int yyFlexLexer::yywrap() { return 1; }
@@ -196,8 +204,9 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
-        argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
+        // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
+        argv[1] = "/mnt/d/jada/test_data/complex.adb";
     }
     
     if (argc < 2) {
@@ -211,11 +220,14 @@ int main(int argc, char** argv) { // try {
         return 1;
     } 
     
+
     auto mdl = path.filename();
     mdl.replace_extension("");
     helper::modulesForPars.push(mdl.string());
 
     helper::allModules.insert("ada");
+
+    addAdaStdLib(helper::modules);
 
     if (!parseProgram(path.remove_filename())) {
         printErrors();
@@ -234,7 +246,6 @@ int main(int argc, char** argv) { // try {
         return 1;
     }
 
-    addAdaStdLib(helper::modules);
 
     return semanticAnalysis();
 } // catch (const std::exception& e) { // TODO 
