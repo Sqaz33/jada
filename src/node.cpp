@@ -767,7 +767,16 @@ ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges,
                      std::shared_ptr<IType> type) :
     ranges_(ranges)
     , type_(type)
-{
+{   
+    for (auto&& [l, r] : ranges_) {
+        if (l != 1 || r < l) {
+            throw std::runtime_error("In this implementation," 
+                                     " in array the left boundary should" 
+                                     " be 1, and the right boundary" 
+                                     " should be greater than" 
+                                     " the left boundary");
+        }
+    }
     type_->setParent(this);
 }
 
@@ -791,7 +800,18 @@ void ArrayType::resetType(std::shared_ptr<IType> newType) {
 // StringType
 StringType::StringType(std::pair<int, int> range) :
     range_(range)
-{}
+{
+
+    if ((range.first != 1 || range.second <= range.first) && 
+        range.first != range.second && range.first != -1) 
+    {
+        throw std::runtime_error("In this implementation," 
+                                " in string the left boundary should" 
+                                " be 1, and the right boundary" 
+                                " should be greater than" 
+                                " the left boundary");
+    }
+}
 
 bool StringType::compare(const std::shared_ptr<IType> rhs) const {
     auto orig = getOrigin(rhs);
