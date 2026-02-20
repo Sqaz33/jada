@@ -2387,7 +2387,7 @@ TypeCheck::analyseBody_(std::shared_ptr<node::Body> body) {
         } else if (auto asg = std::dynamic_pointer_cast<node::Assign>(stm)) {
             auto lhs = asg->lval();
             auto rhs = asg->rval();
-            if (!lhs->compareTypes(rhs->type())) {
+            if (!rhs->compareTypes(lhs->type())) {
                 return "Assignment between expressions of different types";
             }
         } else if (auto ret = std::dynamic_pointer_cast<node::Return>(stm)) {

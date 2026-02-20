@@ -31,6 +31,9 @@ procedure Main is
    var2: Integer;
 
    str2: String(1..4) := "he" & "t" & "t";
+
+   --  bx : Boolean := (true and true); -- false
+
 begin
 
    a := (4, 5, 6);
@@ -45,10 +48,14 @@ begin
    str2 := "he" & "tt";
 
    --  var1 := 1 + 1.0; -- err
-   --  var1 := 1 + 1 + 1; -- bug 
+   var1 := 1 + 1 + 1; -- bug 
 
-   --  str := "1" & foo(1);
+   --  str := "1" & foo(1); -- err
 
    str2 := "1" & foo(True);
+   
+   for i in 1..foo(10) loop
+      var1 := i;
+   end loop;
    
 end Main;

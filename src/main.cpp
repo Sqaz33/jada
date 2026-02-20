@@ -205,9 +205,9 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
-        // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
+        argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
-        argv[1] = "/mnt/d/jada/test_data/semantics/bool.adb";
+        // argv[1] = "/mnt/d/jada/test_data/semantics/bool.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/for_linking.adb";
         // argv[1] = "/mnt/d/jada/test_data/test.adb";
     }

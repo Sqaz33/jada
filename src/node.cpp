@@ -935,6 +935,15 @@ std::shared_ptr<IType> Op::type() {
         }
 
         if (ltype->compare(rtype)) {
+            auto sTy = std::dynamic_pointer_cast<node::SimpleLiteralType>(rhs_->type());
+            SimpleType s = sTy ? sTy->type() : SimpleType::CHAR;
+            // только бул для этих операторов
+            if (s != SimpleType::BOOL && ( 
+                 opType_ == OpType::NOT || 
+                 opType_ == OpType::XOR || 
+                 opType_ == OpType::OR  || 
+                 opType_ == OpType::AND))
+            { return nullptr; }
             return rhs_->type();
         }
         
