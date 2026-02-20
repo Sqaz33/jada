@@ -1,4 +1,4 @@
-  #pragma once
+#pragma once
 
 #include "attribute.hpp"
 #include "location.hh"
@@ -665,6 +665,8 @@ public:
     std::shared_ptr<IType> type();
 
     void resetType(std::shared_ptr<IType> newType);
+
+    decltype(auto) ranges() const noexcept { return ranges_; }
 
 private:
     std::vector<std::pair<int, int>> ranges_; 

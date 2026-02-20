@@ -207,17 +207,27 @@ private:
         bool first = true);
 };
 
-// asg и vardecl rhs - равные типы слева и справа, и не могут быть агрегаты
-// arr - asg и vardecl rhs: без вложенных агрегатов, все типы элементов агр. 
+// asg и vardecl rhs: авные типы слева и справа, и не могут быть агрегаты
+// arr - asg и vardecl rhs: без вложенных агрегатов, все типы элементов агр. ???????????
 //                    равны, тип агрегата равен типу массива, 
 //                    нужное количество элементов в агрегате 
-// arr - 
+// arr: индексация по всем измерениям
+// arr и string: левая граница =  1 и правая граница > левой
 // op: равные типы у left и right
 // for: типы у и l ренджа - Integer
 // if и elsifs: тип выражения - Boolean
-
 class TypeCheck : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
 
+private:
+    std::string analyseContainer_(std::shared_ptr<node::IDecl> decl);
+
+    std::string analyseBody_(std::shared_ptr<node::Body> body); 
 };
+
+
 
 } // namespace semantics_part

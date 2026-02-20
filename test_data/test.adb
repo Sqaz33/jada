@@ -2,7 +2,7 @@ with Ada.Text_IO;
 use Ada.Text_IO;
 
 procedure Main is
-   --  X: Integer;
+   --  X: Integer := 1;
 
    --  arr: array(1..3) of Integer;
 
@@ -107,5 +107,5 @@ begin
    --  1 + 1 := 1;
 
    --  func.X := 1;
-   f(1);
+   --  X := 1;
 end Main;

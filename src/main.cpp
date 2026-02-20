@@ -119,6 +119,8 @@ int semanticAnalysis() {
         std::make_shared<semantics_part::OneClassInSubprogramCheck>();
     // линковка выражений и объявлений
     auto LE = std::make_shared<semantics_part::LinkExprs>();
+    // проверка типов
+    auto TC = std::make_shared<semantics_part::TypeCheck>();
 
     sem.addPart(EPC);
     sem.addPart(MNC);
@@ -136,6 +138,7 @@ int semanticAnalysis() {
     sem.addPart(CCD);
     sem.addPart(OCSC);
     sem.addPart(LE);
+    sem.addPart(TC);
 
     auto[ok, msg] = sem.analyse(helper::modules);
     if (!ok) {
@@ -193,7 +196,7 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
-        argv[1] = "/mnt/d/jada/test_data/test.adb";
+        argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
     }
     

@@ -572,8 +572,17 @@ const std::string& RecordDecl::name() const noexcept {
     return name_;
 }
 
+static auto getOrigin(std::shared_ptr<IType> type) {
+    auto alias = std::dynamic_pointer_cast<node::TypeAliasDecl>(type);
+    if (alias) {
+        return alias->origin();
+    }
+    return type;
+}
+
 bool RecordDecl::compare(const std::shared_ptr<IType> rhs) const {
-    if (rhs.get() == this) {
+    auto orig = getOrigin(rhs);
+    if (orig.get() == this) {
         return true;
     }
     return false;
@@ -706,7 +715,8 @@ SimpleType SimpleLiteralType::type() const noexcept {
 }
 
 bool SimpleLiteralType::compare(const std::shared_ptr<IType> rhs) const {
-    if (auto lit = std::dynamic_pointer_cast<SimpleLiteralType>(rhs)) {
+    auto orig = getOrigin(rhs);
+    if (auto lit = std::dynamic_pointer_cast<SimpleLiteralType>(orig)) {
         return lit->type_ == type_;
     }
     return false;
@@ -718,7 +728,8 @@ AggregateType::AggregateType(std::vector<SimpleType> type) :
 {}
 
 bool AggregateType::compare(const std::shared_ptr<IType> rhs) const {
-    if (auto aggr = std::dynamic_pointer_cast<AggregateType>(rhs)) {
+    auto orig = getOrigin(rhs);
+    if (auto aggr = std::dynamic_pointer_cast<AggregateType>(orig)) {
         auto rtype = aggr->type_;
         if (type_.size() == rtype.size()) {
             for (std::size_t i = 0; i < type_.size(); ++i) {
@@ -727,6 +738,21 @@ bool AggregateType::compare(const std::shared_ptr<IType> rhs) const {
                 }
             }
             return true;
+        }
+    } else if (auto arrTy = std::dynamic_pointer_cast<ArrayType>(orig)) {
+        auto&& range = arrTy->ranges();
+        if (range.size() == 1) {
+            auto&& r = range[0];
+            if (r.second - r.first + 1 == type_.size()) {
+                auto elTy = getOrigin(arrTy->type());
+                for (auto&& s : type_) {
+                    auto agrElType = std::make_shared<node::SimpleLiteralType>(s);
+                    if (!agrElType->compare(elTy)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
         }
     }
     return false;
@@ -743,12 +769,12 @@ ArrayType::ArrayType(const std::vector<std::pair<int, int>>& ranges,
 }
 
 bool ArrayType::compare(const std::shared_ptr<IType> rhs) const {
-    if (auto arr = std::dynamic_pointer_cast<ArrayType>(rhs)) {
-        return arr->type_->compare(type_) && ranges_ == arr->ranges_;
+    auto orig = getOrigin(rhs);
+    if (auto arr = std::dynamic_pointer_cast<ArrayType>(orig)) {
+        return getOrigin(arr->type_)->compare(getOrigin(type_)) && ranges_ == arr->ranges_;
     }
     return false;
 }
-
 
 std::shared_ptr<IType> ArrayType::type() {
     return type_;
@@ -764,7 +790,8 @@ StringType::StringType(std::pair<int, int> range) :
 {}
 
 bool StringType::compare(const std::shared_ptr<IType> rhs) const {
-    if (auto str = std::dynamic_pointer_cast<StringType>(rhs)) {
+    auto orig = getOrigin(rhs);
+    if (auto str = std::dynamic_pointer_cast<StringType>(orig)) {
         return range_ == str->range_ || inf_;
     }
     return false;
@@ -874,15 +901,21 @@ std::shared_ptr<IType> Op::type() {
         }
         auto str1 = std::dynamic_pointer_cast<StringType>(ltype);
         auto str2 = std::dynamic_pointer_cast<StringType>(rtype);
-        if (str1 && str2) {
+        if (str1 && str2 && opType_ == OpType::AMPER) {
             auto [d1, lim1] = str1->range();
             auto [d2, lim2] = str2->range(); 
             type = std::make_shared<StringType>(std::make_pair(1, lim1 + lim2));
-        } else if (str1->compare(str2)) {
+        } else if (str1 && str2) {
             return nullptr;
-        } else {
-            type = rhs_->type();
         }
+
+        auto lrec = std::dynamic_pointer_cast<RecordDecl>(ltype);
+        auto rrec = std::dynamic_pointer_cast<RecordDecl>(rtype);
+        if (lrec || rrec) {
+            return nullptr;
+        }
+
+        type = rhs_->type();
     } else {
         type = rhs_->type();
     }
@@ -923,7 +956,7 @@ std::shared_ptr<DotOpExpr> DotOpExpr::right() {
 }
 
 bool DotOpExpr::compareTypes(const std::shared_ptr<IType> rhs) {
-    auto ty = right_->type();
+    auto ty = type();
     if (ty) {
         return ty->compare(rhs);
     }

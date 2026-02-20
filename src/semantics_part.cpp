@@ -1523,7 +1523,6 @@ std::string LinkExprs::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
     }
 
     return "";
-
 }
 
 std::string LinkExprs::analyseBody_(
@@ -2226,6 +2225,160 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal_(
     } 
 
     return "";
+}
+
+// TypeCheck
+std::string TypeCheck::analyse(
+        const std::vector<std::shared_ptr<mdl::Module>>& program)
+{
+    for (auto mod : program) {
+        auto unit = mod->unit().lock();
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+        auto res = analyseContainer_(space->unit());
+        if (!res.empty()) {
+            std::stringstream ss;
+            ss << mod->fileName();
+            ss << ":";
+            ss << res;
+            return ss.str();
+        }
+    }
+    return ISemanticsPart::analyseNext(program);
+}
+
+std::string 
+TypeCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
+    std::vector<std::shared_ptr<node::VarDecl>> args;
+    std::shared_ptr<node::Body> body;
+    std::shared_ptr<node::DeclArea> decls;
+
+    if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(decl)) {
+        args = proc->params();
+        body = proc->body();
+        decls = proc->decls();
+    } else if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
+        decls = pack->decls();
+    } else if (auto record = std::dynamic_pointer_cast<node::RecordDecl>(decl)) {
+        decls = record->decls();
+    } else {
+        return "";
+    }
+
+    if (body) {
+        auto res = analyseBody_(body);
+        if (!res.empty()) {
+            return res;
+        }
+    }
+
+    for (auto&& d : *decls) {
+        if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
+            auto rhs = var->rval();
+            if (rhs) {
+                auto varType = var->type();
+                if (!rhs->compareTypes(varType)) {
+                    return "Assignment of different types in var decl: "
+                           + var->name();
+                }
+            }
+        } else {
+            auto res = analyseContainer_(d);
+            if (!res.empty()) {
+                return res;
+            }
+        }
+    }
+
+    return "";
+}
+
+std::string 
+TypeCheck::analyseBody_(std::shared_ptr<node::Body> body) {
+    if (!body) {
+        return "";
+    }
+
+    static auto BOOL_TY = 
+        std::make_shared<node::SimpleLiteralType>(node::SimpleType::BOOL);
+    static auto INT_TY = 
+        std::make_shared<node::SimpleLiteralType>(node::SimpleType::INTEGER);
+
+    for (auto&& stm : *body) {
+        if (auto if_ = std::dynamic_pointer_cast<node::If>(stm)) {
+            auto cond = if_->cond();
+            if (!cond->compareTypes(BOOL_TY)) {
+                return "The if condition expects a BOOLEAN expression";
+            }
+            
+            auto bodyRes = analyseBody_(if_->body());
+            if (!bodyRes.empty()) {
+                return bodyRes;
+            }
+
+            auto elseRes = analyseBody_(if_->bodyElse());
+            if (!elseRes.empty()) {
+                return elseRes;
+            }
+
+            for (auto&& [cond, body] : if_->elsifs()) {
+                if (!cond->compareTypes(BOOL_TY)) {
+                    return "The if condition expects a Boolean expression";
+                }
+                auto bodyRes = analyseBody_(body);
+                if (!bodyRes.empty()) {
+                    return bodyRes;
+                }
+            }
+
+        } else if (auto while_ = std::dynamic_pointer_cast<node::While>(stm)) {
+            auto cond = while_->cond();
+            if (!cond->compareTypes(BOOL_TY)) {
+                return "The if condition expects a BOOLEAN expression";
+            }
+
+            auto bodyRes = analyseBody_(while_->body());
+            if (!bodyRes.empty()) {
+                return bodyRes;
+            }
+        } else if (auto for_ = std::dynamic_pointer_cast<node::For>(stm)) {
+            auto [expr1, expr2] = for_->range();
+
+            if (!expr1->compareTypes(INT_TY) || !expr2->compareTypes(INT_TY)) {
+                return "The range boundaries for must be of type Integer";
+            }
+
+            auto bodyRes = analyseBody_(for_->body());
+            if (!bodyRes.empty()) {
+                return bodyRes;
+            }
+        } else if (auto asg = std::dynamic_pointer_cast<node::Assign>(stm)) {
+            auto lhs = asg->lval();
+            auto rhs = asg->rval();
+            if (!lhs->compareTypes(rhs->type())) {
+                return "Assignment between expressions of different types";
+            }
+        } else if (auto ret = std::dynamic_pointer_cast<node::Return>(stm)) {
+            auto func = dynamic_cast<node::FuncBody*>(ret->parent());
+            auto proc = dynamic_cast<node::ProcBody*>(ret->parent());
+            if (!func && !proc) {
+                throw std::logic_error("No func or proc return parent");
+            }
+
+            if (func) {
+                auto funcType = func->retType();
+                std::shared_ptr<node::IExpr> retVal;
+                if (!(retVal = ret->retVal()) || !retVal->type()->compare(funcType)) {
+                    return "Different types of return and functions";
+                }
+            } else {
+                if (ret->retVal()) {
+                    return "The return in procedure has a value";
+                }
+            }
+        } 
+    }
+    return  "";
 }
 
 } // semantics_part
