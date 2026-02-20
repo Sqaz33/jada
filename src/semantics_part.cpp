@@ -248,6 +248,12 @@ GlobalSpaceCreation::addReduceImportPtrs_(std::shared_ptr<mdl::Module> mod) {
             for (auto d : *(pack->decls())) {
                 space->addImport(d);
             }
+            if (u->name().toString('.') == "ada.text_io") {
+                auto textio = std::dynamic_pointer_cast<node::PackDecl>(*(pack->decls()->begin()));
+                for (auto d : *(textio->decls())) {
+                    space->addImport(d);
+                }
+            } 
         }
     }
     return {true, nullptr};

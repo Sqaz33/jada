@@ -161,9 +161,10 @@ void addAdaStdLib(
         std::make_shared<node::PackDecl>("text_io", libAreaTextIO);
 
     auto libArea = std::make_shared<node::DeclArea>();
-    libArea->addDecl(libUnitTextIO);
+        libArea->addDecl(libUnitTextIO);
+
     auto libUnit = 
-        std::make_shared<node::PackDecl>("ada", libAreaTextIO);
+        std::make_shared<node::PackDecl>("ada", libArea);
 
     auto mod = std::make_shared<mdl::Module>(
         libUnit, 
@@ -206,7 +207,7 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
-        argv[1] = "/mnt/d/jada/test_data/complex.adb";
+        argv[1] = "/mnt/d/jada/test_data/semantics/bool.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/for_linking.adb";
         // argv[1] = "/mnt/d/jada/test_data/test.adb";
     }
