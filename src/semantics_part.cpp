@@ -1478,7 +1478,6 @@ std::string LinkExprs::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
         }
     }
 
-
     for (auto&& d : *decls) {
         if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
             auto rhs = var->rval();
@@ -2028,7 +2027,10 @@ static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
     {
         return "Invalid operands for Dot Op";
     } 
+    return "";
+}
 
+static std::string analyseOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
     if (auto call = std::dynamic_pointer_cast<node::CallOrIdxExpr>(leftOrRight)) {
         if (!std::dynamic_pointer_cast<node::NameExpr>(call->name())) {
             return "Using a subprogram call without" 
@@ -2036,7 +2038,6 @@ static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
                    " not supported in this implementation";
         }
     }
-
     return "";
 }
 
@@ -2053,6 +2054,12 @@ LinkExprs::analyseOpExprErr_(std::shared_ptr<node::IExpr> expr) {
         if (!res1.empty() || !res2.empty()) {
             return res1.empty() ? res2 : res1;
         }
+    }
+    
+    auto res1 = analyseOpExpr(op->left());
+    auto res2 = analyseOpExpr(op->right());
+    if (!res1.empty() || !res2.empty()) {
+        return res1.empty() ? res2 : res1;
     }
 
     if (op->op() == node::OpType::DOT &&

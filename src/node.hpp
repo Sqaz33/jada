@@ -1027,7 +1027,7 @@ public: // IExpr interface
     { assert(false); return false; }
 
     std::shared_ptr<IType> type() override 
-    { assert(false); return nullptr; }
+    { assert(false); return nullptr; } 
 
 private:
     void printArgs_(graphviz::GraphViz& gv, 
