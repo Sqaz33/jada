@@ -883,7 +883,7 @@ bool Op::compareTypes(const std::shared_ptr<IType> comp) {
     if (std::dynamic_pointer_cast<node::ArrayType>(rhs_->type())) {
         return false;
     }
-    auto ty = Op::type();
+    auto ty = type();
     if (ty) {
         return ty->compare(comp);
     } else {
@@ -892,7 +892,6 @@ bool Op::compareTypes(const std::shared_ptr<IType> comp) {
 }
 
 std::shared_ptr<IType> Op::type() {
-    std::shared_ptr<IType> type;
     if (lhs_) {
         auto ltype = lhs_->type();
         auto rtype = rhs_->type();
@@ -904,7 +903,7 @@ std::shared_ptr<IType> Op::type() {
         if (str1 && str2 && opType_ == OpType::AMPER) {
             auto [d1, lim1] = str1->range();
             auto [d2, lim2] = str2->range(); 
-            type = std::make_shared<StringType>(std::make_pair(1, lim1 + lim2));
+            return std::make_shared<StringType>(std::make_pair(1, lim1 + lim2));
         } else if (str1 && str2) {
             return nullptr;
         }
@@ -915,11 +914,15 @@ std::shared_ptr<IType> Op::type() {
             return nullptr;
         }
 
-        type = rhs_->type();
+        if (ltype->compare(rtype)) {
+            return rhs_->type();
+        }
+        
+        return nullptr;
     } else {
-        type = rhs_->type();
+        return rhs_->type();
     }
-    return type;
+    return nullptr;
 }
 
 // DotOpExpr
@@ -1085,8 +1088,11 @@ std::shared_ptr<IType> GetArrElementExpr::type() {
     if (left_.expired() && right_) {  
         return tail()->type();
     }
-    auto ty = std::dynamic_pointer_cast<ArrayType>(arr_->type());
-    return ty->type();
+    if (auto ty = std::dynamic_pointer_cast<ArrayType>(arr_->type())) {
+        return ty->type();
+    } else if (auto str = std::dynamic_pointer_cast<StringType>(arr_->type())) {
+        return std::make_shared<SimpleLiteralType>(SimpleType::CHAR);
+    }
 }
 
 std::shared_ptr<VarDecl> GetArrElementExpr::arr() {

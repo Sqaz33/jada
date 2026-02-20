@@ -1928,7 +1928,7 @@ LinkExprs::analyseExpr_(
                 if (procPar && curProc != procPar) {
                     return {
                         "In this implementation, you cannot" 
-                        " take variables from the " 
+                        " take variables from the" 
                         " external subprogram scope: " + base.toString('.'), nullptr};
                 }
                 if (std::dynamic_pointer_cast<node::ArrayType>(var->type())
