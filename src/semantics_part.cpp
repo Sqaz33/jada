@@ -1745,7 +1745,7 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
         }
 
         std::string err;
-        std::tie(err, leftRes) = getRes(right, name);
+        std::tie(err, rightRes) = getRes(right, name);
         if (!err.empty()) {
             return {err, nullptr};
         }
