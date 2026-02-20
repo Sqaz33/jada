@@ -18,26 +18,30 @@ procedure main is
 
    package body pack is
       procedure f(q: in out Base) is
+         X: Integer;
       begin
-         q.X := 1;
+         X := 1;
+         --  q.X := 1;
       end f;
 
       procedure f(q: in out Base1) is
+         X: Integer;
       begin
-         q.W := 1;
+         X := 1;
       end f;
    end pack;
 
-   procedure f(q: in out pack.Base1) is -- err если pack.base
-   begin
-      q.W := 1;
-   end f;
+   --  procedure f(q: in out pack.Base1) is -- err если pack.base
+   --  begin
+   --     q.W := 1;
+   --     --  q.f;
+   --  end f;
 
-   procedure f(q: in out pack.base'class) is
+   procedure f(q: in out pack.base1'class) is
       x: Integer;
    begin
-      x := 1;
-      --  q.f;
+      x := q.W;
+      q.f;
    end f;
 
    l: pack.base;

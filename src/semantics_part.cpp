@@ -1817,7 +1817,14 @@ std::string LinkExprs::analyseRecord_(
         args.begin(), 
         args.end(), 
         std::inserter(argsTypes, argsTypes.end()), 
-        [] (auto&& a) { return a->type(); });
+        [] (auto&& a) { 
+            auto type = a->type();   
+            auto ref = std::dynamic_pointer_cast<node::SuperclassReference>(type);
+            if (ref) {
+                type = ref->cls()->record();
+            }
+            return type;
+        });
 
     std::shared_ptr<node::ProcBody> procCandidate;
     std::shared_ptr<node::FuncBody> funcCandidate;
