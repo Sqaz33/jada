@@ -41,12 +41,12 @@ procedure TestLoops is
       Put_Line("Hi from ada");
    end Proc;
 
-   procedure Sort(arr: IntArray; len: Integer) is 
+   procedure Sort(arr: in out IntArray; len: Integer) is 
       min: Integer;
       buf: Integer;
       begin
          for i in 1..len loop 
-            min := i;
+            --  min := i;
             for j in i..len loop
                if arr(j) < min then
                   min := j;
@@ -94,5 +94,6 @@ begin
             end if;
         end loop;
     end loop;
+
    I := 1 + 2 + 3 + 4 + 5;
 end TestLoops;

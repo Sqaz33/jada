@@ -87,6 +87,27 @@ procedure Main is
 
    --  str: String(1..10);
 
+   type IntArray is array(1 .. 100) of Integer;
+   
+   procedure Sort(arr: IntArray; len: Integer) is 
+      min: Integer;
+      buf: Integer;
+      begin
+         for i in 1..len loop 
+            --  min := i;
+            for j in i..len loop
+               if arr(j) < min then
+                  min := j;
+               end if;
+            end loop;
+            --  buf := arr(i);
+            --  arr(i) := arr(min);
+            --  arr(min) := buf;
+         end loop;
+   end Sort;
+
+   x: Integer := 1;
+
 begin 
    --  X := Integer'Image(1);
    -- 1;
@@ -108,4 +129,5 @@ begin
 
    --  func.X := 1;
    --  X := 1;
+   x := 1;
 end Main;

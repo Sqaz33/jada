@@ -2,6 +2,14 @@
 
 #include <algorithm>
 
+static auto getOrigin(std::shared_ptr<node::IType> type) {
+    auto alias = std::dynamic_pointer_cast<node::TypeAliasDecl>(type);
+    if (alias) {
+        return alias->origin();
+    }
+    return type;
+}
+
 // INode
 namespace node {
 
@@ -162,7 +170,8 @@ const std::string& VarDecl::name() const noexcept {
 }
 
 std::shared_ptr<IType> VarDecl::type() {
-    return type_;
+    auto type = getOrigin(type_);
+    return type;
 }
 
 void VarDecl::resetType(std::shared_ptr<IType> type) {
@@ -294,7 +303,8 @@ FuncBody::FuncBody(const std::string& name,
 
 
 std::shared_ptr<IType> FuncBody::retType() {
-    return retType_;
+    auto type = getOrigin(retType_);
+    return type;
 }
 
 void FuncBody::resetRetType(std::shared_ptr<IType> type) {
@@ -572,13 +582,6 @@ const std::string& RecordDecl::name() const noexcept {
     return name_;
 }
 
-static auto getOrigin(std::shared_ptr<IType> type) {
-    auto alias = std::dynamic_pointer_cast<node::TypeAliasDecl>(type);
-    if (alias) {
-        return alias->origin();
-    }
-    return type;
-}
 
 bool RecordDecl::compare(const std::shared_ptr<IType> rhs) const {
     auto orig = getOrigin(rhs);
@@ -777,7 +780,8 @@ bool ArrayType::compare(const std::shared_ptr<IType> rhs) const {
 }
 
 std::shared_ptr<IType> ArrayType::type() {
-    return type_;
+    auto type = getOrigin(type_);
+    return type;
 }
 
 void ArrayType::resetType(std::shared_ptr<IType> newType) {
@@ -830,7 +834,8 @@ bool Aggregate::compareTypes(const std::shared_ptr<IType> rhs) {
 }
 
 std::shared_ptr<IType> Aggregate::type() {
-    return type_;
+    auto type = getOrigin(type_);
+    return type;
 }
 
 } // namespace node 
@@ -1103,11 +1108,13 @@ std::shared_ptr<IType> GetArrElementExpr::type() {
     if (left_.expired() && right_) {  
         return tail()->type();
     }
-    if (auto ty = std::dynamic_pointer_cast<ArrayType>(arr_->type())) {
+    auto type = getOrigin(arr_->type());
+    if (auto ty = std::dynamic_pointer_cast<ArrayType>(type)) {
         return ty->type();
-    } else if (auto str = std::dynamic_pointer_cast<StringType>(arr_->type())) {
+    } else if (auto str = std::dynamic_pointer_cast<StringType>(type)) {
         return std::make_shared<SimpleLiteralType>(SimpleType::CHAR);
     }
+    assert(false);
 }
 
 std::shared_ptr<VarDecl> GetArrElementExpr::arr() {
@@ -1389,6 +1396,7 @@ void For::setParent(INode* parent) {
     INode::setParent(parent);
     range_.first->setParent(parent);
     range_.second->setParent(parent);
+    body_->setParent(parent);
 }
 
 // While

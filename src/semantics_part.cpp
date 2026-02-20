@@ -1643,7 +1643,6 @@ std::string LinkExprs::analyseBody_(
                 return err;
             }
             
-            parDecls->removeDecl(var);
             for_->setRange({newExrp1, newExrp2});
             var->setRval(newExrp1);
             for_->setIter(var);
@@ -1652,6 +1651,7 @@ std::string LinkExprs::analyseBody_(
             if (!res.empty()) {
                 return res;
             }
+            parDecls->removeDecl(var);
         } else if (auto asg = std::dynamic_pointer_cast<node::Assign>(stm)) {
             auto newLval = getRes(asg->lval(), true, false);
             if (!err.empty()) {
@@ -1922,39 +1922,41 @@ LinkExprs::analyseExpr_(
             return {ss.str(), nullptr};
         }
 
-        if (r.front().size() == 1) {
-            auto&& d = r.front()[0];
-            if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
-                auto procPar = dynamic_cast<node::ProcBody*>(var->parent());
-                auto curProc = dynamic_cast<node::ProcBody*>(expr->parent());
-                if (procPar && curProc != procPar) {
-                    return {
-                        "In this implementation, you cannot" 
-                        " take variables from the" 
-                        " external subprogram scope: " + base.toString('.'), nullptr};
-                }
-                if (std::dynamic_pointer_cast<node::ArrayType>(var->type())
-                    || std::dynamic_pointer_cast<node::StringType>(var->type())) 
-                {
-                    if (args.empty()) {
-                        return {"", std::make_shared<node::GetVarExpr>(var)};
-                    }
-                    return {"", std::make_shared<node::GetArrElementExpr>(nullptr, var, args)};
-                }
-                if (!args.empty()) {
-                    std::string res = "The call is not a subprogram ";
-                    res += base.toString('.') + var->name();
-                    return {res, nullptr};
-                }
-                return {"", std::make_shared<node::GetVarExpr>(var)};
-            } else if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
-                if (!args.empty()) {
-                    std::string res = "Incorrect qualified name using: ";
-                    res += base.toString('.') + pack->name();
-                    return {res, nullptr};
-                }
-                return {"", std::make_shared<node::PackNamePart>(pack)};
+        auto&& d = r.front()[0];
+        if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
+            auto procPar = dynamic_cast<node::ProcBody*>(var->parent());
+            auto curProc = dynamic_cast<node::ProcBody*>(expr->parent());
+            if (procPar && curProc != procPar) {
+                return {
+                    "In this implementation, you cannot" 
+                    " take variables from the" 
+                    " external subprogram scope: " + base.toString('.'), nullptr};
             }
+            auto type = var->type();
+            if (auto alias = std::dynamic_pointer_cast<node::TypeAliasDecl>(type)) {
+                type = alias->origin();
+            }
+            if (std::dynamic_pointer_cast<node::ArrayType>(type)
+                || std::dynamic_pointer_cast<node::StringType>(type)) 
+            {
+                if (args.empty()) {
+                    return {"", std::make_shared<node::GetVarExpr>(var)};
+                }
+                return {"", std::make_shared<node::GetArrElementExpr>(nullptr, var, args)};
+            }
+            if (!args.empty()) {
+                std::string res = "The call is not a subprogram ";
+                res += base.toString('.') + var->name();
+                return {res, nullptr};
+            }
+            return {"", std::make_shared<node::GetVarExpr>(var)};
+        } else if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(d)) {
+            if (!args.empty()) {
+                std::string res = "Incorrect qualified name using: ";
+                res += base.toString('.') + pack->name();
+                return {res, nullptr};
+            }
+            return {"", std::make_shared<node::PackNamePart>(pack)};
         }
 
         auto eqArgs = [] (auto&& subp, auto&& args) {
