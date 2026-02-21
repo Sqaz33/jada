@@ -2413,4 +2413,39 @@ TypeCheck::analyseBody_(std::shared_ptr<node::Body> body) {
     return  "";
 }
 
+// QualifiedNameSet
+std::string QualifiedNameSet::analyse(
+        const std::vector<std::shared_ptr<mdl::Module>>& program)
+{
+    for (auto&& mod : program | std::views::drop(1)) {
+        auto unit = mod->unit().lock();
+        auto space = 
+                std::dynamic_pointer_cast<node::GlobalSpace>(unit);
+        analyseContainer_(space->unit(), mod->name());
+    }
+    return ISemanticsPart::analyseNext(program);
+}
+
+
+void QualifiedNameSet::analyseContainer_(
+    std::shared_ptr<node::IDecl> decl, 
+    attribute::QualifiedName name) 
+{
+    name.push(decl->name());
+    decl->setFullName(name);
+    std::shared_ptr<node::DeclArea> decls;
+    if (auto pack = std::dynamic_pointer_cast<node::PackDecl>(decl)) {
+        decls = pack->decls();
+    } else if (auto sub = std::dynamic_pointer_cast<node::ProcBody>(decl)) {
+        decls = sub->decls();
+    }
+    if (decls) {
+        for (auto&& d : *decls) {
+            analyseContainer_(d, name);
+        }
+    }
+
+}
+
+            
 } // semantics_part

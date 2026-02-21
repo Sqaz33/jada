@@ -228,5 +228,16 @@ private:
 };
 
 
+class QualifiedNameSet : public ISemanticsPart {
+public:
+    std::string analyse(
+            const std::vector<
+                std::shared_ptr<mdl::Module>>& program) override;
+
+private:
+    void analyseContainer_(
+        std::shared_ptr<node::IDecl> decl,
+        attribute::QualifiedName name);
+};
 
 } // namespace semantics_part

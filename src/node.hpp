@@ -91,6 +91,13 @@ public:
         const attribute::QualifiedName& name, 
         IDecl* requester = nullptr);
 
+    void setFullName(const attribute::QualifiedName& name) {
+        fullName_ = name;
+    }
+    decltype(auto) fullName() const noexcept {
+        return fullName_;
+    }
+
 protected:
     friend class ProcBody;
     friend class PackDecl;
@@ -103,6 +110,8 @@ protected:
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
         IDecl* requester) = 0;
+
+    attribute::QualifiedName fullName_; 
 };
 
 struct IType : virtual INode { 
@@ -1012,7 +1021,7 @@ class CallOrIdxExpr : public IExpr {
 
 public:
     CallOrIdxExpr(std::shared_ptr<IExpr> name, 
-                    const std::vector<std::shared_ptr<node::IExpr>>& args);
+                    const std::vector<std::shared_ptr<IExpr>>& args);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 

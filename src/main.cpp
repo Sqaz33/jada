@@ -121,6 +121,8 @@ int semanticAnalysis() {
     auto LE = std::make_shared<semantics_part::LinkExprs>();
     // проверка типов
     auto TC = std::make_shared<semantics_part::TypeCheck>();
+    // расстановка полных квал. имен
+    auto QNS = std::make_shared<semantics_part::QualifiedNameSet>();
 
     sem.addPart(EPC);
     sem.addPart(MNC);
@@ -139,6 +141,7 @@ int semanticAnalysis() {
     sem.addPart(OCSC);
     sem.addPart(LE);
     sem.addPart(TC);
+    sem.addPart(QNS);
 
     auto[ok, msg] = sem.analyse(helper::modules);
     if (!ok) {
@@ -249,8 +252,11 @@ int main(int argc, char** argv) { // try {
         return 1;
     }
 
-
-    return semanticAnalysis();
+    int res = semanticAnalysis();
+    if (res == 0) {
+        std::cout << "semantic analysis: OK\n"; // TODO: delete
+    }
+    return res;
 } // catch (const std::exception& e) { // TODO 
 //     std::cerr << e.what() << '\n';
 //     printErrors();
