@@ -216,10 +216,14 @@ public:
     void setOut(bool out) noexcept;
 
 public:
-    void createLoad(bb::SharedPtrBB bb, const std::string& local = "");
-    void createStore(bb::SharedPtrBB bb, const std::string& local = "");
-    void createRef(bb::SharedPtrBB bb, class_member::SharedPtrMethod method);
-    void loadFromRef(bb::SharedPtrBB bb, class_member::SharedPtrMethod method);
+    // лоад/стор из [лок.]/[стат. пакета]/[обычн. класса/рекорда]
+    void createLoad(bb::SharedPtrBB bb);
+    void createStore(bb::SharedPtrBB bb);
+
+    // лоад создание рефа, загрузка лоад в реф
+    void createRef(bb::SharedPtrBB bb);
+    // получение из рефа, стор
+    void loadFromRef(bb::SharedPtrBB bb);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -253,6 +257,12 @@ private:
     std::shared_ptr<IExpr> rval_;
     bool in_ = true;
     bool out_ = true;
+
+    jvm_class::SharedPtrJVMClass jvmClass_;
+    jvm_class::SharedPtrJVMClass staticJvmClass_;
+    class_member::SharedPtrMethod method_;
+
+    class_member::JVMClassField field_;
 };
 // TODO:
 // 1. при объявлении и функции и процедуры с одним именим - если rhs в assign - функция
