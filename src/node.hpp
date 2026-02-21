@@ -3,6 +3,7 @@
 #include "attribute.hpp"
 #include "location.hh"
 #include "graphviz.hpp"
+#include "codegen.hpp"
 
 #include <vector>
 #include <string>
@@ -134,7 +135,6 @@ struct IExpr : INode {
 
     bool noAnalyse() { return noAnalyse_; }
     void setNoAnalyse() { noAnalyse_ = true;} 
-
     
 private:
     bool inBrackets_ = false;
@@ -214,6 +214,12 @@ public:
     void setIn(bool in) noexcept;
     bool out() const noexcept;
     void setOut(bool out) noexcept;
+
+public:
+    void createLoad(bb::SharedPtrBB bb, const std::string& local = "");
+    void createStore(bb::SharedPtrBB bb, const std::string& local = "");
+    void createRef(bb::SharedPtrBB bb, class_member::SharedPtrMethod method);
+    void loadFromRef(bb::SharedPtrBB bb, class_member::SharedPtrMethod method);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
