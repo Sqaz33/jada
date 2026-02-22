@@ -36,6 +36,12 @@ public:
 public:
     bb::SharedPtrBB createBB();
 
+    std::uint16_t selfClassRef() const noexcept;
+    jvm_class::SharedPtrJVMClass cls();
+
+    const std::string& methodName() const noexcept;
+    const descriptor::JVMMethodDescriptor& methodType() const noexcept; 
+    
 public: 
     // stack
     void createPop(bb::SharedPtrBB bb);
@@ -202,7 +208,8 @@ public:
     void createSastore(bb::SharedPtrBB bb);
 
     // object
-    void createNew(bb::SharedPtrBB bb, std::uint16_t type);
+    void createNew(bb::SharedPtrBB bb, 
+                   jvm_class::SharedPtrJVMClass cls);
 
     void createGetfield(bb::SharedPtrBB bb, 
                         std::shared_ptr<JVMClassField> field);
@@ -229,15 +236,9 @@ public:
         std::shared_ptr<JVMClassMethod> method);
 
 private:
-    void linkMethodNClass_(
-        std::shared_ptr<JVMClassMethod> method);
-
-private:
     std::shared_ptr<jvm_attribute::CodeAttr> code_;
     std::weak_ptr<jvm_class::JVMClass> selfClass_;
     std::uint16_t methodRef_;
-    std::map<jvm_class::JVMClass*, 
-        std::uint16_t> classes_;
     
     std::string name__;
     descriptor::JVMMethodDescriptor type__;

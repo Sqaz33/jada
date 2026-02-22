@@ -24,45 +24,22 @@ JVMClassField::JVMClassField(
         cls.lock()->nameIdx(), nameNType);
 }
 
-std::uint16_t JVMClassField::ref(
-    std::weak_ptr<jvm_class::JVMClass> cls)
-{
-    linkWithClass_(cls);
-    std::uint16_t ref;
-    if (selfClass_.lock() == cls.lock()) {
-        ref = fieldRef_;
-    } else {
-        ref = classes_[cls.lock().get()];
-    }
-    return ref;
+std::uint16_t JVMClassField::selfClassRef() const noexcept {
+    return fieldRef_;
 }
 
-void JVMClassField::linkWithClass_(
-    std::weak_ptr<jvm_class::JVMClass> cls)
-{
-    auto otherClsLock = cls.lock();
-    auto clsLock = selfClass_.lock();
+jvm_class::SharedPtrJVMClass JVMClassField::cls() {
+    return selfClass_.lock();
+}
 
-    if (otherClsLock == clsLock) {
-        return;
-    }
+const std::string& 
+JVMClassField::fieldName() const noexcept {
+    return name__;
+}
 
-    if (!classes_.contains(otherClsLock.get())) {   
-        auto cp = otherClsLock->cp();
-        auto name = cp->addUtf8Name(name__);
-        auto type = cp->addFieldDescriptor(type__);
-        auto nameNType = cp->addNameAndType(name, type);
-
-        auto [ok, clsName] = cp->getClassIdx(
-                                    clsLock->name());
-        if (!ok) {
-            clsName = 
-                cp->addClass(clsLock->name());
-        }
-
-        classes_[otherClsLock.get()] = 
-            cp->addFieldRef(clsName, nameNType);
-    }
+const descriptor::JVMFieldDescriptor&
+JVMClassField::fieldType() const noexcept {
+    return type__;
 }
 
 } // namespace class_member

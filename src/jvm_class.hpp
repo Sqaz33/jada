@@ -40,11 +40,26 @@ public:
         const std::string& name,
         descriptor::JVMMethodDescriptor type);
 
+public:
+    std::uint16_t methodRef(class_member::SharedPtrMethod method);
+    std::uint16_t fieldRef(class_member::SharedPtrField field);
+    std::uint16_t className(jvm_class::SharedPtrJVMClass cls);
+
+private:
+    std::uint16_t linkThisClassNOtherClass_(    
+        jvm_class::SharedPtrJVMClass otherClass);
+
 private:
     // class internal
     std::string name_;
     std::string simpleName_;
     std::weak_ptr<JVMClass> parent_;
+    std::map<jvm_class::JVMClass*, 
+        std::map<class_member::JVMClassField*, 
+                 std::uint16_t>> classNFields_;
+    std::map<jvm_class::JVMClass*, 
+        std::map<class_member::JVMClassMethod*, 
+                 std::uint16_t>> classNMethods_;
 
     // bytes structure 
     std::uint16_t minorV_;

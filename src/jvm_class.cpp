@@ -113,13 +113,14 @@ JVMClass:: simpleName() const noexcept {
 class_member::SharedPtrField 
 JVMClass::addField( 
     const std::string& name,
-    descriptor::JVMFieldDescriptor type)
+descriptor::JVMFieldDescriptor type)
 {
     auto field = 
         std::make_shared<
             class_member::JVMClassField>(
                 name, std::move(type), slf());
     fields_.push_back(field);
+    classNFields_[this][field.get()] = field->selfClassRef();
     return field;
 }
 
@@ -133,7 +134,63 @@ JVMClass::addMethod(
             class_member::JVMClassMethod>(
                 name, std::move(type), slf());
     methods_.push_back(method);
+    classNMethods_[this][method.get()] = method->selfClassRef();
     return method;
+}
+
+std::uint16_t JVMClass::methodRef(
+    class_member::SharedPtrMethod method) 
+{
+    auto otherClsLock = method->cls();
+
+    if (!classNMethods_[otherClsLock.get()].contains(method.get())) {   
+        auto name = cp_->addUtf8Name(method->methodName());
+        auto type = cp_->addMethodDescriptor(method->methodType());
+        auto nameNType = cp_->addNameAndType(name, type);
+        auto clsName = linkThisClassNOtherClass_(otherClsLock);
+
+        classNMethods_[otherClsLock.get()][method.get()] = 
+            cp_->addMehodRef(clsName, nameNType);
+    }
+    return classNMethods_[otherClsLock.get()][method.get()];
+}
+
+std::uint16_t JVMClass::fieldRef(
+    class_member::SharedPtrField field) 
+{
+    auto otherClsLock = field->cls();
+
+    if (!classNFields_[otherClsLock.get()].contains(field.get())) {   
+        auto name = cp_->addUtf8Name(field->fieldName());
+        auto type = cp_->addFieldDescriptor(field->fieldType());
+        auto nameNType = cp_->addNameAndType(name, type);
+        auto clsName = linkThisClassNOtherClass_(otherClsLock);
+
+        classNFields_[otherClsLock.get()][field.get()] = 
+            cp_->addFieldRef(clsName, nameNType);
+    }
+    return classNFields_[otherClsLock.get()][field.get()];
+}
+
+std::uint16_t JVMClass::className(
+    jvm_class::SharedPtrJVMClass cls) 
+{
+    return linkThisClassNOtherClass_(cls);
+}
+
+std::uint16_t JVMClass::linkThisClassNOtherClass_(    
+    jvm_class::SharedPtrJVMClass otherClass)
+{
+    if (this == otherClass.get()) {
+        return nameIdx_;
+    }
+
+    auto&& [ok, otherClsName] = cp_->getClassIdx(otherClass->name());
+    if (!ok) {
+        otherClsName = cp_->addClass(otherClass->name());
+    }
+
+    return otherClsName;
 }
 
 } // namespace jvm_class 

@@ -6,6 +6,8 @@ namespace jvm_class {
 
 class JVMClass; 
 
+using SharedPtrJVMClass = std::shared_ptr<JVMClass>;
+
 } //namespace jvm_class 
 
 namespace class_member {
@@ -27,18 +29,15 @@ public:
     using IJVMClassMember::printBytes;
 
 public:
-    std::uint16_t ref(
-        std::weak_ptr<jvm_class::JVMClass> cls);
+    std::uint16_t selfClassRef() const noexcept;
+    jvm_class::SharedPtrJVMClass cls();
 
-private:
-    void linkWithClass_(
-        std::weak_ptr<jvm_class::JVMClass> cls);
+    const std::string& fieldName() const noexcept;
+    const descriptor::JVMFieldDescriptor& fieldType() const noexcept; 
 
 private:
     std::weak_ptr<jvm_class::JVMClass> selfClass_;
     std::uint16_t fieldRef_;
-    std::map<jvm_class::JVMClass*, 
-        std::uint16_t> classes_;
     std::string name__;
     descriptor::JVMFieldDescriptor type__;
 };

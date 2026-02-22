@@ -48,6 +48,24 @@ bb::SharedPtrBB JVMClassMethod::createBB() {
     return code_->createBB();
 }
 
+std::uint16_t JVMClassMethod::selfClassRef() const noexcept {
+    return methodRef_;
+}
+
+jvm_class::SharedPtrJVMClass JVMClassMethod::cls() {
+    return selfClass_.lock();
+}
+
+const std::string& 
+JVMClassMethod::methodName() const noexcept {
+    return name__;
+}
+
+const descriptor::JVMMethodDescriptor&
+JVMClassMethod::methodType() const noexcept {
+    return type__;
+}
+
 void JVMClassMethod::createPop(bb::SharedPtrBB bb) {
     code_->insertInstr(bb, OpCode::pop);
 }
@@ -827,17 +845,18 @@ void JVMClassMethod::createSastore(bb::SharedPtrBB bb) {
 }
 
 void JVMClassMethod::createNew(
-    bb::SharedPtrBB bb, std::uint16_t type) 
+    bb::SharedPtrBB bb, jvm_class::SharedPtrJVMClass cls)
 {
     instr::Instr ins(OpCode::new_);
-    ins.pushTwoBytes(type);
+    auto name = selfClass_.lock()->className(cls);
+    ins.pushTwoBytes(name);
     code_->insertInstr(bb, std::move(ins));
 } 
 
 void JVMClassMethod::createGetfield(
     bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
 {
-    auto f = field->ref(selfClass_);
+    auto f = selfClass_.lock()->fieldRef(field);
     instr::Instr ins(OpCode::getfield);
     ins.pushTwoBytes(f);
     code_->insertInstr(bb, std::move(ins));
@@ -850,7 +869,7 @@ void JVMClassMethod::createGetstatic(
         throw std::logic_error("static getfield" 
                                " of a non-static field");
     }
-    auto f = field->ref(selfClass_);
+    auto f = selfClass_.lock()->fieldRef(field);
     instr::Instr ins(OpCode::getstatic);
     ins.pushTwoBytes(f);
     code_->insertInstr(bb, std::move(ins));
@@ -859,7 +878,7 @@ void JVMClassMethod::createGetstatic(
 void JVMClassMethod::createPutfield(
     bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
 {
-    auto f = field->ref(selfClass_);
+    auto f = selfClass_.lock()->fieldRef(field);
     instr::Instr ins(OpCode::putfield);
     ins.pushTwoBytes(f);
     code_->insertInstr(bb, std::move(ins));
@@ -868,7 +887,7 @@ void JVMClassMethod::createPutfield(
 void JVMClassMethod::createPutstatic(
     bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
 {   
-    auto f = field->ref(selfClass_);
+    auto f = selfClass_.lock()->fieldRef(field);
     instr::Instr ins(OpCode::putstatic);
     ins.pushTwoBytes(f);
     code_->insertInstr(bb, std::move(ins));
@@ -878,16 +897,7 @@ void JVMClassMethod::createInvokespecial(
     bb::SharedPtrBB bb, 
     std::shared_ptr<JVMClassMethod> method) 
 {
-    linkMethodNClass_(method);
-
-    std::uint16_t ref;
-    if (method->selfClass_.lock() == selfClass_.lock()) {
-        ref = method->methodRef_;
-    } else {
-        ref = classes_[
-            method->selfClass_.lock().get()];
-    }
-
+    auto ref = selfClass_.lock()->methodRef(method);
     instr::Instr ins(OpCode::invokespecial);
     ins.pushTwoBytes(ref);
     code_->insertInstr(bb, std::move(ins));
@@ -897,16 +907,7 @@ void JVMClassMethod::createInvokevirtual(
     bb::SharedPtrBB bb, 
     std::shared_ptr<JVMClassMethod> method) 
 {
-    linkMethodNClass_(method);
-
-    std::uint16_t ref;
-    if (method->selfClass_.lock() == selfClass_.lock()) {
-        ref = method->methodRef_;
-    } else {
-        ref = classes_[
-            method->selfClass_.lock().get()];
-    }
-
+    auto ref = selfClass_.lock()->methodRef(method);
     instr::Instr ins(OpCode::invokevirtual);
     ins.pushTwoBytes(ref);
     code_->insertInstr(bb, std::move(ins));
@@ -921,47 +922,10 @@ void JVMClassMethod::createInvokestatic(
                                " of a non-static method");
     }
 
-    linkMethodNClass_(method);
-
-    std::uint16_t ref;
-    if (method->selfClass_.lock() == selfClass_.lock()) {
-        ref = method->methodRef_;
-    } else {
-        ref = classes_[
-            method->selfClass_.lock().get()];
-    }
-
+    auto ref = selfClass_.lock()->methodRef(method);
     instr::Instr ins(OpCode::invokestatic);
     ins.pushTwoBytes(ref);
     code_->insertInstr(bb, std::move(ins));
 }
 
-void JVMClassMethod::linkMethodNClass_(
-    std::shared_ptr<JVMClassMethod> method) 
-{
-    auto otherClsLock = method->selfClass_.lock();
-    auto clsLock = selfClass_.lock();
-
-    if (otherClsLock == clsLock) {
-        return;
-    }
-
-    if (!classes_.contains(otherClsLock.get())) {   
-        auto cp = clsLock->cp();
-        auto name = cp->addUtf8Name(method->name__);
-        auto type = cp->addMethodDescriptor(method->type__);
-        auto nameNType = cp->addNameAndType(name, type);
-
-        auto [ok, otherClsName] = cp->getClassIdx(
-                                    otherClsLock->name());
-        if (!ok) {
-            otherClsName = 
-                cp->addClass(otherClsLock->name());
-        }
-
-        classes_[otherClsLock.get()] = 
-            cp->addMehodRef(otherClsName, nameNType);
-    }
-}
-
-} // namespace class_member
+} // namespace class_membe

@@ -34,6 +34,56 @@ public class AdaUtility {
         }
     }
 
+    public static void initializeArray(Object array) {
+        if (array == null) return;
+
+        Class arrayClass = array.getClass();
+        if (!arrayClass.isArray()) return; // не массив
+
+        int length = java.lang.reflect.Array.getLength(array);
+        Class compType = arrayClass.getComponentType();
+
+        for (int i = 0; i < length; i++) {
+            Object elem = java.lang.reflect.Array.get(array, i);
+
+            if (compType.isArray()) {
+                // Рекурсивно обходим существующий подмассив
+                if (elem != null) {
+                    initializeArray(elem);
+                }
+            } else if (compType.isPrimitive()) {
+                // Примитивы JVM уже нули, можно явно
+                if (compType == boolean.class) {
+                    java.lang.reflect.Array.setBoolean(array, i, false);
+                } else if (compType == byte.class) {
+                    java.lang.reflect.Array.setByte(array, i, (byte) 0);
+                } else if (compType == short.class) {
+                    java.lang.reflect.Array.setShort(array, i, (short) 0);
+                } else if (compType == int.class) {
+                    java.lang.reflect.Array.setInt(array, i, 0);
+                } else if (compType == long.class) {
+                    java.lang.reflect.Array.setLong(array, i, 0L);
+                } else if (compType == float.class) {
+                    java.lang.reflect.Array.setFloat(array, i, 0f);
+                } else if (compType == double.class) {
+                    java.lang.reflect.Array.setDouble(array, i, 0d);
+                } else if (compType == char.class) {
+                    java.lang.reflect.Array.setChar(array, i, '\0');
+                }
+            } else {
+                // Ссылочные типы — создаём объект через конструктор без аргументов
+                if (elem == null) {
+                    try {
+                        Object obj = compType.newInstance(); // Java 5
+                        java.lang.reflect.Array.set(array, i, obj);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Не удалось создать объект " + compType.getName(), e);
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 // javac -source 1.5 -target 1.5 AdaUtility.java
