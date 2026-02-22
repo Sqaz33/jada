@@ -2065,6 +2065,9 @@ LinkExprs::analyseExpr_(
             ss << base.toString('.');
             return {ss.str(), nullptr};
         }
+        if ((proc && proc->cls()) && (func && func->cls())) { // TODO: ????
+            return {"Ambiguous subprogram call: proc and func", nullptr};
+        }
         if ((proc && proc->cls()) || (func && func->cls())) {
             return {"", std::make_shared<node::CallMethodExpr>(nullptr, proc, func, args)};
         }

@@ -933,6 +933,12 @@ std::shared_ptr<IType> Op::type() {
             return nullptr;
         }
 
+        auto larr = std::dynamic_pointer_cast<node::ArrayType>(ltype);
+        auto rarr = std::dynamic_pointer_cast<node::AggregateType>(rtype);
+        if (larr || rarr) {
+            return nullptr;
+        }
+
         if (ltype->compare(rtype)) {
             auto sTy = std::dynamic_pointer_cast<node::SimpleLiteralType>(rhs_->type());
             SimpleType s = sTy ? sTy->type() : SimpleType::CHAR;

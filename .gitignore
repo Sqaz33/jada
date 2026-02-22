@@ -4,3 +4,4 @@ build/
 main
 .vscode/
 *.class
+!java/AdaUtility.class
