@@ -908,7 +908,6 @@ bool Op::compareTypes(const std::shared_ptr<IType> comp) {
     }
 }
 
-// TODO проверку операции nullptr если ошибочная
 // >,<,=,!= только с float, bool, integer, char
 // not and or xor только с bool 
 std::shared_ptr<IType> Op::type() { 
@@ -960,7 +959,7 @@ void DotOpExpr::setLeft(std::shared_ptr<DotOpExpr> l) {
 }
 
 void DotOpExpr::setRight(std::shared_ptr<DotOpExpr> r) {
-    // r->setLeft(std::dynamic_pointer_cast<node::DotOpExpr>(self())); TODO: ????
+    // r->setLeft(std::dynamic_pointer_cast<node::DotOpExpr>(self())); 
     right_ = r;
 }
 
