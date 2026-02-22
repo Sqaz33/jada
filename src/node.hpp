@@ -220,7 +220,7 @@ public:
     void createLoad(bb::SharedPtrBB bb);
     void createStore(bb::SharedPtrBB bb);
 
-    // лоад создание рефа, загрузка лоад в реф
+    // лоад создание рефа, загрузка лоада в реф
     void createRef(bb::SharedPtrBB bb);
     // получение из рефа, стор
     void loadFromRef(bb::SharedPtrBB bb);
@@ -258,11 +258,8 @@ private:
     bool in_ = true;
     bool out_ = true;
 
-    jvm_class::SharedPtrJVMClass jvmClass_;
-    jvm_class::SharedPtrJVMClass staticJvmClass_;
-    class_member::SharedPtrMethod method_;
-
-    class_member::JVMClassField field_;
+    class_member::SharedPtrMethod method_; // если перемен.
+    class_member::SharedPtrField field_;    // если поле
 };
 // TODO:
 // 1. при объявлении и функции и процедуры с одним именим - если rhs в assign - функция

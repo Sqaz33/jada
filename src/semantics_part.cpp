@@ -2240,6 +2240,23 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal_(
             }
         }
 
+        // проверка на pure rval при lhs
+        if (first && lhs) {
+            auto cur = dotOp;
+            do {
+                if (std::dynamic_pointer_cast<node::CallExpr>(cur) ||
+                    std::dynamic_pointer_cast<node::CallMethodExpr>(cur))
+                {
+                    return "Lhs pure rvalue";
+                } 
+                else if (std::dynamic_pointer_cast<node::GetArrElementExpr>(cur) || 
+                        std::dynamic_pointer_cast<node::GetVarExpr>(cur))
+                {
+                    break;
+                }
+            } while (cur = cur->right());
+        }
+
     // проверка аргументов image
     // проверка что не lhs
     // проверка при noValue

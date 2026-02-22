@@ -41,6 +41,18 @@ procedure TestLoops is
       Put_Line("Hi from ada");
    end Proc;
 
+   type Ty12 is record 
+      X: Integer;
+   end record;
+
+   function ty12f return Ty12 is
+      obj: Ty12;
+   begin
+      return obj;
+   end ty12f;
+
+   objty12: Ty12;
+
    procedure Sort(arr: in out IntArray; len: Integer) is 
       min: Integer;
       buf: Integer;
@@ -96,5 +108,8 @@ begin
     end loop;
 
    I := 1 + 2 + 3 + 4 + 5;
+
+   --  ty12f.x := 2; -- err pure rval assign
+   objty12.x := 2;
    
 end TestLoops;

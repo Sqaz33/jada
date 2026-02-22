@@ -175,7 +175,7 @@ std::shared_ptr<IType> VarDecl::type() {
 }
 
 void VarDecl::resetType(std::shared_ptr<IType> type) {
-    type_ = type;
+    type_ = getOrigin(type);
 }
 
 bool VarDecl::in() const noexcept {
@@ -308,7 +308,7 @@ std::shared_ptr<IType> FuncBody::retType() {
 }
 
 void FuncBody::resetRetType(std::shared_ptr<IType> type) {
-    retType_ = type;
+    retType_ = getOrigin(type);
 }
 
 // FuncDecl 
@@ -785,7 +785,7 @@ std::shared_ptr<IType> ArrayType::type() {
 }
 
 void ArrayType::resetType(std::shared_ptr<IType> newType) {
-    type_ = newType;
+    type_ = getOrigin(newType);
 }
 
 // StringType
