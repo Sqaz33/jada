@@ -56,9 +56,11 @@ begin
 
    str2 := "1" & foo(True);
 
+   --  str2(1, 1) := 'c'; -- err
    str2(1) := 'c';
 
-   arrarr1(1, 1) := 1;
+   --  arrarr1(1) := 1; -- err
+   arrarr1(1, 1) := 2;
    
    for i in 1..foo(10) loop
       var1 := i;

@@ -1292,7 +1292,11 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
                 rec->setClass(classes.back());
                 rec->cls().lock()->setBase(baseClass);
             }
+        // линковка класса с методом
         } else if (auto proc = std::dynamic_pointer_cast<node::ProcBody>(d)) {
+            if (dynamic_cast<node::PackBody*>(decl)) {
+                continue;
+            }
             bool isProc = !std::dynamic_pointer_cast<node::FuncBody>(proc);    
             auto name = proc->name();
             std::vector<std::shared_ptr<node::IType>> params;
