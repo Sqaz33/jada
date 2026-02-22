@@ -34,6 +34,8 @@ procedure Main is
 
    --  bx : Boolean := (true and true); -- false
 
+   arrarr1: array(1..2, 1..2) of Integer;
+
 begin
 
    a := (4, 5, 6);
@@ -53,9 +55,12 @@ begin
    --  str := "1" & foo(1); -- err
 
    str2 := "1" & foo(True);
+
+   str2(1) := 'c';
+
+   arrarr1(1, 1) := 1;
    
    for i in 1..foo(10) loop
       var1 := i;
-   end loop;
-   
+   end loop;   
 end Main;

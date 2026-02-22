@@ -58,7 +58,7 @@ procedure TestLoops is
       buf: Integer;
       begin
          for i in 1..len loop 
-            --  min := i;
+            min := i;
             for j in i..len loop
                if arr(j) < min then
                   min := j;

@@ -215,7 +215,7 @@ public:
     bool out() const noexcept;
     void setOut(bool out) noexcept;
 
-public:
+public: // codegen
     // лоад/стор из [лок.]/[стат. пакета]/[обычн. класса/рекорда]
     void createLoad(bb::SharedPtrBB bb);
     void createStore(bb::SharedPtrBB bb);
@@ -224,6 +224,8 @@ public:
     void createRef(bb::SharedPtrBB bb);
     // получение из рефа, стор
     void loadFromRef(bb::SharedPtrBB bb);
+
+    // void setClass()
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
@@ -258,10 +260,11 @@ private:
     bool in_ = true;
     bool out_ = true;
 
+private: // codegen
     class_member::SharedPtrMethod method_; // если перемен.
-    class_member::SharedPtrField field_;    // если поле
+    class_member::SharedPtrField field_;   // если поле
 };
-// TODO:
+
 // 1. при объявлении и функции и процедуры с одним именим - если rhs в assign - функция
 //      если просто вызов - процедура
 // 2. разные проверки перегрузки

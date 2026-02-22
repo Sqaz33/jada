@@ -35,4 +35,6 @@ private:
 
 } // namespace java_bytecode_codegen
 
+extern JavaBCCodegen cg;
+
 } // namespace codegen

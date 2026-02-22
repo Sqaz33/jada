@@ -7,7 +7,7 @@ procedure main is
 
    var1: Type1;
 
-   X : Boolean := (); -- false
+   X : Boolean := (true and false); -- false
 
 
 begin

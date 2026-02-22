@@ -14,6 +14,11 @@
 #include "graphviz.hpp"
 #include "semantics.hpp"
 #include "semantics_part.hpp"
+#include "codegen.hpp"
+
+namespace codegen {
+    JavaBCCodegen cg(49, 0);
+}
 
 namespace {
 

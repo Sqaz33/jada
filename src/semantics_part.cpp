@@ -1890,9 +1890,10 @@ LinkExprs::analyseExpr_(
                 type = imgTy == "integer" ? node::SimpleType::INTEGER :
                        imgTy == "boolean" ? node::SimpleType::BOOL    :
                        imgTy == "float"   ? node::SimpleType::FLOAT   :
+                       imgTy == "character" ? node::SimpleType::CHAR  :
                        (err = true, node::SimpleType::INTEGER);
                 if (err) {
-                    return {"unknown type for image" + imgTy, nullptr};
+                    return {"Unknown type for image: " + imgTy, nullptr};
                 }
                 if (attr->attr().right() != "image") {
                     return {"All attributes except image" 
@@ -1901,7 +1902,19 @@ LinkExprs::analyseExpr_(
                             + attr->attr().right(), 
                             nullptr};
                 }
+                // проверка кол. арг.
+                
                 auto litType = std::make_shared<node::SimpleLiteralType>(type); 
+                if (callExpr->args().size() != 1) {
+                    return {"[type]'image must have 1 argument", nullptr};
+                }
+
+                // проверка типа аргумента
+                auto atype = 
+                    std::make_shared<node::SimpleLiteralType>(type);
+                if (!atype->compare((callExpr->args()[0])->type())) {
+                    return {"Invalid type of the image argument", nullptr};
+                }
                 return {"", std::make_shared<node::ImageCallExpr>(callExpr->args()[0], litType)};
             } else {
                 return {"Unknown argument type for image", nullptr};
@@ -1942,12 +1955,31 @@ LinkExprs::analyseExpr_(
             if (auto alias = std::dynamic_pointer_cast<node::TypeAliasDecl>(type)) {
                 type = alias->origin();
             }
-            if (std::dynamic_pointer_cast<node::ArrayType>(type)
-                || std::dynamic_pointer_cast<node::StringType>(type)) 
-            {
+            auto arrTy = std::dynamic_pointer_cast<node::ArrayType>(type);
+            auto strTy = std::dynamic_pointer_cast<node::StringType>(type);
+            if (arrTy || strTy) {
                 if (args.empty()) {
                     return {"", std::make_shared<node::GetVarExpr>(var)};
                 }
+                
+                static auto INT_TY = 
+                    std::make_shared<node::SimpleLiteralType>(node::SimpleType::INTEGER);
+
+                if (strTy && args.size() != 1) {
+                    return {"Incorrect number of dimensions" 
+                            " in receiving a string character", nullptr};
+                } else if (arrTy && args.size() != arrTy->ranges().size()) {
+                    return {"In this implementation, you cannot get a subarray",
+                            nullptr};
+                }
+
+                for (auto&& a : args) {
+                    if (!INT_TY->compare(a->type())) {
+                        return {"The indexing argument type must be Integer", 
+                               nullptr};
+                    }
+                }
+
                 return {"", std::make_shared<node::GetArrElementExpr>(nullptr, var, args)};
             }
             if (!args.empty()) {
@@ -2240,7 +2272,7 @@ std::string LinkExprs::analyseInOutRvalLvalNoVal_(
             }
         }
 
-        // проверка на pure rval при lhs
+        // проверка на pure rval при lhs ( foo(b).a := 1; -- err)
         if (first && lhs) {
             auto cur = dotOp;
             do {

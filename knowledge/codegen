@@ -14,3 +14,6 @@
 Функции:
     все примитивные типы - ссылки (ada integer - java Integer ref)
     
+
+
+* iexpr: codegen(bool lhs = false), для варов и массивом
