@@ -44,7 +44,7 @@ JVMClassMethod::JVMClassMethod(
     }
 }
 
-bb::SharedPtrBB JVMClassMethod::createBB() {
+bb::BasicBlock* JVMClassMethod::createBB() {
     return code_->createBB();
 }
 
@@ -66,52 +66,52 @@ JVMClassMethod::methodType() const noexcept {
     return type__;
 }
 
-void JVMClassMethod::createPop(bb::SharedPtrBB bb) {
+void JVMClassMethod::createPop(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::pop);
 }
 
-void JVMClassMethod::createPop2(bb::SharedPtrBB bb) {
+void JVMClassMethod::createPop2(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::pop2);
 }
 
-void JVMClassMethod::createDup(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDup(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dup);
 }
 
-void JVMClassMethod::createDupX1(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDupX1(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dup_x1);
 }
 
-void JVMClassMethod::createDupX2(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDupX2(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dup_x2);
 }
 
-void JVMClassMethod::createDup2(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDup2(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dup2);
 }
 
-void JVMClassMethod::createDup2X1(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDup2X1(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dup2_x1);
 }
 
-void JVMClassMethod::createDup2X2(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDup2X2(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dup2_x2);
 }
 
 void JVMClassMethod::createBipush(
-    bb::SharedPtrBB bb, std::int8_t byte) 
+    bb::BasicBlock* bb, std::int8_t byte) 
 {
     instr::Instr ins(OpCode::bipush);
     ins.pushByte(byte);
     code_->insertInstr(bb, std::move(ins));
 }
 
-void JVMClassMethod::createSwap(bb::SharedPtrBB bb) {
+void JVMClassMethod::createSwap(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::swap);
 }
 
 void JVMClassMethod::createDconst(
-    bb::SharedPtrBB bb, std::int8_t const_) {
+    bb::BasicBlock* bb, std::int8_t const_) {
     if (0 == const_) {
         code_->insertInstr(bb, OpCode::dconst_0);
     } 
@@ -121,7 +121,7 @@ void JVMClassMethod::createDconst(
 }
 
 void JVMClassMethod::createFconst(
-    bb::SharedPtrBB bb, std::int8_t const_) 
+    bb::BasicBlock* bb, std::int8_t const_) 
 {
     switch (const_) {
         case 0: code_->insertInstr(bb, OpCode::fconst_0); break;
@@ -130,7 +130,7 @@ void JVMClassMethod::createFconst(
     }
 }
 
-void JVMClassMethod::createIconst(bb::SharedPtrBB bb, std::int8_t const_) {
+void JVMClassMethod::createIconst(bb::BasicBlock* bb, std::int8_t const_) {
     switch (const_) {
         case -1: code_->insertInstr(bb, OpCode::iconst_m1); break;
         case 0:  code_->insertInstr(bb, OpCode::iconst_0); break;
@@ -143,7 +143,7 @@ void JVMClassMethod::createIconst(bb::SharedPtrBB bb, std::int8_t const_) {
 }
 
 void JVMClassMethod::createLconst(
-    bb::SharedPtrBB bb, std::int8_t const_) 
+    bb::BasicBlock* bb, std::int8_t const_) 
 {
     if (0 == const_) {
         code_->insertInstr(bb, OpCode::lconst_0);
@@ -183,7 +183,7 @@ void JVMClassMethod::createLocalRef(
 }
 
 void JVMClassMethod::createAload(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {   
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::aload_0 
@@ -202,7 +202,7 @@ void JVMClassMethod::createAload(
 }
 
 void JVMClassMethod::createDload(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::dload_0 
@@ -221,7 +221,7 @@ void JVMClassMethod::createDload(
 }
 
 void JVMClassMethod::createFload(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::fload_0 
@@ -240,7 +240,7 @@ void JVMClassMethod::createFload(
 }
 
 void JVMClassMethod::createIload(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::iload_0 
@@ -259,7 +259,7 @@ void JVMClassMethod::createIload(
 }
 
 void JVMClassMethod::createLload(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::lload_0 
@@ -278,7 +278,7 @@ void JVMClassMethod::createLload(
 }
 
 void JVMClassMethod::createAstore(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {   
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::astore_0 
@@ -297,7 +297,7 @@ void JVMClassMethod::createAstore(
 }
 
 void JVMClassMethod::createDstore(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::dstore_0 
@@ -316,7 +316,7 @@ void JVMClassMethod::createDstore(
 }
 
 void JVMClassMethod::createFstore(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::fstore_0 
@@ -335,7 +335,7 @@ void JVMClassMethod::createFstore(
 }
 
 void JVMClassMethod::createIstore(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::istore_0 
@@ -354,7 +354,7 @@ void JVMClassMethod::createIstore(
 }
 
 void JVMClassMethod::createLstore(
-    bb::SharedPtrBB bb, const std::string& local) 
+    bb::BasicBlock* bb, const std::string& local) 
 {
     auto idx = code_->localIdx(local);
     auto op = idx == 0 ? OpCode::lstore_0 
@@ -373,7 +373,7 @@ void JVMClassMethod::createLstore(
 }
 
 void JVMClassMethod::createLdc(
-    bb::SharedPtrBB bb, double numb) 
+    bb::BasicBlock* bb, double numb) 
 {   
     auto cp = selfClass_.lock()->cp();
     auto [ok, idx] = cp->getNumbConstIdx(numb);
@@ -386,7 +386,7 @@ void JVMClassMethod::createLdc(
 } 
 
 void JVMClassMethod::createLdc(
-    bb::SharedPtrBB bb, float numb) 
+    bb::BasicBlock* bb, float numb) 
 {
     auto cp = selfClass_.lock()->cp();
     auto [ok, idx] = cp->getNumbConstIdx(numb);
@@ -406,7 +406,7 @@ void JVMClassMethod::createLdc(
 }   
 
 void JVMClassMethod::createLdc(
-    bb::SharedPtrBB bb, int numb) 
+    bb::BasicBlock* bb, int numb) 
 {
     auto cp = selfClass_.lock()->cp();
     auto [ok, idx] = cp->getNumbConstIdx(numb);
@@ -426,7 +426,7 @@ void JVMClassMethod::createLdc(
 }   
 
 void JVMClassMethod::createLdc(
-    bb::SharedPtrBB bb, std::int64_t numb) 
+    bb::BasicBlock* bb, std::int64_t numb) 
 {
     auto cp = selfClass_.lock()->cp();
     auto [ok, idx] = cp->getNumbConstIdx(numb);
@@ -438,7 +438,7 @@ void JVMClassMethod::createLdc(
     code_->insertInstr(bb, std::move(ins));
 }
 
-void JVMClassMethod::createLdc(bb::SharedPtrBB bb, 
+void JVMClassMethod::createLdc(bb::BasicBlock* bb, 
     const std::string& string)
 {
     auto cp = selfClass_.lock()->cp();
@@ -458,104 +458,104 @@ void JVMClassMethod::createLdc(bb::SharedPtrBB bb,
     code_->insertInstr(bb, *ins);
 }   
 
-void JVMClassMethod::createDadd(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDadd(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dadd);
 }
 
-void JVMClassMethod::createFadd(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFadd(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::fadd);
 }
 
-void JVMClassMethod::createIadd(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIadd(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::iadd);
 }
 
-void JVMClassMethod::createLadd(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLadd(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ladd);
 }
 
-void JVMClassMethod::createDsub(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDsub(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dsub);
 }
 
-void JVMClassMethod::createFsub(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFsub(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::fsub);
 }
 
-void JVMClassMethod::createIsub(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIsub(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::isub);
 }
 
-void JVMClassMethod::createLsub(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLsub(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lsub);
 }
 
-void JVMClassMethod::createDmul(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDmul(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dmul);
 }
 
-void JVMClassMethod::createFmul(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFmul(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::fmul);
 }
 
-void JVMClassMethod::createImul(bb::SharedPtrBB bb) {
+void JVMClassMethod::createImul(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::imul);
 }
 
-void JVMClassMethod::createLmul(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLmul(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lmul);
 }
 
-void JVMClassMethod::createDdiv(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDdiv(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ddiv);
 }
 
-void JVMClassMethod::createFdiv(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFdiv(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::fdiv);
 }
 
-void JVMClassMethod::createIdiv(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIdiv(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::idiv);
 }
 
-void JVMClassMethod::createLdiv(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLdiv(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ldiv);
 }
 
-void JVMClassMethod::createDneg(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDneg(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dneg);
 }
 
-void JVMClassMethod::createFneg(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFneg(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::fneg);
 }
 
-void JVMClassMethod::createIneg(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIneg(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ineg);
 }
 
-void JVMClassMethod::createLneg(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLneg(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lneg);
 }
 
-void JVMClassMethod::createDrem(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDrem(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::drem);
 }
 
-void JVMClassMethod::createFrem(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFrem(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::frem);
 }
 
-void JVMClassMethod::createIrem(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIrem(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::irem);
 }
 
-void JVMClassMethod::createLrem(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLrem(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lrem);
 }
 
 void JVMClassMethod::createIinc(
-    bb::SharedPtrBB bb, 
+    bb::BasicBlock* bb, 
     const std::string& local, 
     std::int8_t const_)
 {
@@ -567,190 +567,190 @@ void JVMClassMethod::createIinc(
     );
 }
 
-void JVMClassMethod::createIand(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIand(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::iand);
 }
 
-void JVMClassMethod::createLand(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLand(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::land);
 }
 
-void JVMClassMethod::createIor(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIor(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ior);
 }
 
-void JVMClassMethod::createLor(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLor(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lor);
 }
 
-void JVMClassMethod::createIxor(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIxor(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ixor);
 }
 
-void JVMClassMethod::createLxor(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLxor(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lxor);
 }
 
-void JVMClassMethod::createDcmpl(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDcmpl(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dcmpl);
 }
 
-void JVMClassMethod::createDcmpg(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDcmpg(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dcmpg);
 }
 
-void JVMClassMethod::createFcmpl(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFcmpl(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::fcmpl);
 }
 
-void JVMClassMethod::createFcmpg(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFcmpg(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::fcmpg);
 }
 
-void JVMClassMethod::createIshl(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIshl(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ishl);
 }
 
-void JVMClassMethod::createIshr(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIshr(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ishr);
 }
 
-void JVMClassMethod::createLshl(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLshl(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lshl);
 }
 
-void JVMClassMethod::createLshr(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLshr(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lshr);
 }
 
-void JVMClassMethod::createReturn(bb::SharedPtrBB bb) {
+void JVMClassMethod::createReturn(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::return_);    
 }
 
-void JVMClassMethod::createAreturn(bb::SharedPtrBB bb) {
+void JVMClassMethod::createAreturn(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::areturn);    
 }
 
-void JVMClassMethod::createDreturn(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDreturn(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dreturn);    
 }
 
-void JVMClassMethod::createFreturn(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFreturn(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::freturn);    
 }
 
-void JVMClassMethod::createIreturn(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIreturn(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::ireturn);    
 }
 
-void JVMClassMethod::createLreturn(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLreturn(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lreturn);    
 }
 
 void JVMClassMethod::createIfeq(
-    bb::SharedPtrBB from, bb::SharedPtrBB to) 
+    bb::BasicBlock* from, bb::BasicBlock* to) 
 {
     code_->insertBranch(from, OpCode::ifeq, to);
 }
 
 void JVMClassMethod::createIfne(
-    bb::SharedPtrBB from, bb::SharedPtrBB to) 
+    bb::BasicBlock* from, bb::BasicBlock* to) 
 {
     code_->insertBranch(from, OpCode::ifne, to);
 }
 
 void JVMClassMethod::createIflt(
-    bb::SharedPtrBB from, bb::SharedPtrBB to) 
+    bb::BasicBlock* from, bb::BasicBlock* to) 
 {
     code_->insertBranch(from, OpCode::iflt, to);
 }
 
 void JVMClassMethod::createIfge(
-    bb::SharedPtrBB from, bb::SharedPtrBB to) 
+    bb::BasicBlock* from, bb::BasicBlock* to) 
 {
     code_->insertBranch(from, OpCode::ifge, to);
 }
 
 void JVMClassMethod::createIfgt(
-    bb::SharedPtrBB from, bb::SharedPtrBB to) 
+    bb::BasicBlock* from, bb::BasicBlock* to) 
 {
     code_->insertBranch(from, OpCode::ifgt, to);
 }
 
 void JVMClassMethod::createIfle(
-    bb::SharedPtrBB from, bb::SharedPtrBB to) 
+    bb::BasicBlock* from, bb::BasicBlock* to) 
 {
     code_->insertBranch(from, OpCode::ifle, to);
 }
 
 void JVMClassMethod::createIficmpeq(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::if_icmpeq, to);
 }
 
 void JVMClassMethod::createIficmpne(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::if_icmpne, to);
 }
 
 void JVMClassMethod::createIficmplt(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::if_icmplt, to);
 }
 
 void JVMClassMethod::createIficmpge(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::if_icmpge, to);
 }
 
 void JVMClassMethod::createIficmpgt(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::if_icmpgt, to);
 }
 
 void JVMClassMethod::createIficmple(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::if_icmple, to);
 }
 
 void JVMClassMethod::createIfnonull(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::ifnonnull, to);
 }
 
 void JVMClassMethod::createIfnull(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::ifnull, to);
 }
 
 void JVMClassMethod::createIfacmpeq(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::if_acmpeq, to);
 }
 
 void JVMClassMethod::createIfacmpne(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::if_acmpne, to);
 }
 
 void JVMClassMethod::createGoto(
-    bb::SharedPtrBB from, bb::SharedPtrBB to)
+    bb::BasicBlock* from, bb::BasicBlock* to)
 {
     code_->insertBranch(from, OpCode::goto_, to);
 }
 
 void JVMClassMethod::createAnewarray(
-    bb::SharedPtrBB bb, std::uint16_t type) 
+    bb::BasicBlock* bb, std::uint16_t type) 
 {   
     instr::Instr ins(OpCode::anewarray);
     ins.pushTwoBytes(type);
@@ -758,7 +758,7 @@ void JVMClassMethod::createAnewarray(
 }
 
 void JVMClassMethod::createNewarray(
-    bb::SharedPtrBB bb, codegen::ArrayType atype)
+    bb::BasicBlock* bb, codegen::ArrayType atype)
 {
     instr::Instr ins(OpCode::anewarray);
     ins.pushByte(static_cast<std::uint8_t>(atype));
@@ -766,7 +766,7 @@ void JVMClassMethod::createNewarray(
 }
 
 void JVMClassMethod::createMultianewarray(
-    bb::SharedPtrBB bb, 
+    bb::BasicBlock* bb, 
     std::uint16_t type, 
     std::uint8_t demensions)
 {
@@ -776,76 +776,76 @@ void JVMClassMethod::createMultianewarray(
     code_->insertInstr(bb, std::move(ins));
 }
 
-void JVMClassMethod::createArraylength(bb::SharedPtrBB bb) {
+void JVMClassMethod::createArraylength(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::arraylength);
 }
 
-void JVMClassMethod::createAaload(bb::SharedPtrBB bb) {
+void JVMClassMethod::createAaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::aaload);
 } 
 
-void JVMClassMethod::createbaload(bb::SharedPtrBB bb) {
+void JVMClassMethod::createbaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::baload);
 }
 
-void JVMClassMethod::createCaload(bb::SharedPtrBB bb) {
+void JVMClassMethod::createCaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::caload);
 }
 
-void JVMClassMethod::createDaload(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::daload);
 }
 
-void JVMClassMethod::createFaload(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::faload);
 }
 
-void JVMClassMethod::createIaload(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::iaload);
 }
 
-void JVMClassMethod::createLaload(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::laload);
 }
 
-void JVMClassMethod::createSaload(bb::SharedPtrBB bb) {
+void JVMClassMethod::createSaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::saload);
 }
 
-void JVMClassMethod::createAastore(bb::SharedPtrBB bb) {
+void JVMClassMethod::createAastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::aastore);
 } 
 
-void JVMClassMethod::createbastore(bb::SharedPtrBB bb) {
+void JVMClassMethod::createbastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::bastore);
 }
 
-void JVMClassMethod::createCastore(bb::SharedPtrBB bb) {
+void JVMClassMethod::createCastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::castore);
 }
 
-void JVMClassMethod::createDastore(bb::SharedPtrBB bb) {
+void JVMClassMethod::createDastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::dastore);
 }
 
-void JVMClassMethod::createFastore(bb::SharedPtrBB bb) {
+void JVMClassMethod::createFastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::fastore);
 }
 
-void JVMClassMethod::createIastore(bb::SharedPtrBB bb) {
+void JVMClassMethod::createIastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::iastore);
 }
 
-void JVMClassMethod::createLastore(bb::SharedPtrBB bb) {
+void JVMClassMethod::createLastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::lastore);
 }
 
-void JVMClassMethod::createSastore(bb::SharedPtrBB bb) {
+void JVMClassMethod::createSastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::sastore);
 }
 
 void JVMClassMethod::createNew(
-    bb::SharedPtrBB bb, jvm_class::SharedPtrJVMClass cls)
+    bb::BasicBlock* bb, jvm_class::SharedPtrJVMClass cls)
 {
     instr::Instr ins(OpCode::new_);
     auto name = selfClass_.lock()->className(cls);
@@ -854,7 +854,7 @@ void JVMClassMethod::createNew(
 } 
 
 void JVMClassMethod::createGetfield(
-    bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
+    bb::BasicBlock* bb, std::shared_ptr<JVMClassField> field)
 {
     auto f = selfClass_.lock()->fieldRef(field);
     instr::Instr ins(OpCode::getfield);
@@ -863,7 +863,7 @@ void JVMClassMethod::createGetfield(
 }
 
 void JVMClassMethod::createGetstatic(
-    bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
+    bb::BasicBlock* bb, std::shared_ptr<JVMClassField> field)
 {   
     if (!field->isStatic()) {
         throw std::logic_error("static getfield" 
@@ -876,7 +876,7 @@ void JVMClassMethod::createGetstatic(
 }
 
 void JVMClassMethod::createPutfield(
-    bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
+    bb::BasicBlock* bb, std::shared_ptr<JVMClassField> field)
 {
     auto f = selfClass_.lock()->fieldRef(field);
     instr::Instr ins(OpCode::putfield);
@@ -885,7 +885,7 @@ void JVMClassMethod::createPutfield(
 }
 
 void JVMClassMethod::createPutstatic(
-    bb::SharedPtrBB bb, std::shared_ptr<JVMClassField> field)
+    bb::BasicBlock* bb, std::shared_ptr<JVMClassField> field)
 {   
     auto f = selfClass_.lock()->fieldRef(field);
     instr::Instr ins(OpCode::putstatic);
@@ -894,7 +894,7 @@ void JVMClassMethod::createPutstatic(
 }
 
 void JVMClassMethod::createInvokespecial(
-    bb::SharedPtrBB bb, 
+    bb::BasicBlock* bb, 
     std::shared_ptr<JVMClassMethod> method) 
 {
     auto ref = selfClass_.lock()->methodRef(method);
@@ -904,7 +904,7 @@ void JVMClassMethod::createInvokespecial(
 }
 
 void JVMClassMethod::createInvokevirtual(
-    bb::SharedPtrBB bb, 
+    bb::BasicBlock* bb, 
     std::shared_ptr<JVMClassMethod> method) 
 {
     auto ref = selfClass_.lock()->methodRef(method);
@@ -914,7 +914,7 @@ void JVMClassMethod::createInvokevirtual(
 }
 
 void JVMClassMethod::createInvokestatic(
-    bb::SharedPtrBB bb, 
+    bb::BasicBlock* bb, 
     std::shared_ptr<JVMClassMethod> method) 
 {
     if (!isStatic()) {

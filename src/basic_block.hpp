@@ -25,9 +25,7 @@ private:
     void printBytes(std::ostream& out) const;
 
     void insertInstr(instr::Instr instr);
-    void insertBranch(
-        instr::OpCode op, 
-        std::shared_ptr<BasicBlock> to); 
+    void insertBranch(instr::OpCode op, bb::BasicBlock* to); 
 
     void setStartOpCodeIdx(std::uint32_t idx);
 
@@ -42,8 +40,8 @@ private:
     int id_;
     std::uint32_t startOpCodeIdx_;
     std::vector<std::unique_ptr<instr::Instr>> instrs_;
-    std::weak_ptr<jvm_attribute::CodeAttr> code_;
-    std::vector<std::shared_ptr<BasicBlock>> branches_;
+    std::weak_ptr<jvm_attribute::CodeAttr> code_; 
+    std::vector<bb::BasicBlock*> branches_;
 };
 
 using SharedPtrBB = std::shared_ptr<BasicBlock>;

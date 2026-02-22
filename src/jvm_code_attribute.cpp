@@ -11,11 +11,11 @@ CodeAttr::CodeAttr(constant_pool::SharedPtrJVMCP cp) :
     IAttribute(name_, cp) 
 {}
 
-bb::SharedPtrBB CodeAttr::createBB() {
+bb::BasicBlock* CodeAttr::createBB() {
     code_.emplace_back(
         new bb::BasicBlock(
             code_.size(), shared_from_this()));
-    return code_.back();
+    return code_.back().get();
 }
 
 void CodeAttr::createLocal(
@@ -45,7 +45,7 @@ std::uint16_t CodeAttr::localIdx(const std::string& name) {
 }
 
 void CodeAttr::insertInstr(
-    bb::SharedPtrBB bb, instr::Instr instr)
+    bb::BasicBlock* bb, instr::Instr instr)
 {  
     bb->insertInstr(std::move(instr));
     calcBBAddr_(); 
@@ -53,9 +53,9 @@ void CodeAttr::insertInstr(
 }
 
 void CodeAttr::insertBranch(
-    bb::SharedPtrBB from, 
+    bb::BasicBlock* from, 
     instr::OpCode op, 
-    bb::SharedPtrBB to)
+    bb::BasicBlock* to)
 {   
     if (to->codeAttr().lock() != from->codeAttr().lock()) {
         throw std::logic_error("Branching is not" 
@@ -68,7 +68,7 @@ void CodeAttr::insertBranch(
 }
 
 void CodeAttr::instertInstrWithLocal(
-    bb::SharedPtrBB bb, 
+    bb::BasicBlock* bb, 
     instr::OpCode op, 
     const std::string& name,
     const std::vector<std::uint8_t>& bytes)
@@ -168,7 +168,7 @@ std::uint32_t CodeAttr::selfLen_() const {
         + 2; // attribute_count
 }
 
-void CodeAttr::checBBThenThrow_(bb::SharedPtrBB bb) {
+void CodeAttr::checBBThenThrow_(bb::BasicBlock* bb) {
     if (bb->codeAttr().lock() != shared_from_this()) {
         throw std::logic_error("Working with bb" 
                                " from another method");

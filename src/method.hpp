@@ -34,7 +34,7 @@ public:
     using IJVMClassMember::printBytes;
 
 public:
-    bb::SharedPtrBB createBB();
+    bb::BasicBlock*createBB();
 
     std::uint16_t selfClassRef() const noexcept;
     jvm_class::SharedPtrJVMClass cls();
@@ -44,27 +44,27 @@ public:
     
 public: 
     // stack
-    void createPop(bb::SharedPtrBB bb);
-    void createPop2(bb::SharedPtrBB bb);
-    void createDup(bb::SharedPtrBB bb);
-    void createDupX1(bb::SharedPtrBB bb);
-    void createDupX2(bb::SharedPtrBB bb);
-    void createDup2(bb::SharedPtrBB bb);
-    void createDup2X1(bb::SharedPtrBB bb);
-    void createDup2X2(bb::SharedPtrBB bb);
+    void createPop(bb::BasicBlock*bb);
+    void createPop2(bb::BasicBlock*bb);
+    void createDup(bb::BasicBlock*bb);
+    void createDupX1(bb::BasicBlock*bb);
+    void createDupX2(bb::BasicBlock*bb);
+    void createDup2(bb::BasicBlock*bb);
+    void createDup2X1(bb::BasicBlock*bb);
+    void createDup2X2(bb::BasicBlock*bb);
 
-    void createBipush(bb::SharedPtrBB bb, std::int8_t byte);
+    void createBipush(bb::BasicBlock*bb, std::int8_t byte);
 
-    void createSwap(bb::SharedPtrBB bb);
+    void createSwap(bb::BasicBlock*bb);
 
     // == 0.0 or == 1.0
-    void createDconst(bb::SharedPtrBB bb, std::int8_t const_); 
+    void createDconst(bb::BasicBlock*bb, std::int8_t const_); 
     // == 0.0 or == 1.0 or == 2.0
-    void createFconst(bb::SharedPtrBB bb, std::int8_t const_); 
+    void createFconst(bb::BasicBlock*bb, std::int8_t const_); 
     // -1 >= const_ <= 5
-    void createIconst(bb::SharedPtrBB bb, std::int8_t const_); 
+    void createIconst(bb::BasicBlock*bb, std::int8_t const_); 
     // == 1 or == 0
-    void createLconst(bb::SharedPtrBB bb, std::int8_t const_); 
+    void createLconst(bb::BasicBlock*bb, std::int8_t const_); 
 
     // load, store
     void createLocalDouble(const std::string& name);
@@ -73,166 +73,166 @@ public:
     void createLocalLong(const std::string& name);
     void createLocalRef(const std::string& name);
 
-    void createAload(bb::SharedPtrBB bb, const std::string& local);
-    void createDload(bb::SharedPtrBB bb, const std::string& local);
-    void createFload(bb::SharedPtrBB bb, const std::string& local);
-    void createIload(bb::SharedPtrBB bb, const std::string& local);
-    void createLload(bb::SharedPtrBB bb, const std::string& local);
+    void createAload(bb::BasicBlock*bb, const std::string& local);
+    void createDload(bb::BasicBlock*bb, const std::string& local);
+    void createFload(bb::BasicBlock*bb, const std::string& local);
+    void createIload(bb::BasicBlock*bb, const std::string& local);
+    void createLload(bb::BasicBlock*bb, const std::string& local);
 
-    void createAstore(bb::SharedPtrBB bb, const std::string& local);
-    void createDstore(bb::SharedPtrBB bb, const std::string& local);
-    void createFstore(bb::SharedPtrBB bb, const std::string& local);
-    void createIstore(bb::SharedPtrBB bb, const std::string& local);
-    void createLstore(bb::SharedPtrBB bb, const std::string& local);
+    void createAstore(bb::BasicBlock*bb, const std::string& local);
+    void createDstore(bb::BasicBlock*bb, const std::string& local);
+    void createFstore(bb::BasicBlock*bb, const std::string& local);
+    void createIstore(bb::BasicBlock*bb, const std::string& local);
+    void createLstore(bb::BasicBlock*bb, const std::string& local);
 
-    void createLdc(bb::SharedPtrBB bb, double numb);                //    \ auto ldc, ldc_w, ldc2_w and cp interaction
-    void createLdc(bb::SharedPtrBB bb, float numb);                 //    /
-    void createLdc(bb::SharedPtrBB bb, int numb);                   //   /
-    void createLdc(bb::SharedPtrBB bb, std::int64_t numb);          //  /
-    void createLdc(bb::SharedPtrBB bb, const std::string& string);  // /
+    void createLdc(bb::BasicBlock*bb, double numb);                //    \ auto ldc, ldc_w, ldc2_w and cp interaction
+    void createLdc(bb::BasicBlock*bb, float numb);                 //    /
+    void createLdc(bb::BasicBlock*bb, int numb);                   //   /
+    void createLdc(bb::BasicBlock*bb, std::int64_t numb);          //  /
+    void createLdc(bb::BasicBlock*bb, const std::string& string);  // /
 
     // math
-    void createDadd(bb::SharedPtrBB bb);
-    void createFadd(bb::SharedPtrBB bb);
-    void createIadd(bb::SharedPtrBB bb);
-    void createLadd(bb::SharedPtrBB bb);
+    void createDadd(bb::BasicBlock*bb);
+    void createFadd(bb::BasicBlock*bb);
+    void createIadd(bb::BasicBlock*bb);
+    void createLadd(bb::BasicBlock*bb);
 
-    void createDsub(bb::SharedPtrBB bb);
-    void createFsub(bb::SharedPtrBB bb);
-    void createIsub(bb::SharedPtrBB bb);
-    void createLsub(bb::SharedPtrBB bb);
+    void createDsub(bb::BasicBlock*bb);
+    void createFsub(bb::BasicBlock*bb);
+    void createIsub(bb::BasicBlock*bb);
+    void createLsub(bb::BasicBlock*bb);
 
-    void createDmul(bb::SharedPtrBB bb);
-    void createFmul(bb::SharedPtrBB bb);
-    void createImul(bb::SharedPtrBB bb);
-    void createLmul(bb::SharedPtrBB bb);
+    void createDmul(bb::BasicBlock*bb);
+    void createFmul(bb::BasicBlock*bb);
+    void createImul(bb::BasicBlock*bb);
+    void createLmul(bb::BasicBlock*bb);
 
-    void createDdiv(bb::SharedPtrBB bb);
-    void createFdiv(bb::SharedPtrBB bb);
-    void createIdiv(bb::SharedPtrBB bb);
-    void createLdiv(bb::SharedPtrBB bb);
+    void createDdiv(bb::BasicBlock*bb);
+    void createFdiv(bb::BasicBlock*bb);
+    void createIdiv(bb::BasicBlock*bb);
+    void createLdiv(bb::BasicBlock*bb);
 
-    void createDneg(bb::SharedPtrBB bb);
-    void createFneg(bb::SharedPtrBB bb);
-    void createIneg(bb::SharedPtrBB bb);
-    void createLneg(bb::SharedPtrBB bb);
+    void createDneg(bb::BasicBlock*bb);
+    void createFneg(bb::BasicBlock*bb);
+    void createIneg(bb::BasicBlock*bb);
+    void createLneg(bb::BasicBlock*bb);
 
-    void createDrem(bb::SharedPtrBB bb);
-    void createFrem(bb::SharedPtrBB bb);
-    void createIrem(bb::SharedPtrBB bb);
-    void createLrem(bb::SharedPtrBB bb);
+    void createDrem(bb::BasicBlock*bb);
+    void createFrem(bb::BasicBlock*bb);
+    void createIrem(bb::BasicBlock*bb);
+    void createLrem(bb::BasicBlock*bb);
 
     void createIinc(
-        bb::SharedPtrBB bb, 
+        bb::BasicBlock*bb, 
         const std::string& local, 
         std::int8_t const_);
 
     // logic
-    void createIand(bb::SharedPtrBB bb);
-    void createLand(bb::SharedPtrBB bb);
+    void createIand(bb::BasicBlock*bb);
+    void createLand(bb::BasicBlock*bb);
 
-    void createIor(bb::SharedPtrBB bb);
-    void createLor(bb::SharedPtrBB bb);
+    void createIor(bb::BasicBlock*bb);
+    void createLor(bb::BasicBlock*bb);
 
-    void createIxor(bb::SharedPtrBB bb);
-    void createLxor(bb::SharedPtrBB bb);
+    void createIxor(bb::BasicBlock*bb);
+    void createLxor(bb::BasicBlock*bb);
 
-    void createDcmpl(bb::SharedPtrBB bb);
-    void createDcmpg(bb::SharedPtrBB bb);
-    void createFcmpl(bb::SharedPtrBB bb);
-    void createFcmpg(bb::SharedPtrBB bb);
+    void createDcmpl(bb::BasicBlock*bb);
+    void createDcmpg(bb::BasicBlock*bb);
+    void createFcmpl(bb::BasicBlock*bb);
+    void createFcmpg(bb::BasicBlock*bb);
 
     // bit manipulation
-    void createIshl(bb::SharedPtrBB bb);
-    void createIshr(bb::SharedPtrBB bb);
-    void createLshl(bb::SharedPtrBB bb);
-    void createLshr(bb::SharedPtrBB bb);
+    void createIshl(bb::BasicBlock*bb);
+    void createIshr(bb::BasicBlock*bb);
+    void createLshl(bb::BasicBlock*bb);
+    void createLshr(bb::BasicBlock*bb);
 
     // return
-    void createReturn(bb::SharedPtrBB bb);
-    void createAreturn(bb::SharedPtrBB bb);
-    void createDreturn(bb::SharedPtrBB bb);
-    void createFreturn(bb::SharedPtrBB bb);
-    void createIreturn(bb::SharedPtrBB bb);
-    void createLreturn(bb::SharedPtrBB bb);
+    void createReturn(bb::BasicBlock*bb);
+    void createAreturn(bb::BasicBlock*bb);
+    void createDreturn(bb::BasicBlock*bb);
+    void createFreturn(bb::BasicBlock*bb);
+    void createIreturn(bb::BasicBlock*bb);
+    void createLreturn(bb::BasicBlock*bb);
 
     // branch    
-    void createIfeq(bb::SharedPtrBB from, bb::SharedPtrBB to); // == 0
-    void createIfne(bb::SharedPtrBB from, bb::SharedPtrBB to); // != 0
-    void createIflt(bb::SharedPtrBB from, bb::SharedPtrBB to); // < 0
-    void createIfge(bb::SharedPtrBB from, bb::SharedPtrBB to); // <= 0
-    void createIfgt(bb::SharedPtrBB from, bb::SharedPtrBB to); // > 0
-    void createIfle(bb::SharedPtrBB from, bb::SharedPtrBB to); // >= 0
+    void createIfeq(bb::BasicBlock*from, bb::BasicBlock*to); // == 0
+    void createIfne(bb::BasicBlock*from, bb::BasicBlock*to); // != 0
+    void createIflt(bb::BasicBlock*from, bb::BasicBlock*to); // < 0
+    void createIfge(bb::BasicBlock*from, bb::BasicBlock*to); // <= 0
+    void createIfgt(bb::BasicBlock*from, bb::BasicBlock*to); // > 0
+    void createIfle(bb::BasicBlock*from, bb::BasicBlock*to); // >= 0
 
-    void createIficmpeq(bb::SharedPtrBB from, bb::SharedPtrBB to); // == 
-    void createIficmpne(bb::SharedPtrBB from, bb::SharedPtrBB to); // != 
-    void createIficmplt(bb::SharedPtrBB from, bb::SharedPtrBB to); // < 
-    void createIficmpge(bb::SharedPtrBB from, bb::SharedPtrBB to); // <= 
-    void createIficmpgt(bb::SharedPtrBB from, bb::SharedPtrBB to); // > 
-    void createIficmple(bb::SharedPtrBB from, bb::SharedPtrBB to); // >= 
+    void createIficmpeq(bb::BasicBlock*from, bb::BasicBlock*to); // == 
+    void createIficmpne(bb::BasicBlock*from, bb::BasicBlock*to); // != 
+    void createIficmplt(bb::BasicBlock*from, bb::BasicBlock*to); // < 
+    void createIficmpge(bb::BasicBlock*from, bb::BasicBlock*to); // <= 
+    void createIficmpgt(bb::BasicBlock*from, bb::BasicBlock*to); // > 
+    void createIficmple(bb::BasicBlock*from, bb::BasicBlock*to); // >= 
 
-    void createIfnonull(bb::SharedPtrBB from, bb::SharedPtrBB to);
-    void createIfnull(bb::SharedPtrBB from, bb::SharedPtrBB to);
+    void createIfnonull(bb::BasicBlock*from, bb::BasicBlock*to);
+    void createIfnull(bb::BasicBlock*from, bb::BasicBlock*to);
 
-    void createIfacmpeq(bb::SharedPtrBB from, bb::SharedPtrBB to);
-    void createIfacmpne(bb::SharedPtrBB from, bb::SharedPtrBB to);
+    void createIfacmpeq(bb::BasicBlock*from, bb::BasicBlock*to);
+    void createIfacmpne(bb::BasicBlock*from, bb::BasicBlock*to);
 
-    void createGoto(bb::SharedPtrBB from, bb::SharedPtrBB to); 
+    void createGoto(bb::BasicBlock*from, bb::BasicBlock*to); 
 
     // array
-    void createAnewarray(bb::SharedPtrBB bb, std::uint16_t type);
-    void createNewarray(bb::SharedPtrBB bb, codegen::ArrayType atype);
+    void createAnewarray(bb::BasicBlock*bb, std::uint16_t type);
+    void createNewarray(bb::BasicBlock*bb, codegen::ArrayType atype);
     void createMultianewarray(
-        bb::SharedPtrBB bb, 
+        bb::BasicBlock*bb, 
         std::uint16_t type, 
         std::uint8_t demensions);
 
-    void createArraylength(bb::SharedPtrBB bb);
+    void createArraylength(bb::BasicBlock*bb);
 
-    void createAaload(bb::SharedPtrBB bb); 
-    void createbaload(bb::SharedPtrBB bb);
-    void createCaload(bb::SharedPtrBB bb);
-    void createDaload(bb::SharedPtrBB bb);
-    void createFaload(bb::SharedPtrBB bb);
-    void createIaload(bb::SharedPtrBB bb);
-    void createLaload(bb::SharedPtrBB bb);
-    void createSaload(bb::SharedPtrBB bb);
+    void createAaload(bb::BasicBlock*bb); 
+    void createbaload(bb::BasicBlock*bb);
+    void createCaload(bb::BasicBlock*bb);
+    void createDaload(bb::BasicBlock*bb);
+    void createFaload(bb::BasicBlock*bb);
+    void createIaload(bb::BasicBlock*bb);
+    void createLaload(bb::BasicBlock*bb);
+    void createSaload(bb::BasicBlock*bb);
 
-    void createAastore(bb::SharedPtrBB bb); 
-    void createbastore(bb::SharedPtrBB bb);
-    void createCastore(bb::SharedPtrBB bb);
-    void createDastore(bb::SharedPtrBB bb);
-    void createFastore(bb::SharedPtrBB bb);
-    void createIastore(bb::SharedPtrBB bb);
-    void createLastore(bb::SharedPtrBB bb);
-    void createSastore(bb::SharedPtrBB bb);
+    void createAastore(bb::BasicBlock*bb); 
+    void createbastore(bb::BasicBlock*bb);
+    void createCastore(bb::BasicBlock*bb);
+    void createDastore(bb::BasicBlock*bb);
+    void createFastore(bb::BasicBlock*bb);
+    void createIastore(bb::BasicBlock*bb);
+    void createLastore(bb::BasicBlock*bb);
+    void createSastore(bb::BasicBlock*bb);
 
     // object
-    void createNew(bb::SharedPtrBB bb, 
+    void createNew(bb::BasicBlock*bb, 
                    jvm_class::SharedPtrJVMClass cls);
 
-    void createGetfield(bb::SharedPtrBB bb, 
+    void createGetfield(bb::BasicBlock*bb, 
                         std::shared_ptr<JVMClassField> field);
 
-    void createGetstatic(bb::SharedPtrBB bb,                         
+    void createGetstatic(bb::BasicBlock*bb,                         
                          std::shared_ptr<JVMClassField> field);
     
-    void createPutfield(bb::SharedPtrBB bb,                         
+    void createPutfield(bb::BasicBlock*bb,                         
                         std::shared_ptr<JVMClassField> field);
 
-    void createPutstatic(bb::SharedPtrBB bb,                         
+    void createPutstatic(bb::BasicBlock*bb,                         
                          std::shared_ptr<JVMClassField> field);
     
     void createInvokespecial(
-        bb::SharedPtrBB bb, 
+        bb::BasicBlock*bb, 
         std::shared_ptr<JVMClassMethod> method);
 
     void createInvokestatic(
-        bb::SharedPtrBB bb, 
+        bb::BasicBlock*bb, 
         std::shared_ptr<JVMClassMethod> method);
 
     void createInvokevirtual(
-        bb::SharedPtrBB bb, 
+        bb::BasicBlock*bb, 
         std::shared_ptr<JVMClassMethod> method);
 
 private:

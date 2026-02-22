@@ -114,10 +114,10 @@ void BasicBlock::insertInstr(instr::Instr instr) {
 }
 
 void BasicBlock::insertBranch(
-    instr::OpCode op, bb::SharedPtrBB to)
+    instr::OpCode op, bb::BasicBlock* to)
 {
     instrs_.emplace_back(new instr::Instr(op, true));
-    branches_.emplace_back(to);
+    branches_.push_back(to);
 }
 
 std::uint32_t 

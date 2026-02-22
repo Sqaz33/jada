@@ -45,19 +45,19 @@ public:
     CodeAttr(constant_pool::SharedPtrJVMCP cp);
 
 public:
-    bb::SharedPtrBB createBB();
+    bb::BasicBlock* createBB();
 
     void createLocal(const std::string& name, 
         std::uint16_t size);
     std::uint16_t localIdx(const std::string& name);
 
-    void insertInstr(bb::SharedPtrBB bb, instr::Instr instr);
+    void insertInstr(bb::BasicBlock* bb, instr::Instr instr);
     void insertBranch(
-        bb::SharedPtrBB from, 
+        bb::BasicBlock* from, 
         instr::OpCode op, 
-        bb::SharedPtrBB to); 
+        bb::BasicBlock*to); 
     void instertInstrWithLocal(
-        bb::SharedPtrBB bb, 
+        bb::BasicBlock* bb, 
         instr::OpCode op, 
         const std::string& name,
         const std::vector<std::uint8_t>& bytes = {});
@@ -76,7 +76,7 @@ private:
     std::uint32_t codeLen_() const;
     std::uint32_t selfLen_() const;
 
-    void checBBThenThrow_(bb::SharedPtrBB bb);
+    void checBBThenThrow_(bb::BasicBlock* bb);
     
 private:
     std::vector<bb::SharedPtrBB> code_;
