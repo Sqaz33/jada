@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "ada_codegen.hpp"
+
 static auto getOrigin(std::shared_ptr<node::IType> type) {
     auto alias = std::dynamic_pointer_cast<node::TypeAliasDecl>(type);
     if (alias) {
@@ -95,6 +97,15 @@ IDecl::reachable(
     }
 
     return res;
+}
+
+// IType
+descriptor::JVMFieldDescriptor 
+IType::descriptor() {
+    auto desc = 
+    descriptor::JVMFieldDescriptor::createFundamental(
+        codegen::java_bytecode_codegen::FundamentalType::BOOLEAN);
+    return desc;
 }
 
 // DeclArea
@@ -202,6 +213,38 @@ void VarDecl::setRval(std::shared_ptr<node::IExpr> expr) {
     rval_ = expr;
 }
 
+// codegen
+void VarDecl::pregen(
+    jvm_class::SharedPtrJVMClass cls, 
+    class_member::SharedPtrMethod method)
+{
+    if (cls) {
+        javaField_ = cls->addField(name_, type_->descriptor());
+    } else {
+        if (std::dynamic_pointer_cast<RecordDecl>(type_) || 
+            std::dynamic_pointer_cast<StringType>(type_) || 
+            std::dynamic_pointer_cast<ArrayType>(type_)) 
+        {
+            method->createLocalRef(name_);
+        } 
+        else if (auto p = std::dynamic_pointer_cast<SimpleLiteralType>(type_))
+        {
+            switch (p->type()) {
+                case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
+                    method->createLocalInt(name_); 
+                    break;
+                case SimpleType::FLOAT:
+                    method->createLocalFloat(name_);
+                    break;
+            }
+        } 
+        else 
+        {
+            assert(false);
+        }
+    }
+}
+
 // ProcBody
 ProcBody::ProcBody(const std::string& name, 
                    const std::vector<std::shared_ptr<VarDecl>>& params,
@@ -279,6 +322,69 @@ void ProcBody::reachable_(
     }
 }
 
+// codegen
+void ProcBody::createCall(
+    bb::BasicBlock* bb,
+    class_member::SharedPtrMethod method) 
+{
+    if (isStatic_) {
+        method->createInvokestatic(bb, javaMethod_);
+    } else {
+        method->createInvokevirtual(bb, javaMethod_);
+    }
+}
+
+descriptor::JVMMethodDescriptor ProcBody::desc() {
+    using namespace descriptor;
+
+    assert(!(dynamic_cast<node::ProcDecl*>(this) || 
+             dynamic_cast<node::FuncDecl*>(this)));
+
+    std::vector<std::pair<std::string, JVMFieldDescriptor>> paramsDescr;
+    auto it = params_.begin(); 
+    if (!cls_.expired()) ++it;
+    for (; it != params_.end(); ++it) {
+        auto var = *it;
+        paramsDescr.emplace_back(var->name(), var->type()->descriptor());
+    } 
+
+    if (paramsDescr.empty()) {
+        return JVMMethodDescriptor::createVoidParamsVoidReturn();
+    } else {
+        return JVMMethodDescriptor::createVoidRetun(paramsDescr);
+    }
+}
+
+void ProcBody::pregen(
+    jvm_class::SharedPtrJVMClass cls, 
+    class_member::SharedPtrMethod method) 
+{
+    if (dynamic_cast<node::ProcDecl*>(this) || 
+        dynamic_cast<node::FuncDecl*>(this)) 
+    { return; }
+
+    auto d = desc();
+    if (cls) {
+        javaMethod_ = cls->addMethod(name_, d);
+        isStatic_ = false;
+    } else {
+        javaMethod_ = codegen::InnerSubprograms->addMethod(name_, d);
+        javaMethod_->addFlag(
+            codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+        isStatic_ = true;
+    }
+    javaMethod_->addFlag(
+        codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+
+    for (auto&& d : *decls_) {
+        d->pregen(nullptr, javaMethod_);
+    }
+}
+
+void ProcBody::codegen(bb::BasicBlock* bb)  {
+    body_->codegen(javaMethod_);
+}
+
 // ProcDecl
 ProcDecl::ProcDecl(const std::string& name, 
                    const std::vector<std::shared_ptr<VarDecl>>& params) :
@@ -290,6 +396,15 @@ ProcDecl::ProcDecl(const std::string& name,
 void ProcDecl::setBody(std::shared_ptr<ProcBody> body) {
     body_ = body;
 }
+
+// codegen
+void ProcDecl::createCall(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method) 
+{
+    body_.lock()->createCall(bb, method);
+}
+
 
 // FuncBody
 FuncBody::FuncBody(const std::string& name, 
@@ -311,6 +426,28 @@ void FuncBody::resetRetType(std::shared_ptr<IType> type) {
     retType_ = getOrigin(type);
 }
 
+descriptor::JVMMethodDescriptor FuncBody::desc() {
+    using namespace descriptor;
+    
+    assert(!(dynamic_cast<node::ProcDecl*>(this) || 
+             dynamic_cast<node::FuncDecl*>(this)));
+
+    std::vector<std::pair<std::string, JVMFieldDescriptor>> paramsDescr;
+    auto it = params_.begin(); 
+    if (!cls_.expired()) ++it;
+    for (; it != params_.end(); ++it) {
+        auto var = *it;
+        paramsDescr.emplace_back(var->name(), var->type()->descriptor());
+    } 
+
+    auto retDesc = retType_->descriptor();
+    if (paramsDescr.empty()) {
+        return JVMMethodDescriptor::createVoidParams(retDesc);
+    } else {
+        return JVMMethodDescriptor::create(paramsDescr, retDesc);
+    }
+}
+
 // FuncDecl 
 FuncDecl::FuncDecl(const std::string& name, 
                    const std::vector<std::shared_ptr<VarDecl>>& params,
@@ -323,6 +460,15 @@ FuncDecl::FuncDecl(const std::string& name,
 
 void FuncDecl::setBody(std::shared_ptr<ProcBody> body) {
     body_ = body;
+}
+
+// codegen
+void FuncDecl::createCall(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method) 
+{
+    assert(body);
+    body_.lock()->createCall(bb, method);
 }
 
 // PackDecl
@@ -428,6 +574,53 @@ void PackDecl::setPackBody(std::shared_ptr<PackBody> body) {
 std::weak_ptr<PackBody> PackDecl::packBody() {
     return packBody_;
 }
+
+// codegen 
+void PackDecl::pregen(
+    jvm_class::SharedPtrJVMClass cls, 
+    class_member::SharedPtrMethod method) 
+{
+    if (dynamic_cast<PackBody*>(this)) return;
+
+    javaClass_ = codegen::cg.createClass(fullName_.toString('_'));
+    javaClass_->setParent(codegen::JavaObject);
+    javaClass_->addAccesFlag(codegen::AccessFlag::ACC_PUBLIC);
+
+    for (auto&& var : *decls_) {
+        var->pregen(javaClass_);
+    }
+
+    if (auto body = packBody_.lock()) {
+        for (auto&& var : *(body->decls())) {
+            var->pregen(javaClass_);
+        }
+    }
+
+    auto initDesc = 
+        descriptor::JVMMethodDescriptor::createVoidParamsVoidReturn();
+    clinit_ = javaClass_->addMethod("<clinit>", initDesc);
+}
+
+void PackDecl::codegen(bb::BasicBlock* bb) {
+    if (dynamic_cast<PackBody*>(this)) return;
+
+    auto* clinitBB = clinit_->createBB();
+    for (auto&& var : *decls_) {
+        var->codegen(clinitBB);
+    }
+
+    if (auto body = packBody_.lock()) {
+        for (auto&& var : *(body->decls())) {
+            var->codegen(clinitBB);
+        }
+    }
+}
+
+void PackDecl::printClass() {
+    if (dynamic_cast<PackBody*>(this)) return;
+    codegen::cg.printClass(javaClass_);
+}
+
 
 // PackBody
 PackBody::PackBody(const std::string& name, 
@@ -582,7 +775,6 @@ const std::string& RecordDecl::name() const noexcept {
     return name_;
 }
 
-
 bool RecordDecl::compare(const std::shared_ptr<IType> rhs) const {
     auto orig = getOrigin(rhs);
     if (orig.get() == this) {
@@ -659,6 +851,66 @@ void RecordDecl::reachable_(
     }
 }
 
+descriptor::JVMFieldDescriptor 
+RecordDecl::descriptor() {
+    auto desc = 
+        descriptor::JVMFieldDescriptor::createObject(fullName_.toString('_'));
+    return desc;
+}
+
+void RecordDecl::pregen(
+    jvm_class::SharedPtrJVMClass cls, 
+    class_member::SharedPtrMethod method) 
+{
+    createJavaClass_();
+    if (deriveRecord_) {
+        deriveRecord_->setJavaClassParrent(javaClass_);
+    }
+
+    if (auto cls = class_.lock()) {
+        for (auto&& p : cls->procs()) {
+            p.lock()->pregen(javaClass_);
+        }
+
+        for (auto&& f : cls->funcs()) {
+            f.lock()->pregen(javaClass_);
+        }
+    }
+
+    for (auto&& var : *decls_) {
+        var->pregen(javaClass_);
+    }
+
+    auto initDesc = 
+        descriptor::JVMMethodDescriptor::createVoidParamsVoidReturn();
+    init_ = javaClass_->addMethod("<init>", initDesc);
+}
+
+void RecordDecl::codegen(bb::BasicBlock* bb) {
+    auto* initBB = init_->createBB();
+    for (auto&& var : *decls_) {
+        var->codegen(initBB);
+    }
+}
+
+void RecordDecl::printClass() {
+    codegen::cg.printClass(javaClass_);
+}
+
+void RecordDecl::setJavaClassParrent(
+    jvm_class::SharedPtrJVMClass parent) 
+{
+    createJavaClass_();
+    javaClass_->setParent(parent);   
+}
+
+void RecordDecl::createJavaClass_() {
+    if (javaClass_) return;
+    javaClass_ = codegen::cg.createClass(fullName_.toString('_'));
+    javaClass_->setParent(codegen::JavaObject);
+    javaClass_->addAccesFlag(codegen::AccessFlag::ACC_PUBLIC);
+}
+
 //TypeAliasDecl
 TypeAliasDecl::TypeAliasDecl(const std::string& name, 
                             std::shared_ptr<IType> origin):
@@ -725,6 +977,19 @@ bool SimpleLiteralType::compare(const std::shared_ptr<IType> rhs) const {
     return false;
 }
 
+descriptor::JVMFieldDescriptor 
+SimpleLiteralType::descriptor() {
+    using namespace codegen;
+    using namespace descriptor;
+    switch (type_) {
+        case SimpleType::BOOL: return JVMFieldDescriptor::createFundamental(FundamentalType::BOOLEAN);
+        case SimpleType::INTEGER: return JVMFieldDescriptor::createFundamental(FundamentalType::INT);
+        case SimpleType::FLOAT: return JVMFieldDescriptor::createFundamental(FundamentalType::FLOAT);
+        case SimpleType::CHAR: return JVMFieldDescriptor::createFundamental(FundamentalType::CHAR);
+    }
+    assert(false);
+}
+
 // AggregateType
 AggregateType::AggregateType(std::vector<SimpleType> type) :
     type_(std::move(type))
@@ -788,6 +1053,15 @@ void ArrayType::resetType(std::shared_ptr<IType> newType) {
     type_ = getOrigin(newType);
 }
 
+descriptor::JVMFieldDescriptor 
+ArrayType::descriptor() {
+    auto desc = type_->descriptor();
+    for (auto&& _ : ranges_) {
+        desc.addDimension();
+    }
+    return desc;
+}
+
 // StringType
 StringType::StringType(std::pair<int, int> range) :
     range_(range)
@@ -807,6 +1081,17 @@ void StringType::setInf() noexcept {
 
 std::pair<int, int> StringType::range() const {
     return range_;
+}
+
+descriptor::JVMFieldDescriptor StringType::descriptor() {
+    static attribute::QualifiedName builder;
+    if (builder.size() == 0) {
+        builder.push("java");
+        builder.push("lang");
+        builder.push("StringBuilder");
+    }
+    auto desc = descriptor::JVMFieldDescriptor::createObject(builder);
+    return desc;
 }
 
 // Aggregate
@@ -1667,6 +1952,11 @@ bool SuperclassReference::compare(
         return class_ && r->class_ && class_ == r->class_;
     }
     return false;
+}
+
+descriptor::JVMFieldDescriptor
+SuperclassReference::descriptor() {
+    return class_->record()->descriptor();
 }
 
 }

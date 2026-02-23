@@ -44,6 +44,4 @@ private:
     std::vector<bb::BasicBlock*> branches_;
 };
 
-using SharedPtrBB = std::shared_ptr<BasicBlock>;
-
 } // namespace bb

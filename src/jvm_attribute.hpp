@@ -79,7 +79,7 @@ private:
     void checBBThenThrow_(bb::BasicBlock* bb);
     
 private:
-    std::vector<bb::SharedPtrBB> code_;
+    std::vector<std::unique_ptr<bb::BasicBlock>>code_;
     // TODO: exception table 
     // TODO: attrs
 

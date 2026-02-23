@@ -11,7 +11,8 @@ enum class FundamentalType {
     FLOAT,
     DOUBLE,
     LONG,
-    BOOLEAN
+    BOOLEAN,
+    CHAR
 };
 
 enum class AccessFlag : std::uint16_t {

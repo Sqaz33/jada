@@ -877,6 +877,7 @@ TypeNameToRealType::analyseRecord_(
 
             isBaseSet = true;
             decl->setBase(base);
+            base->setDerive(decl);
         }
     }
 
@@ -2500,8 +2501,6 @@ void QualifiedNameSet::analyseContainer_(
             analyseContainer_(d, name);
         }
     }
-
 }
-
-            
+           
 } // semantics_part

@@ -113,7 +113,7 @@ void CodeAttr::printBytes(std::ostream& out) const {
         utility::reverse(maxLocals_()));
     utility::printBytes(out, 
         utility::reverse(codeLen_()));
-    for (auto bb : code_) {
+    for (auto&& bb : code_) {
         bb->printBytes(out);
     }
     utility::printBytes(out, std::uint16_t(0)); // TODO: exception_table
@@ -122,7 +122,7 @@ void CodeAttr::printBytes(std::ostream& out) const {
 
 void CodeAttr::calcBBAddr_() {
     std::uint32_t idx = 0;
-    for (auto bb : code_) {
+    for (auto&& bb : code_) {
         bb->setStartOpCodeIdx(idx);
         idx += bb->len();
     }
@@ -134,7 +134,7 @@ void CodeAttr::calcSelfLen_() {
 
 std::uint16_t CodeAttr::maxStack_() const {
     std::uint16_t stack = 0;
-    for (auto bb : code_) {
+    for (auto&& bb : code_) {
         stack += bb->stackSize();
     }
     return stack;
@@ -151,7 +151,7 @@ std::uint16_t CodeAttr::maxLocals_() const {
 
 std::uint32_t CodeAttr::codeLen_() const {
     std::uint32_t len = 0;
-    for (auto bb : code_) {
+    for (auto&& bb : code_) {
         len += bb->len();
     }
     return len;

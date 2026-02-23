@@ -15,6 +15,7 @@
 #include "semantics.hpp"
 #include "semantics_part.hpp"
 #include "codegen.hpp"
+#include "ada_codegen.hpp"
 
 namespace codegen {
     JavaBCCodegen cg(49, 0);
@@ -198,9 +199,12 @@ int main(int argc, char** argv) { // try {
 
     if (argc < 2) { // TODO: delete
         argc = 2;
-        argv = new char*[2]; // TODO: delete
-        // argv[1] = "../test_data/complex.adb"; // TODO: delete
-        // argv[1] = "../test_data/modules/main.adb"; // TODO: delete
+        static std::unique_ptr<char*[]> argvOwner(new char*[2]);
+        argv = argvOwner.get();
+        static std::unique_ptr<char> pathOwner;
+        char* path = nullptr;
+        // argv[1] = "../test_data/complex.adb"; 
+        // argv[1] = "../test_data/modules/main.adb"; 
         // argv[1] = "../test_data/semantics/type_replace_check.adb";
         // argv[1] = "../test_data/semantics/proc_func_overload.adb";
         // argv[1] = "../test_data/semantics/record_inherits.adb";
@@ -213,11 +217,14 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_private.adb";
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
-        argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
+        // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
+        path = strdup("/mnt/d/jada/test_data/semantics/typecheck.adb");
         // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/bool.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/for_linking.adb";
         // argv[1] = "/mnt/d/jada/test_data/test.adb";
+        pathOwner.reset(path);
+        argv[1] = pathOwner.get();
     }
     
     if (argc < 2) {
@@ -260,8 +267,13 @@ int main(int argc, char** argv) { // try {
     int res = semanticAnalysis();
     if (res == 0) {
         std::cout << "semantic analysis: OK\n"; // TODO: delete
+    } else {
+        return res;
     }
-    return res;
+
+    codegen::gen(helper::modules);
+
+    return 0;
 } // catch (const std::exception& e) { // TODO 
 //     std::cerr << e.what() << '\n';
 //     printErrors();

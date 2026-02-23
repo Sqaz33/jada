@@ -36,7 +36,7 @@ public:
     static JVMMethodDescriptor
     createVoidRetun(
         const std::vector<
-            std::pair<std::string,JVMFieldDescriptor>>& params);
+            std::pair<std::string, JVMFieldDescriptor>>& params);
     
     static JVMMethodDescriptor
     createVoidParams(const JVMFieldDescriptor& ret);

@@ -19,7 +19,8 @@ JVMFieldDescriptor::createFundamental(
         {FundamentalType::FLOAT,   "F"},
         {FundamentalType::DOUBLE,  "D"},
         {FundamentalType::BOOLEAN, "Z"},
-        {FundamentalType::LONG,    "J"}
+        {FundamentalType::LONG,    "J"},
+        {FundamentalType::CHAR,    "C"}
     };
 
     int sz  = FundamentalType::LONG == type ||
@@ -34,7 +35,7 @@ JVMFieldDescriptor::createObject(
     const attribute::QualifiedName& name)
 {
     std::string descr("L");
-    descr += name.toString() + ";";
+    descr += name.toString('/') + ";";
     return JVMFieldDescriptor(std::move(descr), 1);
 }
 

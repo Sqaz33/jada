@@ -17,7 +17,7 @@ namespace node {
 struct INode : std::enable_shared_from_this<INode> {
     virtual void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const = 0;
-    virtual void* codegen() = 0; // TODO
+
     virtual ~INode() = default;
 
     void setLocation(const yy::location& loc);
@@ -75,7 +75,13 @@ enum class ParamMode {
 
 namespace node {
 
-class IStm : public INode { /* ... */ };
+class IStm : public INode { 
+public: // codegen
+    // возвращает следующий после себя bb
+    bb::BasicBlock* codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method);
+};
 
 class ProcBody;
 class PackDecl;
@@ -95,9 +101,23 @@ public:
     void setFullName(const attribute::QualifiedName& name) {
         fullName_ = name;
     }
+
     decltype(auto) fullName() const noexcept {
         return fullName_;
     }
+
+public: // codegen
+    // класс для vardecl и proc/func
+    // method для vardecl
+    virtual void pregen(
+        jvm_class::SharedPtrJVMClass cls, 
+        class_member::SharedPtrMethod method = nullptr) {}; 
+
+    // для вставки vardecl инициализации в <init>/<clinit> 
+    virtual void codegen(bb::BasicBlock* bb) 
+    {}
+
+    virtual void printClass() {}
 
 protected:
     friend class ProcBody;
@@ -118,6 +138,9 @@ protected:
 struct IType : virtual INode { 
     virtual bool compare(
         const std::shared_ptr<IType> rhs) const = 0;
+    
+    virtual descriptor::JVMFieldDescriptor 
+    descriptor();
 };
 
 
@@ -135,7 +158,13 @@ struct IExpr : INode {
 
     bool noAnalyse() { return noAnalyse_; }
     void setNoAnalyse() { noAnalyse_ = true;} 
-    
+
+public: // codegen
+    virtual void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs = false);
+
 private:
     bool inBrackets_ = false;
     VarDecl* varDecl_;
@@ -157,7 +186,6 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
 
 public:
     std::vector<std::shared_ptr<IStm>>::iterator begin();
@@ -165,6 +193,9 @@ public:
 
 public:
     void setParent(INode* parent) override;
+
+public:
+    void codegen(class_member::SharedPtrMethod method);
 
 private:
     std::vector<std::shared_ptr<IStm>> stms_;
@@ -194,7 +225,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
 
 private:
     std::vector<std::shared_ptr<IDecl>> decls_;
@@ -216,21 +247,28 @@ public:
     void setOut(bool out) noexcept;
 
 public: // codegen
+    void pregen(
+        jvm_class::SharedPtrJVMClass cls, 
+        class_member::SharedPtrMethod method = nullptr) override;
+
+    // для вставки vardecl инициализации в <init>/<clinit> 
+    void codegen(bb::BasicBlock* bb) override; 
+
     // лоад/стор из [лок.]/[стат. пакета]/[обычн. класса/рекорда]
-    void createLoad(bb::SharedPtrBB bb);
-    void createStore(bb::SharedPtrBB bb);
+    void createLoad(bb::BasicBlock* bb);
+    void createStore(bb::BasicBlock* bb);
 
     // лоад создание рефа, загрузка лоада в реф
-    void createRef(bb::SharedPtrBB bb);
+    void createRef(bb::BasicBlock* bb, 
+                   class_member::SharedPtrMethod method);
     // получение из рефа, стор
-    void loadFromRef(bb::SharedPtrBB bb);
-
-    // void setClass()
+    void loadFromRef(bb::BasicBlock* bb,
+                     class_member::SharedPtrMethod method);
 
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
-                       graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+               graphviz::VertexType par) const override;
+
     void setParent(INode* parent) override {
         INode::setParent(parent);
         if (rval_) {
@@ -242,8 +280,8 @@ public: // IDecl interface
     const std::string& name() const noexcept override;
 
 public:
-    std::shared_ptr<node::IExpr> rval();
-    void setRval(std::shared_ptr<node::IExpr> expr);
+    std::shared_ptr<IExpr> rval();
+    void setRval(std::shared_ptr<IExpr> expr);
 
 private:
     void reachable_(
@@ -261,8 +299,8 @@ private:
     bool out_ = true;
 
 private: // codegen
-    class_member::SharedPtrMethod method_; // если перемен.
-    class_member::SharedPtrField field_;   // если поле
+    class_member::SharedPtrField javaField_;   // если поле
+    bool isStatic_ = false;
 };
 
 // 1. при объявлении и функции и процедуры с одним именим - если rhs в assign - функция
@@ -280,7 +318,6 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
@@ -288,9 +325,20 @@ public: // IDecl interface
 public:
     std::shared_ptr<DeclArea> decls();
     const std::vector<std::shared_ptr<VarDecl>>& params() const noexcept;
-    std::shared_ptr<node::Body> body();
+    std::shared_ptr<Body> body();
     auto cls() { return cls_.lock(); }
     void setClass(std::shared_ptr<ClassDecl> cls) { cls_ = cls; }
+
+public: // codegen
+    virtual void createCall(bb::BasicBlock* bb, class_member::SharedPtrMethod method);
+    virtual descriptor::JVMMethodDescriptor desc();
+
+public: // codegen
+    void pregen(
+        jvm_class::SharedPtrJVMClass cls, 
+        class_member::SharedPtrMethod method = nullptr) override;
+
+    void codegen(bb::BasicBlock* bb = nullptr) override; 
 
 private:
     void printParam_(const std::shared_ptr<VarDecl> param, 
@@ -311,6 +359,10 @@ protected:
     std::vector<std::shared_ptr<VarDecl>> params_;
     std::shared_ptr<DeclArea> decls_;
     std::shared_ptr<Body> body_;
+
+    // codegen
+    class_member::SharedPtrMethod javaMethod_;
+    bool isStatic_;
 };
 
 class ProcDecl : public ProcBody {
@@ -318,8 +370,10 @@ public:
     ProcDecl(const std::string& name, 
              const std::vector<std::shared_ptr<VarDecl>>& params = {});
 
-public: // INode interface
-    void* codegen() override { return nullptr; } // TODO
+public: // codegen
+    void createCall(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method) override;
 
 public:
     void setBody(std::shared_ptr<ProcBody> body);
@@ -339,12 +393,14 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
 
     using ProcBody::name;
 
     std::shared_ptr<IType> retType();
     void resetRetType(std::shared_ptr<IType> type);
+
+public: // codegen
+    descriptor::JVMMethodDescriptor desc() override;
 
 private:
     std::shared_ptr<IType> retType_;
@@ -359,8 +415,10 @@ public:
              const std::vector<std::shared_ptr<VarDecl>>& params,
              std::shared_ptr<IType> retType);
 
-public: // INode interface
-    void* codegen() override { return nullptr; } // TODO
+public: // codegen
+    void createCall(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method) override;
 
 public:
     void setBody(std::shared_ptr<ProcBody> body);
@@ -378,7 +436,6 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
 
 public:
     std::shared_ptr<DeclArea> decls();
@@ -386,6 +443,19 @@ public:
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
+
+public: // codegen
+    void pregen(
+        jvm_class::SharedPtrJVMClass cls, 
+        class_member::SharedPtrMethod method = nullptr) override;
+
+    void codegen(bb::BasicBlock* bb) override; 
+
+    void printClass() override; 
+
+public:
+    void setPackBody(std::shared_ptr<PackBody> body);
+    std::weak_ptr<PackBody> packBody();
 
 private:
     void reachable_(
@@ -404,15 +474,16 @@ protected:
         std::vector<std::string>::const_iterator end,
         IDecl* requester);
 
-public:
-    void setPackBody(std::shared_ptr<PackBody> body);
-    std::weak_ptr<PackBody> packBody();
 
 protected:
     std::string name_;
     std::shared_ptr<DeclArea> decls_;
     std::shared_ptr<DeclArea> privateDecls_;
     std::weak_ptr<PackBody> packBody_;
+
+    // codegen 
+    jvm_class::SharedPtrJVMClass javaClass_;
+    class_member::SharedPtrMethod clinit_;
 };
 
 // + разделение - объявление подпрог. в декле пака, тело в боди пака *
@@ -435,7 +506,6 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override {};
-    void* codegen() override { return nullptr; } // TODO
 
 public:
     std::vector<
@@ -470,7 +540,7 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override { }; // TODO
 
-    void* codegen() override { return nullptr; } // TODO
+
 
 public:
     void addImport(std::shared_ptr<IDecl> decl);
@@ -500,7 +570,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
 
 public:
     const attribute::QualifiedName& name() const noexcept;
@@ -516,7 +586,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
 
 public:
     const attribute::QualifiedName& name() const noexcept;
@@ -540,7 +610,6 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
@@ -548,10 +617,10 @@ public: // IDecl interface
 public: // IType interface
     bool compare(
             const std::shared_ptr<IType> rhs) const override;
-
             
 public: 
     void setBase(std::shared_ptr<RecordDecl> base);
+    void setDerive(std::shared_ptr<RecordDecl> derive);
 
     std::weak_ptr<RecordDecl> base();
     
@@ -567,7 +636,7 @@ public:
     std::weak_ptr<ClassDecl> cls();
     void setClass(std::shared_ptr<ClassDecl> cls);
 
-    std::shared_ptr<node::VarDecl> 
+    std::shared_ptr<VarDecl> 
     getVarDecl(const std::string& name) {
         auto it = std::find_if(decls_->begin(), decls_->end(), 
             [&name](auto&& v) { return v->name() == name; } );
@@ -576,11 +645,32 @@ public:
                 return base->getVarDecl(name);
             } 
         } else {
-            return std::dynamic_pointer_cast<node::VarDecl>(*it);
+            return std::dynamic_pointer_cast<VarDecl>(*it);
         }
 
         return nullptr;
     }
+
+public: // codegen
+    descriptor::JVMFieldDescriptor descriptor() override;
+
+    // класс для vardecl и proc/func
+    // method для vardecl
+    void pregen(
+        jvm_class::SharedPtrJVMClass cls, 
+        class_member::SharedPtrMethod method = nullptr) override; 
+
+    // для вставки vardecl инициализации в <init>/<clinit> 
+    void codegen(bb::BasicBlock* bb) override;
+
+    void printClass() override;
+
+public: // codegen
+    void setJavaClassParrent(jvm_class::SharedPtrJVMClass parent);
+
+private:
+    void createJavaClass_();
+    class_member::SharedPtrMethod init();
 
 private:
     void reachable_(
@@ -592,12 +682,18 @@ private:
 
 private:
     std::weak_ptr<RecordDecl> baseRecord_;
+    std::shared_ptr<RecordDecl> deriveRecord_;
+
     std::string name_;
     std::shared_ptr<DeclArea> decls_;
     attribute::QualifiedName base_;
     bool isInherits_;
     bool isTagged_;
     std::weak_ptr<ClassDecl> class_;
+
+    //codegen
+    jvm_class::SharedPtrJVMClass javaClass_;
+    class_member::SharedPtrMethod init_;
 };
 
 class TypeAliasDecl : 
@@ -611,7 +707,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
@@ -655,7 +751,9 @@ public: // IType interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
+public: // codegen
+    descriptor::JVMFieldDescriptor descriptor() override;    
 
 private:
     SimpleType type_;
@@ -671,7 +769,6 @@ public: // IType interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override {}
-    void* codegen() override { return nullptr; } // TODO
 
 private:
     std::vector<SimpleType> type_;
@@ -688,15 +785,15 @@ public: // IType interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-
-    void* codegen() override { return nullptr; } // TODO
-
 public:
     std::shared_ptr<IType> type();
 
     void resetType(std::shared_ptr<IType> newType);
 
     decltype(auto) ranges() const noexcept { return ranges_; }
+
+public: // codegen
+    descriptor::JVMFieldDescriptor descriptor() override;    
 
 private:
     std::vector<std::pair<int, int>> ranges_; 
@@ -713,12 +810,14 @@ public: // IType interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
+    descriptor::JVMFieldDescriptor descriptor() override;    
 
 public:
     void setInf() noexcept;
 
     std::pair<int, int> range() const;
+
 private:
     std::pair<int, int> range_; 
     bool inf_ = false;
@@ -752,7 +851,6 @@ namespace node {
 //    p("hi"); // но здесь все ок
 // end main;
 
-
 class Op : public IExpr {
 public:
     Op(std::shared_ptr<IExpr> lhs, 
@@ -766,7 +864,6 @@ public: // IExpr interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
 
     void setParent(INode* parent) override;
 
@@ -789,8 +886,6 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                         graphviz::VertexType par) const 
     { assert(false); }
-    void* codegen() 
-    { assert(false); return nullptr;}
 
 public:
     void setLeft(std::shared_ptr<DotOpExpr> l);
@@ -964,8 +1059,6 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                         graphviz::VertexType par) const 
     { assert(false); }
-    void* codegen() 
-    { assert(false); return nullptr;}
 
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
@@ -989,7 +1082,6 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
 
 public:
     const std::string& name() const noexcept {
@@ -1014,7 +1106,6 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                 graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO 
 
 public: // IExpr interface
     bool compareTypes(const std::shared_ptr<IType> rhs) override 
@@ -1042,7 +1133,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                 graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO  
+
 
     void setParent(INode* parent) override {
         INode::setParent(parent);
@@ -1104,7 +1195,7 @@ public: // IExpr interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
 
 private:
     std::string stringifyValue_() const;
@@ -1126,7 +1217,7 @@ public: // IExpr interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
     
 private:
     std::string str_; 
@@ -1144,7 +1235,7 @@ public: // IExpr interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
 
 private:
     void printInits_(graphviz::GraphViz& gv, 
@@ -1170,7 +1261,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                        graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
     void setParent(INode* parent) override;
 
 private:
@@ -1207,7 +1298,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
     void setParent(INode* parent) override;
 
 public:
@@ -1240,7 +1331,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
     void setParent(INode* parent) override;
 
 public:
@@ -1271,7 +1362,7 @@ public: // IType interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
 
 public:
     const attribute::QualifiedName& name() const noexcept;
@@ -1299,7 +1390,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
     void setParent(INode* parent) override;
 
 public:
@@ -1320,7 +1411,7 @@ public:
 public:
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
     void setParent(INode* parent) override;
 
 public:
@@ -1338,7 +1429,7 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-    void* codegen() override { return nullptr; } // TODO
+
     void setParent(INode* parent) override;
 
 public:
@@ -1367,8 +1458,6 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override { assert(false); }; // TODO
 
-void* codegen() override { return nullptr; } // TODO
-
 public:
     void setBase(std::weak_ptr<ClassDecl> base);
 
@@ -1388,6 +1477,9 @@ public:
 
     auto record() { return record_; }
     auto base() { return base_; }
+
+    decltype(auto) procs() const noexcept { return procs_; }
+    decltype(auto) funcs() const noexcept { return funcs_; }
         
 private:
     void reachable_(
@@ -1413,7 +1505,17 @@ public:
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override { assert(false); }; // TODO
-    void* codegen() override { return nullptr; } // TODO
+         
+public: // IType interface
+    bool compare(const std::shared_ptr<IType> rhs) const override;
+
+public:
+    const attribute::Attribute& ref() const noexcept;
+    const std::shared_ptr<ClassDecl>& cls() const noexcept;
+    void setClass(std::shared_ptr<ClassDecl> cls);
+
+public: // codegen
+    descriptor::JVMFieldDescriptor descriptor() override;    
 
 private:
     void reachable_(
@@ -1422,14 +1524,6 @@ private:
         std::vector<std::string>::const_iterator it,
         std::vector<std::string>::const_iterator end,
         IDecl* requester) { assert(false); } 
-
-public: // IType interface
-    bool compare(const std::shared_ptr<IType> rhs) const override;
-
-public:
-    const attribute::Attribute& ref() const noexcept;
-    const std::shared_ptr<ClassDecl>& cls() const noexcept;
-    void setClass(std::shared_ptr<ClassDecl> cls);
 
 private:
     attribute::Attribute ref_;
