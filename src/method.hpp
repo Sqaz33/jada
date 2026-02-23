@@ -184,7 +184,7 @@ public:
     void createNewarray(bb::BasicBlock*bb, codegen::ArrayType atype);
     void createMultianewarray(
         bb::BasicBlock*bb, 
-        std::uint16_t type, 
+        descriptor::JVMFieldDescriptor desc,
         std::uint8_t demensions);
 
     void createArraylength(bb::BasicBlock*bb);
@@ -199,7 +199,7 @@ public:
     void createSaload(bb::BasicBlock*bb);
 
     void createAastore(bb::BasicBlock*bb); 
-    void createbastore(bb::BasicBlock*bb);
+    void createBastore(bb::BasicBlock*bb);
     void createCastore(bb::BasicBlock*bb);
     void createDastore(bb::BasicBlock*bb);
     void createFastore(bb::BasicBlock*bb);

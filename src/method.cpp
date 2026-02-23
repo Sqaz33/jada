@@ -766,11 +766,13 @@ void JVMClassMethod::createNewarray(
 }
 
 void JVMClassMethod::createMultianewarray(
-    bb::BasicBlock* bb, 
-    std::uint16_t type, 
+    bb::BasicBlock*bb, 
+    descriptor::JVMFieldDescriptor desc,
     std::uint8_t demensions)
 {
     instr::Instr ins(OpCode::multianewarray);
+    auto cp = selfClass_.lock()->cp();
+    auto type = cp->addFieldDescriptor(desc);
     ins.pushTwoBytes(type);
     ins.pushByte(demensions);
     code_->insertInstr(bb, std::move(ins));
@@ -816,7 +818,7 @@ void JVMClassMethod::createAastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::aastore);
 } 
 
-void JVMClassMethod::createbastore(bb::BasicBlock* bb) {
+void JVMClassMethod::createBastore(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::bastore);
 }
 

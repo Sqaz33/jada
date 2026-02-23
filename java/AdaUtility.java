@@ -1,89 +1,195 @@
+import java.lang.reflect.*;
+import java.util.IdentityHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 public class AdaUtility {
 
-    public static void deepCopyArrays(Object dst, Object src) {
-        if (dst == null || src == null) return;
-
-        Class dstClass = dst.getClass();
-        Class srcClass = src.getClass();
-
-        if (!dstClass.isArray() || !srcClass.isArray()) {
-            try {
-                java.lang.reflect.Method m = dstClass.getMethod("deep_copy_1234", dstClass);
-                m.invoke(dst, src);
-            } catch (Exception e) {
-                throw new RuntimeException("Ошибка при вызове deep_copy_1234", e);
-            }
-            return;
-        }
-
-        int length = java.lang.reflect.Array.getLength(dst);
-        if (length != java.lang.reflect.Array.getLength(src)) {
-            throw new IllegalArgumentException("Массивы разной длины");
-        }
-
-        for (int i = 0; i < length; i++) {
-            Object dstElem = java.lang.reflect.Array.get(dst, i);
-            Object srcElem = java.lang.reflect.Array.get(src, i);
-
-            Class compType = dstClass.getComponentType();
-            if (compType.isPrimitive()) {
-                java.lang.reflect.Array.set(dst, i, srcElem);
-            } else {
-                deepCopyArrays(dstElem, srcElem);
-            }
-        }
+    // -----------------------------
+    // 1) Создать "атомик" из примитива
+    public static Object toAtomic(boolean value) {
+        return new AtomicBoolean(value);
     }
 
-    public static void initializeArray(Object array) {
-        if (array == null) return;
+    public static Object toAtomic(int value) {
+        return new AtomicInteger(value);
+    }
 
-        Class arrayClass = array.getClass();
-        if (!arrayClass.isArray()) return; // не массив
+    public static Object toAtomic(float value) {
+        // нет AtomicFloat в Java5 → используем AtomicReference<Float>
+        return new AtomicReference<Float>(Float.valueOf(value));
+    }
 
-        int length = java.lang.reflect.Array.getLength(array);
-        Class compType = arrayClass.getComponentType();
+    public static Object toAtomic(char value) {
+        // нет AtomicChar → используем AtomicInteger с кодом символа
+        return new AtomicInteger((int) value);
+    }
 
-        for (int i = 0; i < length; i++) {
-            Object elem = java.lang.reflect.Array.get(array, i);
+    // -----------------------------
+    // 2) Извлечь значение из атомика
+    public static boolean fromAtomic(AtomicBoolean atomic) {
+        return atomic.get();
+    }
 
-            if (compType.isArray()) {
-                // Рекурсивно обходим существующий подмассив
-                if (elem != null) {
-                    initializeArray(elem);
-                }
-            } else if (compType.isPrimitive()) {
-                // Примитивы JVM уже нули, можно явно
-                if (compType == boolean.class) {
-                    java.lang.reflect.Array.setBoolean(array, i, false);
-                } else if (compType == byte.class) {
-                    java.lang.reflect.Array.setByte(array, i, (byte) 0);
-                } else if (compType == short.class) {
-                    java.lang.reflect.Array.setShort(array, i, (short) 0);
-                } else if (compType == int.class) {
-                    java.lang.reflect.Array.setInt(array, i, 0);
-                } else if (compType == long.class) {
-                    java.lang.reflect.Array.setLong(array, i, 0L);
-                } else if (compType == float.class) {
-                    java.lang.reflect.Array.setFloat(array, i, 0f);
-                } else if (compType == double.class) {
-                    java.lang.reflect.Array.setDouble(array, i, 0d);
-                } else if (compType == char.class) {
-                    java.lang.reflect.Array.setChar(array, i, '\0');
-                }
-            } else {
-                // Ссылочные типы — создаём объект через конструктор без аргументов
-                if (elem == null) {
-                    try {
-                        Object obj = compType.newInstance(); // Java 5
-                        java.lang.reflect.Array.set(array, i, obj);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Не удалось создать объект " + compType.getName(), e);
+    public static int fromAtomic(AtomicInteger atomic) {
+        return atomic.get();
+    }
+
+    public static float fromAtomic(AtomicReference<Float> atomic) {
+        return atomic.get().floatValue();
+    }
+
+    public static char fromAtomicChar(AtomicInteger atomic) {
+        return (char) atomic.get();
+    }
+
+    // -----------------------------
+    // Установка значения в атомик
+    public static void setAtomic(AtomicBoolean atomic, boolean value) {
+        atomic.set(value);
+    }
+
+    public static void setAtomic(AtomicInteger atomic, int value) {
+        atomic.set(value);
+    }
+
+    public static void setAtomic(AtomicReference<Float> atomic, float value) {
+        atomic.set(Float.valueOf(value));
+    }
+
+    public static void setAtomicChar(AtomicInteger atomic, char value) {
+        atomic.set((int) value);
+    }
+
+    // -----------------------------
+    // штуки
+    public static StringBuilder copyStringBuilder(StringBuilder src) {
+        if (src == null)
+            return null;
+
+        StringBuilder copy = new StringBuilder(src.length());
+        copy.append(src);
+        return copy;
+    }
+
+    public static Object deepCopy(Object src) {
+        if (src == null)
+            return null;
+
+        Context ctx = new Context();
+        return ctx.copyAny(src);
+    }
+
+    public static Object deepCopyArray(Object srcArray) {
+        if (srcArray == null)
+            return null;
+
+        Context ctx = new Context();
+        return ctx.copyArray(srcArray);
+    }
+
+    private static class Context {
+
+        private IdentityHashMap<Object, Object> visited =
+                new IdentityHashMap<Object, Object>();
+
+        private Object copyAny(Object src) {
+
+            if (visited.containsKey(src))
+                return visited.get(src);
+
+            Class type = src.getClass();
+
+            if (type.isArray())
+                return copyArray(src);
+
+            if (type.isPrimitive()
+                    || src instanceof String
+                    || src instanceof Number
+                    || src instanceof Boolean
+                    || src instanceof Character) {
+                return src;
+            }
+
+            try {
+                Object newObj = type.newInstance();
+                visited.put(src, newObj);
+                copyFields(newObj, src);
+                return newObj;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void copyFields(Object dst, Object src)
+                throws IllegalAccessException, InstantiationException {
+
+            Class clazz = src.getClass();
+
+            while (clazz != null) {
+
+                Field[] fields = clazz.getDeclaredFields();
+
+                for (int i = 0; i < fields.length; i++) {
+
+                    Field f = fields[i];
+
+                    if (Modifier.isStatic(f.getModifiers()))
+                        continue;
+
+                    f.setAccessible(true);
+
+                    Object value = f.get(src);
+
+                    if (value == null) {
+                        f.set(dst, null);
+                    }
+                    else if (f.getType().isPrimitive()) {
+                        f.set(dst, value);
+                    }
+                    else {
+                        Object copied = copyAny(value);
+                        f.set(dst, copied);
                     }
                 }
+
+                clazz = clazz.getSuperclass();
             }
         }
+
+        private Object copyArray(Object array) {
+
+            if (visited.containsKey(array))
+                return visited.get(array);
+
+            int length = Array.getLength(array);
+            Class compType =
+                    array.getClass().getComponentType();
+
+            Object newArray =
+                    Array.newInstance(compType, length);
+
+            visited.put(array, newArray);
+
+            for (int i = 0; i < length; i++) {
+
+                Object value = Array.get(array, i);
+
+                if (value == null) {
+                    Array.set(newArray, i, null);
+                }
+                else if (compType.isPrimitive()) {
+                    Array.set(newArray, i, value);
+                }
+                else {
+                    Object copied = copyAny(value);
+                    Array.set(newArray, i, copied);
+                }
+            }
+
+            return newArray;
+        }
     }
-
 }
-
-// javac -source 1.5 -target 1.5 AdaUtility.java

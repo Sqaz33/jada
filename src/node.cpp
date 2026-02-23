@@ -67,6 +67,14 @@ void Body::setParent(INode* parent)  {
     }
 }
 
+// codegen
+void Body::codegen(class_member::SharedPtrMethod method) {
+    auto* bb = method->createBB();
+    for (auto&& stm : stms_) {
+        bb = stm->codegen(bb, method);
+    }
+}
+
 } // namespace node 
 
 // Decls 
@@ -214,12 +222,31 @@ void VarDecl::setRval(std::shared_ptr<node::IExpr> expr) {
 }
 
 // codegen
+std::vector<std::string> atomicRefs({
+    "AtomicRef1",
+    "AtomicRef2",
+    "AtomicRef3",
+    "AtomicRef4",
+    "AtomicRef5",
+    "AtomicRef6",
+    "AtomicRef7",
+    "AtomicRef8",
+    "AtomicRef9",
+    "AtomicRef10",
+});
+
 void VarDecl::pregen(
     jvm_class::SharedPtrJVMClass cls, 
-    class_member::SharedPtrMethod method)
+    class_member::SharedPtrMethod method,
+    bool isStatic)
 {
     if (cls) {
         javaField_ = cls->addField(name_, type_->descriptor());
+        isStatic_ = isStatic;
+        if (isStatic) {
+            javaField_->addFlag(
+                codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+        }
     } else {
         if (std::dynamic_pointer_cast<RecordDecl>(type_) || 
             std::dynamic_pointer_cast<StringType>(type_) || 
@@ -241,6 +268,129 @@ void VarDecl::pregen(
         else 
         {
             assert(false);
+        }
+    }
+}
+
+
+static void cgCreateArray(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method, 
+    std::shared_ptr<ArrayType> arr)
+{
+    for (auto [l, r] : arr->ranges()) {
+        method->createLdc(bb, l - r + 1);
+    }
+    auto arrDesc = arr->descriptor();
+    auto dem = static_cast<std::uint8_t>(arr->ranges().size());
+    method->createMultianewarray(bb, arrDesc, dem);
+}
+
+void VarDecl::codegen(
+        bb::BasicBlock* bb,
+        class_member::SharedPtrMethod method)  
+ {
+    auto rec = std::dynamic_pointer_cast<node::RecordDecl>(type_);
+    auto arr = std::dynamic_pointer_cast<node::ArrayType>(type_);
+    auto str = std::dynamic_pointer_cast<node::StringType>(type_);
+    // если есть инициализация
+    if (rval_) {
+        rval_->codegen(bb, method);
+        if (rec) {
+            method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
+        } else if (arr) {
+            if (auto arrTy = std::dynamic_pointer_cast<node::ArrayType>(rval_->type())) {
+                // дублирование массива
+                method->createInvokestatic(bb, codegen::AdaUtilityDeepCopyArray);
+                createStore(bb, method);
+            } else if (auto aggrTy = std::dynamic_pointer_cast<AggregateType>(rval_->type())) {
+                // работа с агрегатом
+                cgCreateArray(bb, method, arr);
+                createStore(bb, method);
+
+                for (int i = 0; i < aggrTy->size(); ++i) {
+                    createLoad(bb, method);
+                    method->createLdc(bb, i);
+                    method->createDupX2(bb);
+                    method->createPop(bb);
+                    switch (aggrTy->type()) {
+                        case SimpleType::BOOL:
+                            method->createBastore(bb);
+                            break;
+                        case SimpleType::CHAR:
+                            method->createCastore(bb);
+                            break;
+                        case SimpleType::FLOAT:
+                            method->createFastore(bb);
+                            break;
+                        case SimpleType::INTEGER:
+                            method->createIastore(bb);
+                            break;
+                    } 
+                } 
+            } else if (str) {
+                method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
+            }
+        }
+    // если нет
+    } else {
+        if (rec) {
+            method->createNew(bb, rec->javaClass());
+            createStore(bb, method);
+        } else if (arr) {
+            cgCreateArray(bb, method, arr);
+            createStore(bb, method);
+        } else if (str) {
+            method->createNew(bb, codegen::StringBuiler);
+            createStore(bb, method);
+        }
+    }
+}
+
+void VarDecl::createLoad(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method)
+{
+    if (javaField_ && isStatic_) {
+        method->createGetstatic(bb, javaField_);
+    } else if (javaField_) {
+        method->createGetfield(bb, javaField_);
+    } else {
+        if (auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_)) {
+            switch (sTy->type()) {
+                case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
+                    method->createIload(bb, name_);
+                    break;
+                case (SimpleType::FLOAT):
+                    method->createFload(bb, name_);
+                    break;
+            }
+        } else {
+            method->createAload(bb, name_);
+        }
+    }
+}
+    
+void VarDecl::createStore(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method)
+{
+    if (javaField_ && isStatic_) {
+        method->createPutstatic(bb, javaField_);
+    } else if (javaField_) {
+        method->createPutfield(bb, javaField_);
+    } else {
+        if (auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_)) {
+            switch (sTy->type()) {
+                case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
+                    method->createIstore(bb, name_);
+                    break;
+                case (SimpleType::FLOAT):
+                    method->createFstore(bb, name_);
+                    break;
+            }
+        } else {
+            method->createAstore(bb, name_);
         }
     }
 }
@@ -357,7 +507,8 @@ descriptor::JVMMethodDescriptor ProcBody::desc() {
 
 void ProcBody::pregen(
     jvm_class::SharedPtrJVMClass cls, 
-    class_member::SharedPtrMethod method) 
+    class_member::SharedPtrMethod method,
+    bool isStatic) 
 {
     if (dynamic_cast<node::ProcDecl*>(this) || 
         dynamic_cast<node::FuncDecl*>(this)) 
@@ -375,13 +526,20 @@ void ProcBody::pregen(
     }
     javaMethod_->addFlag(
         codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+    
+    for (auto&& r : atomicRefs) {
+        javaMethod_->createLocalRef(r);
+    }
 
     for (auto&& d : *decls_) {
         d->pregen(nullptr, javaMethod_);
     }
 }
 
-void ProcBody::codegen(bb::BasicBlock* bb)  {
+void ProcBody::codegen(
+    bb::BasicBlock* bb,
+    class_member::SharedPtrMethod method)  
+{
     body_->codegen(javaMethod_);
 }
 
@@ -578,7 +736,8 @@ std::weak_ptr<PackBody> PackDecl::packBody() {
 // codegen 
 void PackDecl::pregen(
     jvm_class::SharedPtrJVMClass cls, 
-    class_member::SharedPtrMethod method) 
+    class_member::SharedPtrMethod method,
+    bool isStatic) 
 {
     if (dynamic_cast<PackBody*>(this)) return;
 
@@ -587,12 +746,12 @@ void PackDecl::pregen(
     javaClass_->addAccesFlag(codegen::AccessFlag::ACC_PUBLIC);
 
     for (auto&& var : *decls_) {
-        var->pregen(javaClass_);
+        var->pregen(javaClass_, nullptr, true);
     }
 
     if (auto body = packBody_.lock()) {
         for (auto&& var : *(body->decls())) {
-            var->pregen(javaClass_);
+            var->pregen(javaClass_, nullptr, true);
         }
     }
 
@@ -601,7 +760,10 @@ void PackDecl::pregen(
     clinit_ = javaClass_->addMethod("<clinit>", initDesc);
 }
 
-void PackDecl::codegen(bb::BasicBlock* bb) {
+void PackDecl::codegen(
+    bb::BasicBlock* bb,
+    class_member::SharedPtrMethod method) 
+{
     if (dynamic_cast<PackBody*>(this)) return;
 
     auto* clinitBB = clinit_->createBB();
@@ -860,7 +1022,8 @@ RecordDecl::descriptor() {
 
 void RecordDecl::pregen(
     jvm_class::SharedPtrJVMClass cls, 
-    class_member::SharedPtrMethod method) 
+    class_member::SharedPtrMethod method,
+    bool isStatic) 
 {
     createJavaClass_();
     if (deriveRecord_) {
@@ -886,7 +1049,10 @@ void RecordDecl::pregen(
     init_ = javaClass_->addMethod("<init>", initDesc);
 }
 
-void RecordDecl::codegen(bb::BasicBlock* bb) {
+void RecordDecl::codegen(
+    bb::BasicBlock* bb,
+    class_member::SharedPtrMethod method) 
+{
     auto* initBB = init_->createBB();
     for (auto&& var : *decls_) {
         var->codegen(initBB);
@@ -1233,6 +1399,20 @@ std::shared_ptr<IType> Op::type() {
                  opType_ == OpType::XOR || 
                  opType_ == OpType::OR  || 
                  opType_ == OpType::AND))
+            { return nullptr; }
+
+            if (s != SimpleType::FLOAT || 
+                s != SimpleType::INTEGER && 
+                (opType_ == OpType::MORE ||
+                 opType_ == OpType::LESS ||
+                 opType_ == OpType::GTE ||
+                 opType_ == OpType::LTE ||
+                 opType_ == OpType::PLUS ||
+                 opType_ == OpType::MINUS ||
+                 opType_ == OpType::MUL ||
+                 opType_ == OpType::DIV ||
+                 opType_ == OpType::MOD ||
+                 opType_ == OpType::UMINUS ))
             { return nullptr; }
             return rhs_->type();
         }

@@ -111,10 +111,13 @@ public: // codegen
     // method для vardecl
     virtual void pregen(
         jvm_class::SharedPtrJVMClass cls, 
-        class_member::SharedPtrMethod method = nullptr) {}; 
+        class_member::SharedPtrMethod method = nullptr,
+        bool isStatic = false) {}; 
 
     // для вставки vardecl инициализации в <init>/<clinit> 
-    virtual void codegen(bb::BasicBlock* bb) 
+    virtual void codegen(
+        bb::BasicBlock* bb,
+        class_member::SharedPtrMethod method = nullptr) 
     {}
 
     virtual void printClass() {}
@@ -140,7 +143,7 @@ struct IType : virtual INode {
         const std::shared_ptr<IType> rhs) const = 0;
     
     virtual descriptor::JVMFieldDescriptor 
-    descriptor();
+    descriptor(bool out = false);
 };
 
 
@@ -249,14 +252,22 @@ public:
 public: // codegen
     void pregen(
         jvm_class::SharedPtrJVMClass cls, 
-        class_member::SharedPtrMethod method = nullptr) override;
+        class_member::SharedPtrMethod method = nullptr,
+        bool isStatic = false) override;
 
     // для вставки vardecl инициализации в <init>/<clinit> 
-    void codegen(bb::BasicBlock* bb) override; 
+    void codegen(
+        bb::BasicBlock* bb,
+        class_member::SharedPtrMethod method = nullptr) override; 
 
     // лоад/стор из [лок.]/[стат. пакета]/[обычн. класса/рекорда]
-    void createLoad(bb::BasicBlock* bb);
-    void createStore(bb::BasicBlock* bb);
+    void createLoad(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method);
+
+    void createStore(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method);
 
     // лоад создание рефа, загрузка лоада в реф
     void createRef(bb::BasicBlock* bb, 
@@ -336,9 +347,12 @@ public: // codegen
 public: // codegen
     void pregen(
         jvm_class::SharedPtrJVMClass cls, 
-        class_member::SharedPtrMethod method = nullptr) override;
+        class_member::SharedPtrMethod method = nullptr,
+        bool isStatic = false) override;
 
-    void codegen(bb::BasicBlock* bb = nullptr) override; 
+    void codegen(
+        bb::BasicBlock* bb = nullptr,
+        class_member::SharedPtrMethod method = nullptr) override; 
 
 private:
     void printParam_(const std::shared_ptr<VarDecl> param, 
@@ -447,9 +461,12 @@ public: // IDecl interface
 public: // codegen
     void pregen(
         jvm_class::SharedPtrJVMClass cls, 
-        class_member::SharedPtrMethod method = nullptr) override;
+        class_member::SharedPtrMethod method = nullptr,
+        bool isStatic = false) override;
 
-    void codegen(bb::BasicBlock* bb) override; 
+    void codegen(
+        bb::BasicBlock* bb = nullptr,
+        class_member::SharedPtrMethod method = nullptr) override; 
 
     void printClass() override; 
 
@@ -658,12 +675,17 @@ public: // codegen
     // method для vardecl
     void pregen(
         jvm_class::SharedPtrJVMClass cls, 
-        class_member::SharedPtrMethod method = nullptr) override; 
+        class_member::SharedPtrMethod method = nullptr,
+        bool isStatic = false) override; 
 
     // для вставки vardecl инициализации в <init>/<clinit> 
-    void codegen(bb::BasicBlock* bb) override;
+    void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method = nullptr) override;
 
     void printClass() override;
+
+    auto javaClass() { return javaClass_; }
 
 public: // codegen
     void setJavaClassParrent(jvm_class::SharedPtrJVMClass parent);
@@ -769,6 +791,9 @@ public: // IType interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override {}
+    
+    auto type() { return type_[0]; }
+    auto size() { return type_.size(); }
 
 private:
     std::vector<SimpleType> type_;
