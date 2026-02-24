@@ -8,8 +8,8 @@ JVMClass::JVMClass(
     const attribute::QualifiedName& name, 
     std::uint16_t majorV,
     std::uint16_t minorV) :
-    name_(name.toString())
-    , simpleName_(name.last())
+    name_(name.toString('/'))
+    , simpleName_(name.toString('_'))
     , minorV_(minorV)
     , majorV_(majorV)
     , cp_(new constant_pool::JVMConstantPool)
@@ -106,7 +106,7 @@ void JVMClass::addAccesFlag(
 }
 
 const std::string& 
-JVMClass:: simpleName() const noexcept {
+JVMClass::simpleName() const noexcept {
     return simpleName_;
 }
 

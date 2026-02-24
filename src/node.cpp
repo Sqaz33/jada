@@ -330,7 +330,7 @@ void VarDecl::codegen(
                 method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
             }
         } else {
-            createLoad(bb, method);
+            createStore(bb, method);
         }
     // если нет
     } else {
@@ -358,7 +358,7 @@ void VarDecl::createLoad(
         method->createGetfield(bb, javaField_);
     } else {
         auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_);
-        if (sTy && !param_ && !out_) {
+        if (sTy && !(param_ && out_)) {
             switch (sTy->type()) {
                 case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
                     method->createIload(bb, name_);
@@ -383,7 +383,7 @@ void VarDecl::createStore(
         method->createPutfield(bb, javaField_);
     } else {
         auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_);
-        if (sTy && !param_ && !out_) {
+        if (sTy && !(param_ && out_)) {
             switch (sTy->type()) {
                 case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
                     method->createIstore(bb, name_);
@@ -558,6 +558,9 @@ void ProcBody::createCall(
     bb::BasicBlock* bb,
     class_member::SharedPtrMethod method) 
 {
+    if (javaMain_) {
+        throw std::runtime_error("Call main");
+    }
     if (isStatic_) {
         method->createInvokestatic(bb, javaMethod_);
     } else {
@@ -570,6 +573,15 @@ descriptor::JVMMethodDescriptor ProcBody::desc() {
 
     assert(!(dynamic_cast<node::ProcDecl*>(this) || 
              dynamic_cast<node::FuncDecl*>(this)));
+
+    if (javaMain_) {
+        attribute::QualifiedName strName("java/lang/String");
+        auto strArrType = descriptor::JVMFieldDescriptor::createObject(strName);
+        strArrType.addDimension();
+        std::pair<std::string, descriptor::JVMFieldDescriptor> p(std::string("F"), strArrType);
+        auto funcType = descriptor::JVMMethodDescriptor::createVoidRetun({p});
+        return funcType;
+    }
 
     std::vector<std::pair<std::string, JVMFieldDescriptor>> paramsDescr;
     auto it = params_.begin(); 
@@ -597,22 +609,31 @@ void ProcBody::pregen(
     { return; }
 
     auto d = desc();
-    if (cls) {
-        javaMethod_ = cls->addMethod(name_, d);
-        isStatic_ = false;
-    } else {
-        javaMethod_ = codegen::InnerSubprograms->addMethod(name_, d);
+
+    if (javaMain_) {
+        javaMethod_ = cls->addMethod("main", d);
         javaMethod_->addFlag(
             codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
         isStatic_ = true;
+    } else {
+        if (cls) {
+            javaMethod_ = cls->addMethod(name_, d);
+            isStatic_ = false;
+        } else {
+            javaMethod_ = codegen::InnerSubprograms->addMethod(name_, d);
+            javaMethod_->addFlag(
+                codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+            isStatic_ = true;
+        }
+
+        for (auto&& r : atomicRefs) {
+            javaMethod_->createLocalRef(r);
+        }
     }
+
     javaMethod_->addFlag(
         codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
     
-    for (auto&& r : atomicRefs) {
-        javaMethod_->createLocalRef(r);
-    }
-
     for (auto&& d : *decls_) {
         d->pregen(nullptr, javaMethod_);
     }
@@ -621,8 +642,12 @@ void ProcBody::pregen(
 void ProcBody::codegen(
     bb::BasicBlock* bb,
     class_member::SharedPtrMethod method)  
-{
-    auto* _ = body_->codegen(javaMethod_, method->createBB());
+{   
+    for (auto&& d : *decls_) {
+        d->codegen(javaMethod_->createBB(), javaMethod_);
+    }
+    auto* _ = body_->codegen(javaMethod_, javaMethod_->createBB());
+    javaMethod_->createReturn(javaMethod_->createBB());
 }
 
 // ProcDecl
@@ -1671,8 +1696,8 @@ std::shared_ptr<IType> Op::type() {
                  opType_ == OpType::AND))
             { return nullptr; }
 
-            if (s != SimpleType::FLOAT || 
-                s != SimpleType::INTEGER && 
+            if ((s != SimpleType::FLOAT && 
+                s != SimpleType::INTEGER) && 
                 (opType_ == OpType::MORE ||
                  opType_ == OpType::LESS ||
                  opType_ == OpType::GTE ||

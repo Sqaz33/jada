@@ -867,10 +867,10 @@ void JVMClassMethod::createGetfield(
 void JVMClassMethod::createGetstatic(
     bb::BasicBlock* bb, std::shared_ptr<JVMClassField> field)
 {   
-    if (!field->isStatic()) {
-        throw std::logic_error("static getfield" 
-                               " of a non-static field");
-    }
+    // if (!field->isStatic()) {
+    //     throw std::logic_error("static getfield" 
+    //                            " of a non-static field");
+    // }
     auto f = selfClass_.lock()->fieldRef(field);
     instr::Instr ins(OpCode::getstatic);
     ins.pushTwoBytes(f);
@@ -919,10 +919,10 @@ void JVMClassMethod::createInvokestatic(
     bb::BasicBlock* bb, 
     std::shared_ptr<JVMClassMethod> method) 
 {
-    if (!isStatic()) {
-        throw std::logic_error("static invocation" 
-                               " of a non-static method");
-    }
+    // if (!isStatic()) {
+    //     throw std::logic_error("static invocation" 
+    //                            " of a non-static method");
+    // }
 
     auto ref = selfClass_.lock()->methodRef(method);
     instr::Instr ins(OpCode::invokestatic);

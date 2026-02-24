@@ -2465,10 +2465,12 @@ TypeCheck::analyseBody_(std::shared_ptr<node::Body> body) {
                     return "The return in procedure has a value";
                 }
             }
-
-            if (std::dynamic_pointer_cast<node::AggregateType>(ret->retVal()->type())) {
-                return "return aggregate";
+            if (ret->retVal()) {
+                if (std::dynamic_pointer_cast<node::AggregateType>(ret->retVal()->type())) {
+                    return "return aggregate";
+                }
             }
+
         } 
     }
     return  "";

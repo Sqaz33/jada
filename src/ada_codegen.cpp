@@ -8,13 +8,12 @@
 
 namespace codegen {
 
-jvm_class::SharedPtrJVMClass InnerSubprograms(
-    cg.createClass(attribute::QualifiedName("inner_subprograms")));
-
 void gen(std::vector<std::shared_ptr<mdl::Module>>& program) {
+    initAdaUtilityNames();
     std::vector<std::shared_ptr<node::IDecl>> decls;
 
-for (auto&& mod : program | std::views::drop(1)) {
+    int idx = 0;
+    for (auto&& mod : program | std::views::drop(1)) {
         auto unit = mod->unit().lock();
         auto space = std::dynamic_pointer_cast<node::GlobalSpace>(unit);
         auto spaceUnit = space->unit();
@@ -22,7 +21,11 @@ for (auto&& mod : program | std::views::drop(1)) {
     }
 
     for (auto&& d : decls) {
-        d->pregen(nullptr, nullptr);
+        if (idx == 0) {
+            std::dynamic_pointer_cast<node::ProcBody>(d)->setJavaMain();
+        }
+        ++idx;
+        d->pregen(InnerSubprograms, nullptr);
     }
 
     for (auto&& d : decls) {
@@ -35,6 +38,8 @@ for (auto&& mod : program | std::views::drop(1)) {
 
     cg.printClass(InnerSubprograms);
 }
+
+jvm_class::SharedPtrJVMClass InnerSubprograms;
 
 jvm_class::SharedPtrJVMClass StringBuiler;
 jvm_class::SharedPtrJVMClass PrintStream; 
@@ -79,12 +84,25 @@ void initAdaUtilityNames() {
     using namespace descriptor;
 
     // ------------------ классы ------------------
-    InnerSubprograms = cg.createClass(attribute::QualifiedName("ada/InnerSubprograms"));
-    StringBuiler = cg.createClass(attribute::QualifiedName("java/lang/StringBuilder"));
-    PrintStream = cg.createClass(attribute::QualifiedName("java/io/PrintStream"));
-    AtomicInteger = cg.createClass(attribute::QualifiedName("java/util/concurrent/atomic/AtomicInteger"));
-    AdaUtility = cg.createClass(attribute::QualifiedName("ada/AdaUtility"));
-    JavaObject = cg.createClass(attribute::QualifiedName("java/lang/Object"));
+    InnerSubprograms = cg.createClass(
+        attribute::QualifiedName("inner_subprograms"));
+
+    StringBuiler = cg.createClass(
+        attribute::QualifiedName({"java", "lang", "StringBuilder"}));
+
+    PrintStream = cg.createClass(
+        attribute::QualifiedName({"java", "io", "PrintStream"}));
+
+    AtomicInteger = cg.createClass(
+        attribute::QualifiedName({"java", "util", "concurrent", "atomic", "AtomicInteger"}));
+
+    AdaUtility = cg.createClass(
+        attribute::QualifiedName({"ada", "AdaUtility"}));
+
+    JavaObject = cg.createClass(
+        attribute::QualifiedName({"java", "lang", "Object"}));
+
+    InnerSubprograms->setParent(JavaObject);
 
     // ------------------ методы ------------------
     AdaUtilityInitArrayElements = AdaUtility->addMethod(

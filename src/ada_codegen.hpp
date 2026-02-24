@@ -54,4 +54,6 @@ extern class_member::SharedPtrMethod AdaUtilityImageFromFloat;
 // io
 extern class_member::SharedPtrMethod AdaUtilityPrintStringBuilder;
 
+void initAdaUtilityNames();
+
 } // namespace codegen

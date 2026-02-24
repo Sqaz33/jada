@@ -369,7 +369,7 @@ public: // codegen
         bb::BasicBlock* bb = nullptr,
         class_member::SharedPtrMethod method = nullptr) override; 
 
-    void setJavaMain() { javaMain = true; }
+    void setJavaMain() { javaMain_ = true; }
 
 private:
     void printParam_(const std::shared_ptr<VarDecl> param, 
@@ -391,7 +391,7 @@ protected:
     std::shared_ptr<DeclArea> decls_;
     std::shared_ptr<Body> body_;
 
-    bool javaMain = false;
+    bool javaMain_ = false;
 
     // codegen
     class_member::SharedPtrMethod javaMethod_;

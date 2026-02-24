@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <initializer_list>
 
 namespace attribute {
     
@@ -9,6 +10,9 @@ class QualifiedName {
 public:
     QualifiedName() = default;
     QualifiedName(const std::string& base);
+    QualifiedName(std::initializer_list<std::string> list) :
+        fullName_(list)
+    {}
 
 public:
     void push(const std::string& name);
