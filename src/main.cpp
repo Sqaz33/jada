@@ -252,9 +252,10 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // path = strdup("/mnt/d/jada/test_data/codegen/out.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/string.adb");
+        path = strdup("/mnt/d/jada/test_data/codegen/array.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/bool.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/loop.adb");
-        path = strdup("/mnt/d/jada/test_data/codegen/branch.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/branch.adb");
         // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/bool.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/for_linking.adb";

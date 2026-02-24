@@ -109,7 +109,7 @@ void initAdaUtilityNames() {
     // ------------------ методы ------------------
     AdaUtilityInitArrayElements = AdaUtility->addMethod(
         "initArrayElements",
-        JVMMethodDescriptor::createVoidParamsVoidReturn());
+        JVMMethodDescriptor::createVoidRetun({{"src", JVMFieldDescriptor::createObject(JavaObject->name())}}));
 
     AdaUtilityDeepCopy = AdaUtility->addMethod(
         "deepCopy",

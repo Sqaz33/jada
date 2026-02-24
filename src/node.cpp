@@ -262,66 +262,20 @@ void VarDecl::pregen(
     }
 }
 
-void cgCreatePrimitiveArray(bb::BasicBlock* bb,
-                            class_member::SharedPtrMethod method,
-                            SimpleType type,
-                            const std::vector<int>& dims,
-                            size_t level = 0)
-{
-    // 1. создаём массив текущей размерности
-    method->createLdc(bb, dims[level]);
-    if (level + 1 < dims.size()) {
-        // массив ссылок на подмассивы
-        method->createAnewarray(bb, codegen::JavaObject); // или тип Object
-    } else {
-        // массив примитивов
-        switch (type) {
-            case SimpleType::BOOL:
-            case SimpleType::CHAR:
-            case SimpleType::INTEGER:
-                method->createNewarray(bb, codegen::ArrayType::INT);
-                break;
-            case SimpleType::FLOAT:
-                method->createNewarray(bb, codegen::ArrayType::FLOAT);
-                break;
-        }
-}
-    if (level + 1 < dims.size()) {
-        method->createDup(bb);                  
-        for (int i = 0; i < dims[level]; ++i) {
-            method->createDup(bb);              
-            method->createLdc(bb, i);           
-            cgCreatePrimitiveArray(bb, method, type, dims, level + 1);
-            method->createAastore(bb);         
-        }
-    }
-}
-
 static void cgCreateArray(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
     std::shared_ptr<ArrayType> arr)
 {
-    auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(arr->type());
-    if (!sTy) {
-        for (auto [l, r] : arr->ranges()) {
-            method->createLdc(bb, r - l + 1);
-        }
-        auto arrDesc = arr->descriptor();
-        auto dem = static_cast<std::uint8_t>(arr->ranges().size());
-        method->createMultianewarray(bb, arrDesc, dem);
-        method->createDup(bb);
-        method->createInvokestatic(bb, codegen::AdaUtilityInitArrayElements);
-    } else {
-        std::vector<int> dims;
-        auto&& ranges = arr->ranges();
-        std::transform(
-            ranges.begin(), ranges.end(), 
-            std::inserter(dims, dims.end()), 
-            [] (auto&& r) { return r.second - r.first + 1; } );
-        cgCreatePrimitiveArray(bb, method, sTy->type(), dims);
-    }
 
+    for (auto [l, r] : arr->ranges()) {
+        method->createLdc(bb, r - l + 1);
+    }
+    auto arrDesc = arr->descriptor();
+    auto dem = static_cast<std::uint8_t>(arr->ranges().size());
+    method->createMultianewarray(bb, arrDesc, dem);
+    method->createDup(bb);
+    method->createInvokestatic(bb, codegen::AdaUtilityInitArrayElements);
 }
 
 void VarDecl::codegen(

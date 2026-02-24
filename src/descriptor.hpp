@@ -16,9 +16,11 @@ public:
     static JVMFieldDescriptor
     createObject(const attribute::QualifiedName& name);
 
+    JVMFieldDescriptor& operator=(const JVMFieldDescriptor&) = default;
+
 public:
     // throw exception, if dimensions more then 255
-    void addDimension(); 
+    void addDimension(int d = 1); 
     const std::string& toString() const noexcept;
     int size() const noexcept;
 

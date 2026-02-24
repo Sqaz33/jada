@@ -39,12 +39,12 @@ JVMFieldDescriptor::createObject(
     return JVMFieldDescriptor(std::move(descr), 1);
 }
 
-void JVMFieldDescriptor::addDimension() { 
-    if (++dimens_ > 255) {
+void JVMFieldDescriptor::addDimension(int d) { 
+    if (dimens_ += d > 255) {
         throw std::logic_error("An array cannot have"
                                " more than 255 dimensions");
     }
-    descr_ = "[" + descr_; 
+    descr_ = std::string(d, '[')  + descr_; 
     sz_ = 1;
 }
 

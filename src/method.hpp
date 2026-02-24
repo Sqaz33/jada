@@ -237,6 +237,10 @@ public:
         bb::BasicBlock*bb, 
         std::shared_ptr<JVMClassMethod> method);
 
+    void createCheckcast(
+        bb::BasicBlock*bb, 
+        descriptor::JVMFieldDescriptor desc);
+
 private:
     std::shared_ptr<jvm_attribute::CodeAttr> code_;
     std::weak_ptr<jvm_class::JVMClass> selfClass_;

@@ -769,7 +769,7 @@ void JVMClassMethod::createMultianewarray(
 {
     instr::Instr ins(OpCode::multianewarray);
     auto cp = selfClass_.lock()->cp();
-    auto type = cp->addFieldDescriptor(desc);
+    auto type = cp->addClass(desc.toString());
     ins.pushTwoBytes(type);
     ins.pushByte(demensions);
     code_->insertInstr(bb, std::move(ins));
@@ -924,6 +924,17 @@ void JVMClassMethod::createInvokestatic(
     auto ref = selfClass_.lock()->methodRef(method);
     instr::Instr ins(OpCode::invokestatic);
     ins.pushTwoBytes(ref);
+    code_->insertInstr(bb, std::move(ins));
+}
+
+void JVMClassMethod::createCheckcast(
+    bb::BasicBlock*bb, 
+    descriptor::JVMFieldDescriptor desc)
+{   
+    instr::Instr ins(OpCode::checkcast);
+    auto cp = selfClass_.lock()->cp();
+    auto type = cp->addClass(desc.toString());
+    ins.pushTwoBytes(type);
     code_->insertInstr(bb, std::move(ins));
 }
 
