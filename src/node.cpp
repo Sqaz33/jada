@@ -1495,7 +1495,7 @@ void Op::codegen(
     {
         auto trueBB  = method->createBB();
         auto falseBB = method->createBB();
-        auto endBB   = method->createBB();
+        auto endBB = method->createBB();
 
         if (isFloat) {
             method->createFcmpl(bb);
@@ -1827,10 +1827,10 @@ void GetVarExpr::codegen(
                     break;
             }
         } else {
-            var_->createStore(bb, method);
+            var_->createLoad(bb, method);
         } 
     } else {
-        var_->createStore(bb, method);
+        var_->createLoad(bb, method);
         right_->codegen(bb, method, lhs, callStage);
     }
                              
@@ -2425,6 +2425,24 @@ void If::setParent(INode* parent) {
     } 
 }
 
+// codegen
+bb::BasicBlock* If::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method)
+{
+    cond_->codegen(bb, method);
+    
+    auto* bodyBB = method->createBB();
+
+    body_->codegen(method, bodyBB);
+
+    auto* nextBB = method->createBB();
+    method->createIfne(bb, bodyBB);
+    method->createGoto(bb, nextBB);
+
+    return nextBB;
+}
+
 // For
 For::For(const std::string& init, 
          std::pair<std::shared_ptr<IExpr>, std::shared_ptr<IExpr>> range, 
@@ -2445,6 +2463,40 @@ void For::setParent(INode* parent) {
     body_->setParent(parent);
 }
 
+bb::BasicBlock* For::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method)
+{
+    iter_->pregen(nullptr, method);
+
+    range_.first->codegen(bb, method);
+    iter_->createStore(bb, method);
+
+    std::string right = "right12345";
+    method->createLocalInt(right);
+    range_.second->codegen(bb, method);
+    method->createIstore(bb, right);
+    
+    // создаем бб конда и тела
+    auto* condBB = method->createBB();
+    auto* bodyBB = method->createBB();
+
+    // наполняем тело
+    bodyBB = body_->codegen(method, bodyBB);
+    method->createIinc(bodyBB, iter_->name(), 1);
+    method->createGoto(bodyBB, condBB);
+
+    // создаем следующий бб, наполняем конд бб 
+    auto nextBB = method->createBB();
+    iter_->createLoad(condBB, method);
+    // условие цикла
+    method->createIload(condBB, right);
+    method->createIficmple(condBB, bodyBB);
+    method->createGoto(condBB, nextBB);
+
+    return nextBB;
+}
+
 // While
 While::While(std::shared_ptr<IExpr> cond, 
             std::shared_ptr<Body> body) :
@@ -2459,6 +2511,25 @@ void While::setParent(INode* parent) {
     INode::setParent(parent);
     cond_->setParent(parent);
     body_->setParent(parent);
+}
+
+bb::BasicBlock* While::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method)
+{
+    auto* condBB = method->createBB();
+    cond_->codegen(condBB, method);
+    
+    auto* bodyBB = method->createBB();
+    bodyBB = body_->codegen(method, bodyBB);
+
+    auto* nextBB = method->createBB();
+    method->createIfne(bb, bodyBB);
+    method->createGoto(bb, nextBB);
+
+    method->createGoto(bodyBB, condBB);
+
+    return nextBB;
 }
 
 } // namespace node 
@@ -2481,6 +2552,15 @@ std::shared_ptr<IExpr> MBCall::call() {
 
 void MBCall::setCall(std::shared_ptr<IExpr> expr) {
     call_ = expr;
+}
+
+// codegen
+bb::BasicBlock* MBCall::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method)
+{
+    call_->codegen(bb, method);
+    return bb;
 }
 
 } // namespace node 
@@ -2551,17 +2631,101 @@ void Assign::setRval(std::shared_ptr<IExpr> rval) {
     rval_ = rval;
 }
 
+bb::BasicBlock* Assign::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method)
+{
+
+    // дип копи: справа массив, строка, объект
+    // спрвава агрегат, копирование агретага
+
+    auto rec = std::dynamic_pointer_cast<RecordDecl>(rval_->type());
+    auto arr = std::dynamic_pointer_cast<ArrayType>(rval_->type());
+    auto str = std::dynamic_pointer_cast<StringType>(rval_->type());
+    auto agr = std::dynamic_pointer_cast<AggregateType>(rval_->type());
+
+    rval_->codegen(bb, method);
+    if (rec) {
+        method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
+    } else if (arr) {
+        method->createInvokestatic(bb, codegen::AdaUtilityDeepCopyArray);
+    } else if (str) {
+        method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
+    }
+
+    if (!agr) {
+        lval_->codegen(bb, method, true);
+    } else {
+         // работа с агрегатом
+        lval_->codegen(bb, method, false);
+        for (int i = agr->size() - 1; i >= 0; --i) {
+            lval_->codegen(bb, method, false);
+            method->createLdc(bb, i);
+            method->createDup2X1(bb);
+            method->createPop(bb);
+            method->createPop(bb);
+            switch (agr->type()) {
+                case SimpleType::BOOL:
+                    method->createBastore(bb);
+                    break;
+                case SimpleType::CHAR:
+                    method->createCastore(bb);
+                    break;
+                case SimpleType::FLOAT:
+                    method->createFastore(bb);
+                    break;
+                case SimpleType::INTEGER:
+                    method->createIastore(bb);
+                    break;
+            } 
+        } 
+    }
+
+    return bb;
+}
+
 // Return 
 Return::Return(std::shared_ptr<IExpr> retVal) : 
     retVal_(retVal) 
 {}
-
 
 void Return::setParent(INode* parent) {
     INode::setParent(parent);
     if (retVal_) {
         retVal_->setParent(parent);
     }
+}
+
+bb::BasicBlock* Return::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method)
+{
+    retVal_->codegen(bb, method);
+    auto rec = std::dynamic_pointer_cast<RecordDecl>(retVal_->type());
+    auto arr = std::dynamic_pointer_cast<ArrayType>(retVal_->type());
+    auto str = std::dynamic_pointer_cast<StringType>(retVal_->type());
+    if (rec) {
+        method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
+    } else if (arr) {
+        method->createInvokestatic(bb, codegen::AdaUtilityDeepCopyArray);
+    } else if (str) {
+        method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
+    }
+
+    if (rec || arr || str) {
+        method->createAreturn(bb);
+    } else if (auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(retVal_->type())) {
+        switch (sTy->type()) {
+            case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
+                method->createIreturn(bb);
+                break;
+            case SimpleType::FLOAT:
+                method->createFreturn(bb);
+                break;
+        }
+    }
+
+    return bb;
 }
 
 } // namespace node

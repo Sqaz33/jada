@@ -1384,8 +1384,12 @@ public:
     auto body() { return body_; }
     auto bodyElse() { return els_; }
     decltype(auto) elsifs() { return elsifs_; } 
-    
 
+public: // codegen
+    bb::BasicBlock* codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method) override;
+    
 private:
     std::shared_ptr<IExpr> cond_;
     std::shared_ptr<Body> body_;
@@ -1421,6 +1425,11 @@ public:
     }
     auto body() { return body_; }
 
+public: // codegen
+    bb::BasicBlock* codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method) override;
+
 private:
     std::string init_;
     std::shared_ptr<VarDecl> iter_;
@@ -1446,6 +1455,11 @@ public:
         cond_ = cond;
     }
     auto body() { return body_; }
+
+public: // codegen
+    bb::BasicBlock* codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method) override;
 
 private:
     std::shared_ptr<IExpr> cond_;
@@ -1506,9 +1520,9 @@ public:
     void setRval(std::shared_ptr<IExpr> rval);
 
 public: // codegen
-bb::BasicBlock* codegen(
-        bb::BasicBlock* bb, 
-        class_member::SharedPtrMethod method);
+    bb::BasicBlock* codegen(
+            bb::BasicBlock* bb, 
+            class_member::SharedPtrMethod method);
 
 private:
     std::shared_ptr<IExpr> lval_;
@@ -1529,6 +1543,11 @@ public:
     std::shared_ptr<IExpr> call();
     void setCall(std::shared_ptr<IExpr> expr);
 
+public: // codegen
+    bb::BasicBlock* codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method) override;
+
 private:
     std::shared_ptr<IExpr> call_;
 };
@@ -1548,6 +1567,11 @@ public:
     void setRetVal(std::shared_ptr<IExpr> ret) {
         retVal_ = ret;
     }
+
+public: // codegen
+    bb::BasicBlock* codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method) override;
 
 private:
     std::shared_ptr<IExpr> retVal_;

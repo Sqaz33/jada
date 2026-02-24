@@ -167,9 +167,9 @@ public:
     void createIficmpeq(bb::BasicBlock*from, bb::BasicBlock*to); // == 
     void createIficmpne(bb::BasicBlock*from, bb::BasicBlock*to); // != 
     void createIficmplt(bb::BasicBlock*from, bb::BasicBlock*to); // < 
-    void createIficmpge(bb::BasicBlock*from, bb::BasicBlock*to); // <= 
+    void createIficmple(bb::BasicBlock*from, bb::BasicBlock*to); // <= 
     void createIficmpgt(bb::BasicBlock*from, bb::BasicBlock*to); // > 
-    void createIficmple(bb::BasicBlock*from, bb::BasicBlock*to); // >= 
+    void createIficmpge(bb::BasicBlock*from, bb::BasicBlock*to); // >= 
 
     void createIfnonull(bb::BasicBlock*from, bb::BasicBlock*to);
     void createIfnull(bb::BasicBlock*from, bb::BasicBlock*to);
