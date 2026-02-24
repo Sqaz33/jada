@@ -78,6 +78,7 @@ namespace node {
 class IStm : public INode { 
 public: // codegen
     // возвращает следующий после себя bb
+    [[nodiscard]] 
     virtual bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method) 
@@ -164,7 +165,8 @@ struct IExpr : INode {
     void setNoAnalyse() { noAnalyse_ = true;} 
 
 public: // codegen
-    virtual void codegen(
+    [[nodiscard]]
+    virtual bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs = false,
@@ -201,7 +203,7 @@ public:
     void setParent(INode* parent) override;
 
 public:
-    bb::BasicBlock* codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         class_member::SharedPtrMethod method,
         bb::BasicBlock* bb);
 
@@ -285,6 +287,8 @@ public: // codegen
     void loadFromRef(bb::BasicBlock* bb,
                      class_member::SharedPtrMethod method);
 
+    auto nextBB() noexcept { return nextBB_; }
+
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
@@ -322,6 +326,7 @@ private:
 private: // codegen
     class_member::SharedPtrField javaField_;   // если поле
     bool isStatic_ = false;
+    bb::BasicBlock* nextBB_ = nullptr;
 };
 
 // 1. при объявлении и функции и процедуры с одним именим - если rhs в assign - функция
@@ -915,7 +920,7 @@ public:
     void setRight(std::shared_ptr<IExpr> right);
 
 public: // codgen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs = false,
@@ -980,7 +985,7 @@ public:
     std::shared_ptr<VarDecl> var();
 
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs = false,
@@ -1010,7 +1015,7 @@ public:
     std::shared_ptr<IType> type() override;
 
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs = false, 
@@ -1039,7 +1044,7 @@ public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs = false,
@@ -1077,7 +1082,7 @@ public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs = false, 
@@ -1115,7 +1120,7 @@ public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs = false,
@@ -1151,7 +1156,7 @@ public:
     std::shared_ptr<SimpleLiteralType> imageType();
 
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs = false, 
@@ -1285,7 +1290,7 @@ public: // INode interface
                graphviz::VertexType par) const override;
 
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
             bb::BasicBlock* bb, 
             class_member::SharedPtrMethod method, 
             bool lhs = false,
@@ -1313,7 +1318,7 @@ public: // INode interface
                graphviz::VertexType par) const override;
     
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
             bb::BasicBlock* bb, 
             class_member::SharedPtrMethod method, 
             bool lhs = false,
@@ -1337,7 +1342,7 @@ public: // INode interface
                graphviz::VertexType par) const override;
 
 public: // codegen
-    void codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
             bb::BasicBlock* bb, 
             class_member::SharedPtrMethod method, 
             bool lhs = false,
@@ -1386,7 +1391,7 @@ public:
     decltype(auto) elsifs() { return elsifs_; } 
 
 public: // codegen
-    bb::BasicBlock* codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method) override;
     
@@ -1426,7 +1431,7 @@ public:
     auto body() { return body_; }
 
 public: // codegen
-    bb::BasicBlock* codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method) override;
 
@@ -1457,7 +1462,7 @@ public:
     auto body() { return body_; }
 
 public: // codegen
-    bb::BasicBlock* codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method) override;
 
@@ -1520,7 +1525,7 @@ public:
     void setRval(std::shared_ptr<IExpr> rval);
 
 public: // codegen
-    bb::BasicBlock* codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
             bb::BasicBlock* bb, 
             class_member::SharedPtrMethod method);
 
@@ -1544,7 +1549,7 @@ public:
     void setCall(std::shared_ptr<IExpr> expr);
 
 public: // codegen
-    bb::BasicBlock* codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method) override;
 
@@ -1569,7 +1574,7 @@ public:
     }
 
 public: // codegen
-    bb::BasicBlock* codegen(
+    [[nodiscard]] bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method) override;
 

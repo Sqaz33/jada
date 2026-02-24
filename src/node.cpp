@@ -287,7 +287,8 @@ void VarDecl::codegen(
     auto str = std::dynamic_pointer_cast<node::StringType>(type_);
     // если есть инициализация
     if (rval_) {
-        rval_->codegen(bb, method);
+        bb = rval_->codegen(bb, method);
+        nextBB_ = bb;
         if (rec) {
             method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
         } else if (arr) {
@@ -621,7 +622,7 @@ void ProcBody::codegen(
     bb::BasicBlock* bb,
     class_member::SharedPtrMethod method)  
 {
-    body_->codegen(javaMethod_, method->createBB());
+    auto* _ = body_->codegen(javaMethod_, method->createBB());
 }
 
 // ProcDecl
@@ -849,13 +850,19 @@ void PackDecl::codegen(
     if (dynamic_cast<PackBody*>(this)) return;
 
     auto* clinitBB = clinit_->createBB();
-    for (auto&& var : *decls_) {
-        var->codegen(clinitBB);
+    for (auto&& d : *decls_) {
+        d->codegen(clinitBB);
+        if (auto var = std::dynamic_pointer_cast<VarDecl>(d)) {
+            clinitBB = var->nextBB();
+        }
     }
 
     if (auto body = packBody_.lock()) {
-        for (auto&& var : *(body->decls())) {
-            var->codegen(clinitBB);
+        for (auto&& d : *(body->decls())) {
+            d->codegen(clinitBB);
+            if (auto var = std::dynamic_pointer_cast<VarDecl>(d)) {
+                clinitBB = var->nextBB();
+            }
         }
     }
 }
@@ -864,7 +871,6 @@ void PackDecl::printClass() {
     if (dynamic_cast<PackBody*>(this)) return;
     codegen::cg.printClass(javaClass_);
 }
-
 
 // PackBody
 PackBody::PackBody(const std::string& name, 
@@ -1138,6 +1144,8 @@ void RecordDecl::codegen(
     auto* initBB = init_->createBB();
     for (auto&& var : *decls_) {
         var->codegen(initBB);
+        auto v = std::dynamic_pointer_cast<VarDecl>(var);
+        initBB = v->nextBB();
     }
 }
 
@@ -1389,15 +1397,16 @@ std::shared_ptr<IType> Aggregate::type() {
     return type;
 }
 
-void Aggregate::codegen(
+bb::BasicBlock* Aggregate::codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs,
         int callStage) 
 {
     for (auto&& e : inits_) {
-        e->codegen(bb, method, lhs, callStage);
+        bb = e->codegen(bb, method, lhs, callStage);
     }
+    return bb;
 }
 
 } // namespace node 
@@ -1470,17 +1479,17 @@ bool Op::compareTypes(const std::shared_ptr<IType> comp) {
     }
 }
 
-void Op::codegen(
+bb::BasicBlock* Op::codegen(
     bb::BasicBlock* bb,
     class_member::SharedPtrMethod method,
     bool lhs,
     int callStage)
 {
     if (lhs_) {
-        lhs_->codegen(bb, method, lhs, callStage);
+        bb = lhs_->codegen(bb, method, lhs, callStage);
     }
 
-    rhs_->codegen(bb, method, lhs, callStage);
+    bb = rhs_->codegen(bb, method, lhs, callStage);
 
     assert(opType_ != OpType::DOT);
 
@@ -1496,6 +1505,7 @@ void Op::codegen(
         auto trueBB  = method->createBB();
         auto falseBB = method->createBB();
         auto endBB = method->createBB();
+        bb = endBB;
 
         if (isFloat) {
             method->createFcmpl(bb);
@@ -1615,6 +1625,8 @@ void Op::codegen(
         default:
             assert(false && "Unsupported OpType");
     }
+
+    return bb;
 }
 
 // >,<,=,!= только с float, bool, integer, char
@@ -1767,7 +1779,7 @@ std::shared_ptr<VarDecl> GetVarExpr::var() {
     return var_;
 }
 
-void GetVarExpr::codegen(
+bb::BasicBlock* GetVarExpr::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
     bool lhs, 
@@ -1781,10 +1793,10 @@ void GetVarExpr::codegen(
     const int POST_CALL = 2; 
     if (PRE_CALL == callStage && !right_) {
         var_->createRef(bb, method);
-        return;
+        return bb;
     } else if (POST_CALL == callStage && !right_) {
         var_->loadFromRef(bb, method);
-        return;
+        return bb;
     }
 
     if (lhs && !right_) {
@@ -1831,9 +1843,10 @@ void GetVarExpr::codegen(
         } 
     } else {
         var_->createLoad(bb, method);
-        right_->codegen(bb, method, lhs, callStage);
+        return right_->codegen(bb, method, lhs, callStage);
     }
-                             
+
+    return bb;                         
 } 
 
 // PackNamePart
@@ -1874,14 +1887,14 @@ std::shared_ptr<IType> PackNamePart::type() {
     return nullptr;
 }
 
-void PackNamePart::codegen(
+bb::BasicBlock* PackNamePart::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
     bool lhs,
     int callStage)
 {
     assert(right_);
-    right_->codegen(bb, method, lhs, callStage);
+    return right_->codegen(bb, method, lhs, callStage);
 }
 
 // GetArrElementExpr
@@ -1937,7 +1950,7 @@ std::shared_ptr<VarDecl> GetArrElementExpr::arr() {
     return arr_;
 }
 
-void GetArrElementExpr::codegen(
+bb::BasicBlock* GetArrElementExpr::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
     bool lhs,
@@ -1948,14 +1961,14 @@ void GetArrElementExpr::codegen(
         arr_->createLoad(bb, method);
         for (int i = 0; i < idxs_.size() - 1; ++i) {
             auto&& idx = idxs_[i];
-            idx->codegen(bb, method, false);
+            bb = idx->codegen(bb, method, false);
             method->createIconst(bb, 1);
             method->createIsub(bb);
             method->createAaload(bb);
         }
         // val, ref, idx -> ref, idx, var
         // получаем последний индекс
-        idxs_.back()->codegen(bb, method);
+        bb = idxs_.back()->codegen(bb, method);
         method->createIconst(bb, 1);
         method->createIsub(bb);
         // загружаем или выгружаем
@@ -2004,7 +2017,7 @@ void GetArrElementExpr::codegen(
         }
     } else if (auto strTy = std::dynamic_pointer_cast<StringType>(arr_->type())) {
         arr_->createLoad(bb, method);
-        idxs_[0]->codegen(bb, method, false);
+        bb = idxs_[0]->codegen(bb, method, false);
         method->createIconst(bb, 1);
         method->createIsub(bb);
         if (lhs && !right_) {
@@ -2018,8 +2031,10 @@ void GetArrElementExpr::codegen(
     }
 
     if (right_) {
-        right_->codegen(bb, method, lhs, callStage);
+        return right_->codegen(bb, method, lhs, callStage);
     }
+
+    return bb;
 }
 
 // CallExpr
@@ -2089,7 +2104,7 @@ std::shared_ptr<IType> CallExpr::type() {
     return nullptr;
 }
 
-void CallExpr::codegen(
+bb::BasicBlock* CallExpr::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
     bool lhs, 
@@ -2112,7 +2127,7 @@ void CallExpr::codegen(
         auto&& p = params_[i];
         auto&& var = params[i];
         int callSt = var->out() ? -1 : 1;
-        p->codegen(bb, method, callSt);
+        bb = p->codegen(bb, method, callSt);
     }
 
     if (noValue_) {
@@ -2125,13 +2140,19 @@ void CallExpr::codegen(
     for (int i = 0; i < params.size(); ++i) {
         auto&& p = params_[i];
         auto&& var = params[i];
-        int callSt = var->out() ? -1 : 2;
-        p->codegen(bb, method, callSt);
+        if (auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(p)) {
+            if (std::dynamic_pointer_cast<node::GetVarExpr>(dotOp->tail())) {
+                int callSt = var->out() ? -1 : 2;
+                bb = p->codegen(bb, method, callSt);
+            }
+        }
     }
 
     if (right_) {
-        right_->codegen(bb, method, lhs, callStage);
+        return right_->codegen(bb, method, lhs, callStage);
     }
+    
+    return bb;
 } 
 
 // CallMethodExpr
@@ -2201,7 +2222,7 @@ std::shared_ptr<IType> CallMethodExpr::type() {
     return nullptr;
 }
 
-void CallMethodExpr::codegen(
+bb::BasicBlock* CallMethodExpr::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
     bool lhs, 
@@ -2224,7 +2245,7 @@ void CallMethodExpr::codegen(
         auto&& p = params_[i];
         auto&& var = params[i];
         int callSt = var->out() ? -1 : 1;
-        p->codegen(bb, method, callSt);
+        bb = p->codegen(bb, method, callSt);
     }
 
     if (noValue_) {
@@ -2237,13 +2258,19 @@ void CallMethodExpr::codegen(
     for (int i = 0; i < params.size(); ++i) {
         auto&& p = params_[i];
         auto&& var = params[i];
-        int callSt = var->out() ? -1 : 2;
-        p->codegen(bb, method, callSt);
+        if (auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(p)) {
+            if (std::dynamic_pointer_cast<node::GetVarExpr>(dotOp->tail())) {
+                int callSt = var->out() ? -1 : 2;
+                bb = p->codegen(bb, method, callSt);
+            }
+        }
+    }
+
+    if (right_) {
+        return right_->codegen(bb, method, lhs, callStage);
     }
     
-    if (right_) {
-        right_->codegen(bb, method, lhs, callStage);
-    }
+    return bb;
 } 
 
 // ImageCallExpr
@@ -2276,13 +2303,13 @@ bool ImageCallExpr::compareTypes(
     return stringType_->compare(rhs);
 }
 
-void ImageCallExpr::codegen(
+bb::BasicBlock* ImageCallExpr::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
     bool lhs,
     int callStage) 
 {
-    param_->codegen(bb, method);
+    bb = param_->codegen(bb, method);
     switch (imageType_->type()) {
         case SimpleType::CHAR:
             method->createInvokestatic(bb, codegen::AdaUtilityImageFromChar);
@@ -2297,6 +2324,7 @@ void ImageCallExpr::codegen(
             method->createInvokestatic(bb, codegen::AdaUtilityImageFromFloat);
             break;
     }
+    return bb;
 }
 
 // NameExpr
@@ -2337,7 +2365,7 @@ std::shared_ptr<IType> SimpleLiteral::type() {
 }
 
 // codegen
-void SimpleLiteral::codegen(
+bb::BasicBlock* SimpleLiteral::codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs,
@@ -2357,6 +2385,7 @@ void SimpleLiteral::codegen(
             method->createLdc(bb, get<float>());
             break;
     }
+    return bb;
 }
 
 // StringLiteral
@@ -2377,13 +2406,14 @@ std::shared_ptr<IType> StringLiteral::type() {
 }
 
 // codegen
-void StringLiteral::codegen(
+bb::BasicBlock* StringLiteral::codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
         bool lhs,
         int callStage) 
 {
     method->createLdc(bb, str_);   
+    return bb;
 }
 
 } // namespace node 
@@ -2430,17 +2460,38 @@ bb::BasicBlock* If::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method)
 {
-    cond_->codegen(bb, method);
+    bb = cond_->codegen(bb, method);
     
     auto* bodyBB = method->createBB();
 
-    body_->codegen(method, bodyBB);
+    std::vector<bb::BasicBlock*> bodyNextBBs;
+    bodyNextBBs.push_back(body_->codegen(method, bodyBB));
 
     auto* nextBB = method->createBB();
     method->createIfne(bb, bodyBB);
     method->createGoto(bb, nextBB);
 
-    return nextBB;
+    bb = nextBB;
+
+    for (auto&& [c, b] : elsifs_) {
+        bb = c->codegen(bb, method);
+        auto* bodyBB = method->createBB();
+        bodyNextBBs.push_back(b->codegen(method, bodyBB));
+        auto* nextBB = method->createBB();
+        method->createIfne(bb, bodyBB);
+        method->createGoto(bb, nextBB);
+        bb = nextBB;
+    }
+
+    bodyNextBBs.push_back(els_->codegen(method, bb));
+
+    auto* endBB = method->createBB();
+
+    for (auto* bb : bodyNextBBs) {
+        method->createGoto(bb, endBB);
+    }
+
+    return endBB;
 }
 
 // For
@@ -2469,12 +2520,12 @@ bb::BasicBlock* For::codegen(
 {
     iter_->pregen(nullptr, method);
 
-    range_.first->codegen(bb, method);
+    bb = range_.first->codegen(bb, method);
     iter_->createStore(bb, method);
 
     std::string right = "right12345";
     method->createLocalInt(right);
-    range_.second->codegen(bb, method);
+    bb = range_.second->codegen(bb, method);
     method->createIstore(bb, right);
     
     // создаем бб конда и тела
@@ -2482,15 +2533,15 @@ bb::BasicBlock* For::codegen(
     auto* bodyBB = method->createBB();
 
     // наполняем тело
-    bodyBB = body_->codegen(method, bodyBB);
-    method->createIinc(bodyBB, iter_->name(), 1);
-    method->createGoto(bodyBB, condBB);
+    auto* bodyNext = body_->codegen(method, bodyBB);
+    method->createIinc(bodyNext, iter_->name(), 1);
+    method->createGoto(bodyNext, condBB);
 
     // создаем следующий бб, наполняем конд бб 
     auto nextBB = method->createBB();
     iter_->createLoad(condBB, method);
-    // условие цикла
     method->createIload(condBB, right);
+    // условие цикла
     method->createIficmple(condBB, bodyBB);
     method->createGoto(condBB, nextBB);
 
@@ -2518,16 +2569,17 @@ bb::BasicBlock* While::codegen(
     class_member::SharedPtrMethod method)
 {
     auto* condBB = method->createBB();
-    cond_->codegen(condBB, method);
+    cond_->codegen(condBB, method); 
     
     auto* bodyBB = method->createBB();
-    bodyBB = body_->codegen(method, bodyBB);
+    auto bodyNextBB = body_->codegen(method, bodyBB);
 
     auto* nextBB = method->createBB();
-    method->createIfne(bb, bodyBB);
-    method->createGoto(bb, nextBB);
+    // заполняется cond
+    method->createIfne(condBB, bodyBB);
+    method->createGoto(condBB, nextBB);
 
-    method->createGoto(bodyBB, condBB);
+    method->createGoto(bodyNextBB, condBB);
 
     return nextBB;
 }
