@@ -189,6 +189,7 @@ namespace node {
 
 class Body : public INode {
 public:
+    Body() = default;
     Body(const std::vector<std::shared_ptr<IStm>>& stms);
     
 public: // INode interface
@@ -370,6 +371,9 @@ public: // codegen
         class_member::SharedPtrMethod method = nullptr) override; 
 
     void setJavaMain() { javaMain_ = true; }
+
+    void setJavaMethod(auto method) { javaMethod_ = method; }
+    void setStatic() { isStatic_ = true; }
 
 private:
     void printParam_(const std::shared_ptr<VarDecl> param, 

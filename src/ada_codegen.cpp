@@ -9,18 +9,17 @@
 namespace codegen {
 
 void gen(std::vector<std::shared_ptr<mdl::Module>>& program) {
-    initAdaUtilityNames();
     std::vector<std::shared_ptr<node::IDecl>> decls;
 
-    int idx = 0;
-    for (auto&& mod : program | std::views::drop(1)) {
+    for (auto&& mod : program) {
         auto unit = mod->unit().lock();
         auto space = std::dynamic_pointer_cast<node::GlobalSpace>(unit);
         auto spaceUnit = space->unit();
         decls.push_back(spaceUnit);
     }
 
-    for (auto&& d : decls) {
+    int idx = 0;
+    for (auto&& d : decls | std::views::drop(1)) {
         if (idx == 0) {
             std::dynamic_pointer_cast<node::ProcBody>(d)->setJavaMain();
         }
@@ -28,11 +27,11 @@ void gen(std::vector<std::shared_ptr<mdl::Module>>& program) {
         d->pregen(InnerSubprograms, nullptr);
     }
 
-    for (auto&& d : decls) {
+    for (auto&& d : decls | std::views::drop(1)) {
         d->codegen(nullptr);
     }
 
-    for (auto&& d : decls) {
+    for (auto&& d : decls | std::views::drop(1)) {
         d->printClass();
     }
 

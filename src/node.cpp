@@ -371,6 +371,7 @@ void VarDecl::codegen(
             } 
         } else if (str) {
             method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
+            createStore(bb, method);
         } else {
             createStore(bb, method);
         }
@@ -1597,7 +1598,7 @@ bb::BasicBlock* Op::codegen(
             }
         }
 
-        method->createGoto(bb, falseBB); // mb err
+        method->createGoto(bb, falseBB); 
 
         method->createLdc(trueBB, 1);
         method->createGoto(trueBB, endBB);
@@ -2194,8 +2195,17 @@ bb::BasicBlock* CallExpr::codegen(
     for (int i = 0; i < params.size(); ++i) {
         auto&& p = params_[i];
         auto&& var = params[i];
-        int callSt = var->out() ? -1 : 1;
-        bb = p->codegen(bb, method, callSt);
+        bool gen = false;
+        if (auto dotOp = std::dynamic_pointer_cast<DotOpExpr>(p)) {
+            if (auto tail = std::dynamic_pointer_cast<GetVarExpr>(dotOp->tail())) {
+                if (std::dynamic_pointer_cast<SimpleLiteralType>(tail->var()->type()) && var->param() && var->out()) {
+                    int callSt = var->out() ? -1 : 1;
+                    bb = p->codegen(bb, method, false, callSt);
+                    gen = true;
+                }
+            }
+        }
+        if (!gen) bb = p->codegen(bb, method);
     }
 
     if (noValue_) {
@@ -2208,10 +2218,12 @@ bb::BasicBlock* CallExpr::codegen(
     for (int i = 0; i < params.size(); ++i) {
         auto&& p = params_[i];
         auto&& var = params[i];
-        if (auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(p)) {
-            if (std::dynamic_pointer_cast<node::GetVarExpr>(dotOp->tail())) {
-                int callSt = var->out() ? -1 : 2;
-                bb = p->codegen(bb, method, callSt);
+        if (auto dotOp = std::dynamic_pointer_cast<DotOpExpr>(p)) {
+            if (auto tail = std::dynamic_pointer_cast<GetVarExpr>(dotOp->tail())) {
+                if (std::dynamic_pointer_cast<SimpleLiteralType>(tail->var()->type()) && var->param() && var->out()) {
+                    int callSt = var->out() ? -1 : 2;
+                    bb = p->codegen(bb, method, false, callSt);
+                }
             }
         }
     }

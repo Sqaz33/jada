@@ -169,16 +169,28 @@ void addAdaStdLib(
     strTy->setInf();
     std::vector putLineVars({std::make_shared<node::VarDecl>("str", strTy)});
     putLineVars[0]->setIn(true);
-    auto PutLine = std::make_shared<node::ProcDecl>("put_line", putLineVars);
+    auto plDecls = std::make_shared<node::DeclArea>();
+    auto plBody = std::make_shared<node::Body>();
+    auto PutLine = std::make_shared<node::ProcBody>("put_line", putLineVars, plDecls, plBody);
     ////////////////////////// putline ////////////////////////////////////////
+    auto desc = PutLine->desc();
+    auto plf = codegen::InnerSubprograms->addMethod(PutLine->name(), desc, true);
+    auto* plfBB = plf->createBB();
+    plf->createAload(plfBB, "str");
+    plf->createInvokestatic(plfBB, codegen::AdaUtilityPrintStringBuilder);
+    plf->createReturn(plfBB);
 
+    plf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+    plf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+    PutLine->setJavaMethod(plf);
+    PutLine->setStatic();
     ///////////////////////////////////////////////////////////////////////////
 
+    // std::vector getIntVars({std::make_shared<node::VarDecl>("str", strTy)});
+    // auto GetInt = std::make_shared<node::ProcDecl>("get", getIntVars);
+    ////////////////////////// GetInt ////////////////////////////////////////
 
-
-    std::vector getIntVars({std::make_shared<node::VarDecl>("str", strTy)});
-    auto GetInt = std::make_shared<node::ProcDecl>("get", getIntVars);
-
+    ///////////////////////////////////////////////////////////////////////////
 
 
 
@@ -238,7 +250,8 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "../test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
-        path = strdup("/mnt/d/jada/test_data/semantics/typecheck.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/out.adb");
+        path = strdup("/mnt/d/jada/test_data/codegen/string.adb");
         // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/bool.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/for_linking.adb";
@@ -265,6 +278,7 @@ int main(int argc, char** argv) { // try {
 
     helper::allModules.insert("ada");
 
+    codegen::initAdaUtilityNames();
     addAdaStdLib(helper::modules);
 
     if (!parseProgram(path.remove_filename())) {

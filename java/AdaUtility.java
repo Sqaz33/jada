@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AdaUtility {
-
     public static void printStringBuilder(StringBuilder sb) {
        if (sb == null) return;
         System.out.println(sb.toString());
