@@ -14,6 +14,7 @@ extern jvm_class::SharedPtrJVMClass PrintStream;
 extern jvm_class::SharedPtrJVMClass AtomicInteger;
 extern jvm_class::SharedPtrJVMClass AdaUtility; 
 extern jvm_class::SharedPtrJVMClass JavaObject; 
+extern jvm_class::SharedPtrJVMClass JavaString; 
 
 // init 
 extern class_member::SharedPtrMethod AdaUtilityInitArrayElements;

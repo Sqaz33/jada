@@ -45,7 +45,8 @@ jvm_class::SharedPtrJVMClass StringBuiler;
 jvm_class::SharedPtrJVMClass PrintStream; 
 jvm_class::SharedPtrJVMClass AtomicInteger;
 jvm_class::SharedPtrJVMClass AdaUtility; 
-jvm_class::SharedPtrJVMClass JavaObject; 
+jvm_class::SharedPtrJVMClass JavaObject;
+jvm_class::SharedPtrJVMClass JavaString;
 
 class_member::SharedPtrMethod AdaUtilityInitArrayElements;
 
@@ -97,12 +98,14 @@ void initAdaUtilityNames() {
         attribute::QualifiedName({"java", "util", "concurrent", "atomic", "AtomicInteger"}));
 
     AdaUtility = cg.createClass(
-        attribute::QualifiedName({"ada", "AdaUtility"}));
+        attribute::QualifiedName({"AdaUtility"}));
 
     JavaObject = cg.createClass(
         attribute::QualifiedName({"java", "lang", "Object"}));
 
     InnerSubprograms->setParent(JavaObject);
+    JavaString = 
+        cg.createClass(attribute::QualifiedName({"java", "lang", "String"}));
 
     // ------------------ методы ------------------
     AdaUtilityInitArrayElements = AdaUtility->addMethod(
@@ -263,7 +266,7 @@ void initAdaUtilityNames() {
     AdaUtilityFromStringLiteral = AdaUtility->addMethod(
         "fromStringLiteral",
         JVMMethodDescriptor::create(
-            {{"value", JVMFieldDescriptor::createObject(StringBuiler->name())}},
+            {{"value", JVMFieldDescriptor::createObject(JavaString->name())}},
             JVMFieldDescriptor::createObject(StringBuiler->name())
         )
     );

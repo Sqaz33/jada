@@ -262,20 +262,66 @@ void VarDecl::pregen(
     }
 }
 
+void cgCreatePrimitiveArray(bb::BasicBlock* bb,
+                            class_member::SharedPtrMethod method,
+                            SimpleType type,
+                            const std::vector<int>& dims,
+                            size_t level = 0)
+{
+    // 1. создаём массив текущей размерности
+    method->createLdc(bb, dims[level]);
+    if (level + 1 < dims.size()) {
+        // массив ссылок на подмассивы
+        method->createAnewarray(bb, codegen::JavaObject); // или тип Object
+    } else {
+        // массив примитивов
+        switch (type) {
+            case SimpleType::BOOL:
+            case SimpleType::CHAR:
+            case SimpleType::INTEGER:
+                method->createNewarray(bb, codegen::ArrayType::INT);
+                break;
+            case SimpleType::FLOAT:
+                method->createNewarray(bb, codegen::ArrayType::FLOAT);
+                break;
+        }
+}
+    if (level + 1 < dims.size()) {
+        method->createDup(bb);                  
+        for (int i = 0; i < dims[level]; ++i) {
+            method->createDup(bb);              
+            method->createLdc(bb, i);           
+            cgCreatePrimitiveArray(bb, method, type, dims, level + 1);
+            method->createAastore(bb);         
+        }
+    }
+}
 
 static void cgCreateArray(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
     std::shared_ptr<ArrayType> arr)
 {
-    for (auto [l, r] : arr->ranges()) {
-        method->createLdc(bb, l - r + 1);
+    auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(arr->type());
+    if (!sTy) {
+        for (auto [l, r] : arr->ranges()) {
+            method->createLdc(bb, r - l + 1);
+        }
+        auto arrDesc = arr->descriptor();
+        auto dem = static_cast<std::uint8_t>(arr->ranges().size());
+        method->createMultianewarray(bb, arrDesc, dem);
+        method->createDup(bb);
+        method->createInvokestatic(bb, codegen::AdaUtilityInitArrayElements);
+    } else {
+        std::vector<int> dims;
+        auto&& ranges = arr->ranges();
+        std::transform(
+            ranges.begin(), ranges.end(), 
+            std::inserter(dims, dims.end()), 
+            [] (auto&& r) { return r.second - r.first + 1; } );
+        cgCreatePrimitiveArray(bb, method, sTy->type(), dims);
     }
-    auto arrDesc = arr->descriptor();
-    auto dem = static_cast<std::uint8_t>(arr->ranges().size());
-    method->createMultianewarray(bb, arrDesc, dem);
-    method->createDup(bb);
-    method->createInvokestatic(bb, codegen::AdaUtilityInitArrayElements);
+
 }
 
 void VarDecl::codegen(
@@ -324,11 +370,7 @@ void VarDecl::codegen(
                 } 
             } 
         } else if (str) {
-            if (std::dynamic_pointer_cast<StringLiteral>(rval_)) {
-                method->createInvokestatic(bb, codegen::AdaUtilityFromStringLiteral);
-            } else {
-                method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
-            }
+            method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
         } else {
             createStore(bb, method);
         }
@@ -611,7 +653,7 @@ void ProcBody::pregen(
     auto d = desc();
 
     if (javaMain_) {
-        javaMethod_ = cls->addMethod("main", d);
+        javaMethod_ = cls->addMethod("main", d, true);
         javaMethod_->addFlag(
             codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
         isStatic_ = true;
@@ -620,7 +662,7 @@ void ProcBody::pregen(
             javaMethod_ = cls->addMethod(name_, d);
             isStatic_ = false;
         } else {
-            javaMethod_ = codegen::InnerSubprograms->addMethod(name_, d);
+            javaMethod_ = codegen::InnerSubprograms->addMethod(name_, d, true);
             javaMethod_->addFlag(
                 codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
             isStatic_ = true;
@@ -1645,7 +1687,8 @@ bb::BasicBlock* Op::codegen(
         }
         case OpType::AMPER:
             assert(STRING_TY->compare(type()));
-            method->createInvokestatic(bb, codegen::AdaUtilityConcat);
+            method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
+            break;
 
         default:
             assert(false && "Unsupported OpType");
@@ -2438,6 +2481,7 @@ bb::BasicBlock* StringLiteral::codegen(
         int callStage) 
 {
     method->createLdc(bb, str_);   
+    method->createInvokestatic(bb, codegen::AdaUtilityFromStringLiteral);
     return bb;
 }
 
@@ -2777,30 +2821,34 @@ bb::BasicBlock* Return::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method)
 {
-    retVal_->codegen(bb, method);
-    auto rec = std::dynamic_pointer_cast<RecordDecl>(retVal_->type());
-    auto arr = std::dynamic_pointer_cast<ArrayType>(retVal_->type());
-    auto str = std::dynamic_pointer_cast<StringType>(retVal_->type());
-    if (rec) {
-        method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
-    } else if (arr) {
-        method->createInvokestatic(bb, codegen::AdaUtilityDeepCopyArray);
-    } else if (str) {
-        method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
-    }
-
-    if (rec || arr || str) {
-        method->createAreturn(bb);
-    } else if (auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(retVal_->type())) {
-        switch (sTy->type()) {
-            case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
-                method->createIreturn(bb);
-                break;
-            case SimpleType::FLOAT:
-                method->createFreturn(bb);
-                break;
+    if (retVal_) {
+        bb = retVal_->codegen(bb, method);
+        auto rec = std::dynamic_pointer_cast<RecordDecl>(retVal_->type());
+        auto arr = std::dynamic_pointer_cast<ArrayType>(retVal_->type());
+        auto str = std::dynamic_pointer_cast<StringType>(retVal_->type());
+        if (rec) {
+            method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
+        } else if (arr) {
+            method->createInvokestatic(bb, codegen::AdaUtilityDeepCopyArray);
+        } else if (str) {
+            method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
         }
-    }
+
+        if (rec || arr || str) {
+            method->createAreturn(bb);
+        } else if (auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(retVal_->type())) {
+            switch (sTy->type()) {
+                case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
+                    method->createIreturn(bb);
+                    break;
+                case SimpleType::FLOAT:
+                    method->createFreturn(bb);
+                    break;
+            }
+        } 
+    } else {
+        method->createReturn(bb);
+    }  
 
     return bb;
 }

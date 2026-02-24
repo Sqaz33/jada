@@ -38,7 +38,8 @@ public:
         descriptor::JVMFieldDescriptor type);
     class_member::SharedPtrMethod addMethod( 
         const std::string& name,
-        descriptor::JVMMethodDescriptor type);
+        descriptor::JVMMethodDescriptor type,
+        bool isStatic = false);
 
 public:
     std::uint16_t methodRef(class_member::SharedPtrMethod method);

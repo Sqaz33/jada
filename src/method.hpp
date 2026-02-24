@@ -180,7 +180,9 @@ public:
     void createGoto(bb::BasicBlock*from, bb::BasicBlock*to); 
 
     // array
-    void createAnewarray(bb::BasicBlock*bb, std::uint16_t type);
+    void createAnewarray(
+        bb::BasicBlock*bb, 
+        jvm_class::SharedPtrJVMClass cls);
     void createNewarray(bb::BasicBlock*bb, codegen::ArrayType atype);
     void createMultianewarray(
         bb::BasicBlock*bb, 

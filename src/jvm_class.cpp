@@ -113,7 +113,7 @@ JVMClass::simpleName() const noexcept {
 class_member::SharedPtrField 
 JVMClass::addField( 
     const std::string& name,
-descriptor::JVMFieldDescriptor type)
+    descriptor::JVMFieldDescriptor type)
 {
     auto field = 
         std::make_shared<
@@ -127,12 +127,13 @@ descriptor::JVMFieldDescriptor type)
 class_member::SharedPtrMethod 
 JVMClass::addMethod( 
     const std::string& name,
-    descriptor::JVMMethodDescriptor type)
+    descriptor::JVMMethodDescriptor type,
+    bool isStatic)
 {
     auto method = 
         std::make_shared<
             class_member::JVMClassMethod>(
-                name, std::move(type), slf());
+                name, std::move(type), slf(), isStatic);
     methods_.push_back(method);
     classNMethods_[this][method.get()] = method->selfClassRef();
     return method;

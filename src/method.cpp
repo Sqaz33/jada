@@ -23,9 +23,6 @@ JVMClassMethod::JVMClassMethod(
     , name__(name)
     , type__(type)
 {   
-    if (isStatic) {
-        addFlag(codegen::AccessFlag::ACC_STATIC);
-    } 
 
     auto cp = cls.lock()->cp();
     code_.reset(
@@ -750,17 +747,18 @@ void JVMClassMethod::createGoto(
 }
 
 void JVMClassMethod::createAnewarray(
-    bb::BasicBlock* bb, std::uint16_t type) 
+    bb::BasicBlock* bb, jvm_class::SharedPtrJVMClass cls) 
 {   
     instr::Instr ins(OpCode::anewarray);
-    ins.pushTwoBytes(type);
+    auto name = selfClass_.lock()->className(cls);
+    ins.pushTwoBytes(name);
     code_->insertInstr(bb, std::move(ins));
 }
 
 void JVMClassMethod::createNewarray(
     bb::BasicBlock* bb, codegen::ArrayType atype)
 {
-    instr::Instr ins(OpCode::anewarray);
+    instr::Instr ins(OpCode::newarray);
     ins.pushByte(static_cast<std::uint8_t>(atype));
     code_->insertInstr(bb, std::move(ins));
 }
