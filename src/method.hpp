@@ -190,7 +190,7 @@ public:
     void createArraylength(bb::BasicBlock*bb);
 
     void createAaload(bb::BasicBlock*bb); 
-    void createbaload(bb::BasicBlock*bb);
+    void createBaload(bb::BasicBlock*bb);
     void createCaload(bb::BasicBlock*bb);
     void createDaload(bb::BasicBlock*bb);
     void createFaload(bb::BasicBlock*bb);

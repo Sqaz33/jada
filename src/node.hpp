@@ -166,7 +166,7 @@ public: // codegen
     virtual void codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
-        bool lhs = false);
+        bool lhs = false) { assert(false); }
 
 private:
     bool inBrackets_ = false;
@@ -669,7 +669,8 @@ public:
     }
 
 public: // codegen
-    descriptor::JVMFieldDescriptor descriptor() override;
+    descriptor::JVMFieldDescriptor descriptor(
+        bool out = false) override;
 
     // класс для vardecl и proc/func
     // method для vardecl
@@ -775,7 +776,8 @@ public: // INode interface
                graphviz::VertexType par) const override;
 
 public: // codegen
-    descriptor::JVMFieldDescriptor descriptor() override;    
+    descriptor::JVMFieldDescriptor descriptor(
+        bool out = false) override;    
 
 private:
     SimpleType type_;
@@ -818,7 +820,8 @@ public:
     decltype(auto) ranges() const noexcept { return ranges_; }
 
 public: // codegen
-    descriptor::JVMFieldDescriptor descriptor() override;    
+    descriptor::JVMFieldDescriptor descriptor(
+        bool out = false) override;    
 
 private:
     std::vector<std::pair<int, int>> ranges_; 
@@ -836,7 +839,8 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
 
-    descriptor::JVMFieldDescriptor descriptor() override;    
+    descriptor::JVMFieldDescriptor descriptor(
+        bool out = false) override;    
 
 public:
     void setInf() noexcept;
@@ -981,6 +985,12 @@ public:
 public:
     std::shared_ptr<IType> type() override;
 
+public: // codegen
+    void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs = false) override;
+
 private:
     std::shared_ptr<PackDecl> pack_;
 };
@@ -1002,6 +1012,12 @@ public:
 
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
+
+public: // codegen
+    void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs = false) override;
 
 private:
     std::shared_ptr<IDecl> owner_; 
@@ -1034,6 +1050,12 @@ public:
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
+public: // codegen
+    void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs = false) override;
+    
 private:
     std::shared_ptr<IDecl> owner_; 
     std::shared_ptr<ProcBody> proc_;
@@ -1065,6 +1087,12 @@ public:
 public: // IExpr interface
     std::shared_ptr<IType> type() override;
 
+public: // codegen
+    void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs = false) override;
+
 private:
     std::shared_ptr<ClassDecl> owner_;
     std::shared_ptr<ProcBody> proc_;
@@ -1093,6 +1121,12 @@ public: // IExpr interface
 public:
     std::shared_ptr<IExpr> param();
     std::shared_ptr<SimpleLiteralType> imageType();
+
+public: // codegen
+    void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs = false) override;
 
 private:
     std::shared_ptr<SimpleLiteralType> imageType_;
@@ -1242,7 +1276,6 @@ public: // IExpr interface
 public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
-
     
 private:
     std::string str_; 
@@ -1540,7 +1573,8 @@ public:
     void setClass(std::shared_ptr<ClassDecl> cls);
 
 public: // codegen
-    descriptor::JVMFieldDescriptor descriptor() override;    
+    descriptor::JVMFieldDescriptor descriptor(
+        bool out = false) override;    
 
 private:
     void reachable_(

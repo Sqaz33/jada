@@ -6,6 +6,62 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AdaUtility {
+    // concat
+    public static StringBuilder concat(StringBuilder sb1, StringBuilder sb2) {
+        if (sb1 == null) sb1 = new StringBuilder();
+        if (sb2 == null) sb2 = new StringBuilder();
+
+        StringBuilder result = new StringBuilder(sb1.length() + sb2.length());
+        result.append(sb1);
+        result.append(sb2);
+        return result;
+    }
+
+    //string idx
+    public static void setCharAt(StringBuilder sb, int index, char value) {
+        if (sb == null)
+            throw new NullPointerException("StringBuilder is null");
+
+        if (index < 0 || index >= sb.length())
+            throw new IndexOutOfBoundsException("Index: " + index);
+
+        sb.setCharAt(index, value);
+    }
+
+    public static char charAt(StringBuilder sb, int index) {
+        if (sb == null)
+            throw new NullPointerException("StringBuilder is null");
+
+        if (index < 0 || index >= sb.length())
+            throw new IndexOutOfBoundsException("Index: " + index);
+
+        return sb.charAt(index);
+    }
+
+    // image
+    public static StringBuilder imageFromChar(char value) {
+        StringBuilder sb = new StringBuilder(1);
+        sb.append(value);
+        return sb;
+    }
+
+    public static StringBuilder imageFromInt(int value) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(value);
+        return sb;
+    }
+
+    public static StringBuilder imageFromBool(boolean value) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(value);
+        return sb;
+    }
+
+    public static StringBuilder imageFromFloat(float value) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(value);
+        return sb;
+    }
 
     // -----------------------------
     // 1) Создать "атомик" из примитива

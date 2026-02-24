@@ -109,7 +109,7 @@ IDecl::reachable(
 
 // IType
 descriptor::JVMFieldDescriptor 
-IType::descriptor() {
+IType::descriptor(bool out) {
     auto desc = 
     descriptor::JVMFieldDescriptor::createFundamental(
         codegen::java_bytecode_codegen::FundamentalType::BOOLEAN);
@@ -285,7 +285,7 @@ static void cgCreateArray(
     auto dem = static_cast<std::uint8_t>(arr->ranges().size());
     method->createMultianewarray(bb, arrDesc, dem);
 }
-
+// TODO: инициализация строки от литирала
 void VarDecl::codegen(
         bb::BasicBlock* bb,
         class_member::SharedPtrMethod method)  
@@ -308,10 +308,11 @@ void VarDecl::codegen(
                 cgCreateArray(bb, method, arr);
                 createStore(bb, method);
 
-                for (int i = 0; i < aggrTy->size(); ++i) {
+                for (int i = aggrTy->size() - 1; i >= 0; --i) {
                     createLoad(bb, method);
                     method->createLdc(bb, i);
-                    method->createDupX2(bb);
+                    method->createDup2X1(bb);
+                    method->createPop(bb);
                     method->createPop(bb);
                     switch (aggrTy->type()) {
                         case SimpleType::BOOL:
@@ -329,6 +330,7 @@ void VarDecl::codegen(
                     } 
                 } 
             } else if (str) {
+                // if (std::dynamic_pointer_cast<>)
                 method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
             }
         }
@@ -495,7 +497,8 @@ descriptor::JVMMethodDescriptor ProcBody::desc() {
     if (!cls_.expired()) ++it;
     for (; it != params_.end(); ++it) {
         auto var = *it;
-        paramsDescr.emplace_back(var->name(), var->type()->descriptor());
+        paramsDescr.emplace_back(
+            var->name(), var->type()->descriptor(var->out()));
     } 
 
     if (paramsDescr.empty()) {
@@ -595,7 +598,8 @@ descriptor::JVMMethodDescriptor FuncBody::desc() {
     if (!cls_.expired()) ++it;
     for (; it != params_.end(); ++it) {
         auto var = *it;
-        paramsDescr.emplace_back(var->name(), var->type()->descriptor());
+        paramsDescr.emplace_back(
+            var->name(), var->type()->descriptor(var->out()));
     } 
 
     auto retDesc = retType_->descriptor();
@@ -1014,7 +1018,7 @@ void RecordDecl::reachable_(
 }
 
 descriptor::JVMFieldDescriptor 
-RecordDecl::descriptor() {
+RecordDecl::descriptor(bool out) {
     auto desc = 
         descriptor::JVMFieldDescriptor::createObject(fullName_.toString('_'));
     return desc;
@@ -1144,15 +1148,33 @@ bool SimpleLiteralType::compare(const std::shared_ptr<IType> rhs) const {
 }
 
 descriptor::JVMFieldDescriptor 
-SimpleLiteralType::descriptor() {
+SimpleLiteralType::descriptor(bool out) {
     using namespace codegen;
     using namespace descriptor;
-    switch (type_) {
-        case SimpleType::BOOL: return JVMFieldDescriptor::createFundamental(FundamentalType::BOOLEAN);
-        case SimpleType::INTEGER: return JVMFieldDescriptor::createFundamental(FundamentalType::INT);
-        case SimpleType::FLOAT: return JVMFieldDescriptor::createFundamental(FundamentalType::FLOAT);
-        case SimpleType::CHAR: return JVMFieldDescriptor::createFundamental(FundamentalType::CHAR);
+    if (!out) {
+        switch (type_) {
+            case SimpleType::BOOL: 
+                return JVMFieldDescriptor::createFundamental(FundamentalType::BOOLEAN);
+            case SimpleType::INTEGER: 
+                return JVMFieldDescriptor::createFundamental(FundamentalType::INT);
+            case SimpleType::FLOAT: 
+                return JVMFieldDescriptor::createFundamental(FundamentalType::FLOAT);
+            case SimpleType::CHAR: 
+                return JVMFieldDescriptor::createFundamental(FundamentalType::CHAR);
+        }
+    } else {
+        switch (type_) {
+            case SimpleType::BOOL: 
+                return JVMFieldDescriptor::createObject({"java/util/concurrent/atomic/AtomicBoolean"});
+            case SimpleType::INTEGER: 
+                return JVMFieldDescriptor::createObject({"java/util/concurrent/atomic/AtomicInteger"});
+            case SimpleType::FLOAT: 
+                return JVMFieldDescriptor::createObject({"java/util/concurrent/atomic/AtomicReference"}); 
+            case SimpleType::CHAR: 
+                return JVMFieldDescriptor::createObject({"java/util/concurrent/atomic/AtomicInteger"}); //TODO: mb err here
+        }
     }
+
     assert(false);
 }
 
@@ -1220,7 +1242,7 @@ void ArrayType::resetType(std::shared_ptr<IType> newType) {
 }
 
 descriptor::JVMFieldDescriptor 
-ArrayType::descriptor() {
+ArrayType::descriptor(bool out) {
     auto desc = type_->descriptor();
     for (auto&& _ : ranges_) {
         desc.addDimension();
@@ -1249,7 +1271,7 @@ std::pair<int, int> StringType::range() const {
     return range_;
 }
 
-descriptor::JVMFieldDescriptor StringType::descriptor() {
+descriptor::JVMFieldDescriptor StringType::descriptor(bool out) {
     static attribute::QualifiedName builder;
     if (builder.size() == 0) {
         builder.push("java");
@@ -1547,6 +1569,15 @@ std::shared_ptr<IType> PackNamePart::type() {
     return nullptr;
 }
 
+void PackNamePart::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method, 
+    bool lhs)
+{
+    assert(right_);
+    right_->codegen(bb, method, lhs);
+}
+
 // GetArrElementExpr
 GetArrElementExpr::GetArrElementExpr(
     std::shared_ptr<IDecl> owner, 
@@ -1598,6 +1629,85 @@ std::shared_ptr<IType> GetArrElementExpr::type() {
 
 std::shared_ptr<VarDecl> GetArrElementExpr::arr() {
     return arr_;
+}
+
+void GetArrElementExpr::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method, 
+    bool lhs) 
+{
+    if (auto arrTy = std::dynamic_pointer_cast<ArrayType>(arr_->type())) {
+        arr_->createLoad(bb, method);
+        for (int i = 0; i < idxs_.size() - 1; ++i) {
+            auto&& idx = idxs_[i];
+            idx->codegen(bb, method, false);
+            method->createIconst(bb, 1);
+            method->createIsub(bb);
+            method->createAaload(bb);
+        }
+        // val, ref, idx -> ref, idx, var
+        idxs_.back()->codegen(bb, method);
+        auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(arrTy->type());
+        if (lhs && !right_) {
+            if (sTy) {
+                method->createDup2X1(bb);
+                method->createPop(bb);
+                method->createPop(bb);
+                switch (sTy->type()) {
+                    case SimpleType::BOOL:
+                        method->createBastore(bb);
+                        break;
+                    case SimpleType::CHAR:
+                        method->createCastore(bb);
+                        break;
+                    case SimpleType::FLOAT:
+                        method->createFastore(bb);
+                        break;
+                    case SimpleType::INTEGER:
+                        method->createIastore(bb);
+                        break;
+                } 
+            } else {
+                method->createAastore(bb);
+            }
+        } else {
+            if (sTy) {
+                switch (sTy->type()) {
+                    case SimpleType::BOOL:
+                        method->createBaload(bb);
+                        break;
+                    case SimpleType::CHAR:
+                        method->createCaload(bb);
+                        break;
+                    case SimpleType::FLOAT:
+                        method->createFaload(bb);
+                        break;
+                    case SimpleType::INTEGER:
+                        method->createIaload(bb);
+                        break;
+                } 
+            } else {
+                method->createAaload(bb);
+            }
+        }
+    } else if (auto strTy = std::dynamic_pointer_cast<StringType>(arr_->type())) {
+        arr_->createLoad(bb, method);
+        idxs_[0]->codegen(bb, method, false);
+        method->createIconst(bb, 1);
+        method->createIsub(bb);
+        if (lhs && !right_) {
+            method->createDup2X1(bb);
+            method->createPop(bb);
+            method->createPop(bb);
+            method->createInvokestatic(bb, codegen::AdaUtilitySetCharAt);
+        } else {
+            method->createInvokestatic(bb, codegen::AdaUtilityCharAt);
+        }
+    }
+    
+    if (right_) {
+        right_->codegen(bb, method, lhs);
+    }
 }
 
 // CallExpr
@@ -1667,6 +1777,23 @@ std::shared_ptr<IType> CallExpr::type() {
     return nullptr;
 }
 
+void CallExpr::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method, 
+    bool lhs)
+{
+    assert(!lhs || (lhs && right_));
+
+    for (auto&& p : params_) {
+        p->codegen(bb, method, false);
+    }
+    if (noValue_) {
+        proc_->createCall(bb, method);
+    } else {
+        func_->createCall(bb, method);
+    }
+} 
+
 // CallMethodExpr
 CallMethodExpr::CallMethodExpr(
     std::shared_ptr<ClassDecl> owner, 
@@ -1733,6 +1860,23 @@ std::shared_ptr<IType> CallMethodExpr::type() {
     }
     return nullptr;
 }
+
+void CallMethodExpr::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method, 
+    bool lhs)
+{
+    assert(!lhs || (lhs && right_));
+
+    for (auto&& p : params_) {
+        p->codegen(bb, method, false);
+    }
+    if (noValue_) {
+        proc_->createCall(bb, method);
+    } else {
+        func_->createCall(bb, method);
+    }
+} 
 
 // ImageCallExpr
 ImageCallExpr::ImageCallExpr(        
@@ -2135,7 +2279,7 @@ bool SuperclassReference::compare(
 }
 
 descriptor::JVMFieldDescriptor
-SuperclassReference::descriptor() {
+SuperclassReference::descriptor(bool out) {
     return class_->record()->descriptor();
 }
 

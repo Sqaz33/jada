@@ -786,7 +786,7 @@ void JVMClassMethod::createAaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::aaload);
 } 
 
-void JVMClassMethod::createbaload(bb::BasicBlock* bb) {
+void JVMClassMethod::createBaload(bb::BasicBlock* bb) {
     code_->insertInstr(bb, OpCode::baload);
 }
 

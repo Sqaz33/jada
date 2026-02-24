@@ -36,4 +36,18 @@ extern class_member::SharedPtrMethod AdaUtilitySetAtomicInt;
 extern class_member::SharedPtrMethod AdaUtilitySetAtomicFloat;
 extern class_member::SharedPtrMethod AdaUtilitySetAtomicChar;
 
+// string builder
+extern class_member::SharedPtrMethod AdaUtilitySetCharAt;
+extern class_member::SharedPtrMethod AdaUtilityCharAt;
+extern class_member::SharedPtrMethod AdaUtilityConcat;
+
+// image
+extern class_member::SharedPtrMethod AdaUtilityImageFromChar;
+extern class_member::SharedPtrMethod AdaUtilityImageFromInt;
+extern class_member::SharedPtrMethod AdaUtilityImageFromBool;
+extern class_member::SharedPtrMethod AdaUtilityImageFromFloat;
+
+// io
+// Get, Put_line
+
 } // namespace codegen
