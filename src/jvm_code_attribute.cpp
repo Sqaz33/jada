@@ -24,6 +24,10 @@ void CodeAttr::createLocal(
     std::uint16_t preIdx = 0;
     std::uint16_t preSz = 0;
 
+    if (locals_.contains(name)) {
+        return;
+    }
+    
     if (!locals_.empty()) {
         preIdx = localsIdxSz_.back().first;
         preSz = localsIdxSz_.back().second;

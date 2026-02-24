@@ -303,6 +303,7 @@ public: // INode interface
 
 public: // IDecl interface
     const std::string& name() const noexcept override;
+    void setName(const std::string& name) { name_ = name; };
 
 public:
     std::shared_ptr<IExpr> rval();

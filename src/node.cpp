@@ -1559,6 +1559,8 @@ bb::BasicBlock* Op::codegen(
 
     bb = rhs_->codegen(bb, method, lhs, callStage);
 
+    auto* retbb = bb;
+
     assert(opType_ != OpType::DOT);
 
     static auto BOOL_TY    = std::make_shared<SimpleLiteralType>(SimpleType::BOOL);
@@ -1573,7 +1575,7 @@ bb::BasicBlock* Op::codegen(
         auto trueBB  = method->createBB();
         auto falseBB = method->createBB();
         auto endBB = method->createBB();
-        bb = endBB;
+        retbb = endBB;
 
         if (isFloat) {
             method->createFcmpl(bb);
@@ -1695,7 +1697,7 @@ bb::BasicBlock* Op::codegen(
             assert(false && "Unsupported OpType");
     }
 
-    return bb;
+    return retbb;
 }
 
 // >,<,=,!= только с float, bool, integer, char
@@ -1753,6 +1755,17 @@ std::shared_ptr<IType> Op::type() {
                  opType_ == OpType::MOD ||
                  opType_ == OpType::UMINUS ))
             { return nullptr; }
+
+            if ((opType_ == OpType::MORE ||
+                 opType_ == OpType::LESS ||
+                 opType_ == OpType::GTE ||
+                 opType_ == OpType::LTE ||
+                 opType_ == OpType::UMINUS || 
+                 opType_ == OpType::EQ ||
+                 opType_ == OpType::NEQ))
+            {
+                return std::make_shared<SimpleLiteralType>(SimpleType::BOOL);
+            }
             return rhs_->type();
         }
         
@@ -2541,34 +2554,34 @@ bb::BasicBlock* If::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method)
 {
-    bb = cond_->codegen(bb, method);
+    std::vector<bb::BasicBlock*> nextBodyBBs;
+
+    auto* nextCondBB = cond_->codegen(bb, method);
     
     auto* bodyBB = method->createBB();
-
-    std::vector<bb::BasicBlock*> bodyNextBBs;
-    bodyNextBBs.push_back(body_->codegen(method, bodyBB));
+    nextBodyBBs.push_back(body_->codegen(method, bodyBB));
 
     auto* nextBB = method->createBB();
-    method->createIfne(bb, bodyBB);
-    method->createGoto(bb, nextBB);
-
-    bb = nextBB;
+    // условие ветвления
+    method->createIfne(nextCondBB, bodyBB);
+    method->createGoto(nextCondBB, nextBB);
 
     for (auto&& [c, b] : elsifs_) {
-        bb = c->codegen(bb, method);
-        auto* bodyBB = method->createBB();
-        bodyNextBBs.push_back(b->codegen(method, bodyBB));
-        auto* nextBB = method->createBB();
-        method->createIfne(bb, bodyBB);
-        method->createGoto(bb, nextBB);
-        bb = nextBB;
+        nextCondBB = c->codegen(nextBB, method);
+        bodyBB = method->createBB();
+        nextBB = method->createBB();
+        nextBodyBBs.push_back(b->codegen(method, bodyBB));
+        // условие ветвления
+        method->createIfne(nextCondBB, bodyBB);
+        method->createGoto(nextCondBB, nextBB);
     }
 
-    bodyNextBBs.push_back(els_->codegen(method, bb));
+    if (els_) {
+        auto* _ = els_->codegen(method, nextBB);
+    } 
 
     auto* endBB = method->createBB();
-
-    for (auto* bb : bodyNextBBs) {
+    for (auto* bb : nextBodyBBs) {
         method->createGoto(bb, endBB);
     }
 
@@ -2599,6 +2612,8 @@ bb::BasicBlock* For::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method)
 {
+    static int forNumb = 0;
+    iter_->setName(iter_->name() + std::to_string(forNumb++));
     iter_->pregen(nullptr, method);
 
     bb = range_.first->codegen(bb, method);
@@ -2650,15 +2665,15 @@ bb::BasicBlock* While::codegen(
     class_member::SharedPtrMethod method)
 {
     auto* condBB = method->createBB();
-    cond_->codegen(condBB, method); 
+    auto* nextCondBB = cond_->codegen(condBB, method); 
     
     auto* bodyBB = method->createBB();
-    auto bodyNextBB = body_->codegen(method, bodyBB);
+    auto* bodyNextBB = body_->codegen(method, bodyBB);
 
     auto* nextBB = method->createBB();
     // заполняется cond
-    method->createIfne(condBB, bodyBB);
-    method->createGoto(condBB, nextBB);
+    method->createIfne(nextCondBB, bodyBB);
+    method->createGoto(nextCondBB, nextBB);
 
     method->createGoto(bodyNextBB, condBB);
 

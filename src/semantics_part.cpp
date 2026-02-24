@@ -2423,7 +2423,7 @@ TypeCheck::analyseBody_(std::shared_ptr<node::Body> body) {
         } else if (auto while_ = std::dynamic_pointer_cast<node::While>(stm)) {
             auto cond = while_->cond();
             if (!cond->compareTypes(BOOL_TY)) {
-                return "The if condition expects a BOOLEAN expression";
+                return "The while condition expects a BOOLEAN expression";
             }
 
             auto bodyRes = analyseBody_(while_->body());
