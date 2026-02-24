@@ -277,24 +277,28 @@ param:            NAME COLON inf_str_or_type                            {
                                                                           decl->setIn(true);
                                                                           decl->setOut(false);
                                                                           $$ = decl; 
+                                                                          $$->setParam();
                                                                         }
                 | NAME COLON IN inf_str_or_type                         { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           decl->setIn(true);
                                                                           decl->setOut(false);
                                                                           $$ = decl; 
+                                                                          $$->setParam();
                                                                         }
                 | NAME COLON OUT inf_str_or_type                        { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $4));
                                                                           decl->setIn(false);
                                                                           decl->setOut(true);
                                                                           $$ = decl; 
+                                                                          $$->setParam();
                                                                         }
                 | NAME COLON IN OUT inf_str_or_type                     { 
                                                                           std::shared_ptr<node::VarDecl> decl(new node::VarDecl($1, $5));
                                                                           decl->setIn(true);
                                                                           decl->setOut(true);
                                                                           $$ = decl; 
+                                                                          $$->setParam();
                                                                         }
 
 inf_str_or_type: type

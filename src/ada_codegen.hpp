@@ -15,6 +15,9 @@ extern jvm_class::SharedPtrJVMClass AtomicInteger;
 extern jvm_class::SharedPtrJVMClass AdaUtility; 
 extern jvm_class::SharedPtrJVMClass JavaObject; 
 
+// init 
+extern class_member::SharedPtrMethod AdaUtilityInitArrayElements;
+
 // copy
 extern class_member::SharedPtrMethod AdaUtilityDeepCopy;
 extern class_member::SharedPtrMethod AdaUtilityDeepCopyArray;
@@ -40,6 +43,7 @@ extern class_member::SharedPtrMethod AdaUtilitySetAtomicChar;
 extern class_member::SharedPtrMethod AdaUtilitySetCharAt;
 extern class_member::SharedPtrMethod AdaUtilityCharAt;
 extern class_member::SharedPtrMethod AdaUtilityConcat;
+extern class_member::SharedPtrMethod AdaUtilityFromStringLiteral;
 
 // image
 extern class_member::SharedPtrMethod AdaUtilityImageFromChar;

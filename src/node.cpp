@@ -68,11 +68,14 @@ void Body::setParent(INode* parent)  {
 }
 
 // codegen
-void Body::codegen(class_member::SharedPtrMethod method) {
-    auto* bb = method->createBB();
+bb::BasicBlock* Body::codegen(
+    class_member::SharedPtrMethod method, 
+    bb::BasicBlock* bb) 
+{
     for (auto&& stm : stms_) {
         bb = stm->codegen(bb, method);
     }
+    return bb;
 }
 
 } // namespace node 
@@ -222,19 +225,6 @@ void VarDecl::setRval(std::shared_ptr<node::IExpr> expr) {
 }
 
 // codegen
-std::vector<std::string> atomicRefs({
-    "AtomicRef1",
-    "AtomicRef2",
-    "AtomicRef3",
-    "AtomicRef4",
-    "AtomicRef5",
-    "AtomicRef6",
-    "AtomicRef7",
-    "AtomicRef8",
-    "AtomicRef9",
-    "AtomicRef10",
-});
-
 void VarDecl::pregen(
     jvm_class::SharedPtrJVMClass cls, 
     class_member::SharedPtrMethod method,
@@ -284,8 +274,10 @@ static void cgCreateArray(
     auto arrDesc = arr->descriptor();
     auto dem = static_cast<std::uint8_t>(arr->ranges().size());
     method->createMultianewarray(bb, arrDesc, dem);
+    method->createDup(bb);
+    method->createInvokestatic(bb, codegen::AdaUtilityInitArrayElements);
 }
-// TODO: инициализация строки от литирала
+
 void VarDecl::codegen(
         bb::BasicBlock* bb,
         class_member::SharedPtrMethod method)  
@@ -329,15 +321,21 @@ void VarDecl::codegen(
                             break;
                     } 
                 } 
-            } else if (str) {
-                // if (std::dynamic_pointer_cast<>)
+            } 
+        } else if (str) {
+            if (std::dynamic_pointer_cast<StringLiteral>(rval_)) {
+                method->createInvokestatic(bb, codegen::AdaUtilityFromStringLiteral);
+            } else {
                 method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
             }
+        } else {
+            createLoad(bb, method);
         }
     // если нет
     } else {
         if (rec) {
             method->createNew(bb, rec->javaClass());
+            method->createInvokespecial(bb, rec->init());
             createStore(bb, method);
         } else if (arr) {
             cgCreateArray(bb, method, arr);
@@ -358,7 +356,8 @@ void VarDecl::createLoad(
     } else if (javaField_) {
         method->createGetfield(bb, javaField_);
     } else {
-        if (auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_)) {
+        auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_);
+        if (sTy && !param_ && !out_) {
             switch (sTy->type()) {
                 case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
                     method->createIload(bb, name_);
@@ -382,7 +381,8 @@ void VarDecl::createStore(
     } else if (javaField_) {
         method->createPutfield(bb, javaField_);
     } else {
-        if (auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_)) {
+        auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_);
+        if (sTy && !param_ && !out_) {
             switch (sTy->type()) {
                 case SimpleType::BOOL: case SimpleType::CHAR: case SimpleType::INTEGER:
                     method->createIstore(bb, name_);
@@ -395,6 +395,84 @@ void VarDecl::createStore(
             method->createAstore(bb, name_);
         }
     }
+}
+
+// codegen
+const std::vector<std::string> atomicRefs({
+    "AtomicRef1",
+    "AtomicRef2",
+    "AtomicRef3",
+    "AtomicRef4",
+    "AtomicRef5",
+    "AtomicRef6",
+    "AtomicRef7",
+    "AtomicRef8",
+    "AtomicRef9",
+    "AtomicRef10",
+});
+
+int curRef = 0;
+int curRefForLoad = 0;
+
+void VarDecl::createRef(bb::BasicBlock* bb, 
+                class_member::SharedPtrMethod method)
+{
+    auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_);
+    assert(sTy);
+
+    auto&& ref = atomicRefs[curRef++];
+    curRefForLoad = 0;
+
+    assert(curRef >= 0);
+    if (curRef >= atomicRefs.size()) {
+        throw std::runtime_error("ref params > 10");
+    }
+
+    createLoad(bb, method);
+    switch (sTy->type()) {
+        case SimpleType::BOOL:
+            method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicBoolean);
+            break;
+        case SimpleType::CHAR:
+            method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicChar);
+            break;
+        case SimpleType::FLOAT:
+            method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicFloat);
+            break;
+        case SimpleType::INTEGER:
+            method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicInt);
+            break;
+    }
+
+    method->createAstore(bb, ref);
+}
+
+void VarDecl::loadFromRef(bb::BasicBlock* bb,
+                    class_member::SharedPtrMethod method)
+{
+    auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_);
+    assert(sTy);
+
+    auto&& ref = atomicRefs[curRefForLoad++];
+    curRef = 0;
+
+    method->createAload(bb, ref);
+    switch (sTy->type()) {
+        case SimpleType::BOOL:
+            method->createInvokestatic(bb, codegen::AdaUtilityFromAtomicBoolean);
+            break;
+        case SimpleType::CHAR:
+            method->createInvokestatic(bb, codegen::AdaUtilityFromAtomicChar);
+            break;
+        case SimpleType::FLOAT:
+            method->createInvokestatic(bb, codegen::AdaUtilityFromAtomicFloat);
+            break;
+        case SimpleType::INTEGER:
+            method->createInvokestatic(bb, codegen::AdaUtilityFromAtomicInt);
+            break;
+    }  
+
+    createStore(bb, method);
 }
 
 // ProcBody
@@ -498,7 +576,7 @@ descriptor::JVMMethodDescriptor ProcBody::desc() {
     for (; it != params_.end(); ++it) {
         auto var = *it;
         paramsDescr.emplace_back(
-            var->name(), var->type()->descriptor(var->out()));
+            var->name(), var->type()->descriptor(var->out() && var->param()));
     } 
 
     if (paramsDescr.empty()) {
@@ -543,7 +621,7 @@ void ProcBody::codegen(
     bb::BasicBlock* bb,
     class_member::SharedPtrMethod method)  
 {
-    body_->codegen(javaMethod_);
+    body_->codegen(javaMethod_, method->createBB());
 }
 
 // ProcDecl
@@ -599,7 +677,7 @@ descriptor::JVMMethodDescriptor FuncBody::desc() {
     for (; it != params_.end(); ++it) {
         auto var = *it;
         paramsDescr.emplace_back(
-            var->name(), var->type()->descriptor(var->out()));
+            var->name(), var->type()->descriptor(var->out() && var->param()));
     } 
 
     auto retDesc = retType_->descriptor();
@@ -629,7 +707,7 @@ void FuncDecl::createCall(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method) 
 {
-    assert(body);
+    assert(!body_.expired());
     body_.lock()->createCall(bb, method);
 }
 
@@ -1146,7 +1224,7 @@ bool SimpleLiteralType::compare(const std::shared_ptr<IType> rhs) const {
     }
     return false;
 }
-
+// codegen
 descriptor::JVMFieldDescriptor 
 SimpleLiteralType::descriptor(bool out) {
     using namespace codegen;
@@ -1309,6 +1387,17 @@ bool Aggregate::compareTypes(const std::shared_ptr<IType> rhs) {
 std::shared_ptr<IType> Aggregate::type() {
     auto type = getOrigin(type_);
     return type;
+}
+
+void Aggregate::codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs,
+        int callStage) 
+{
+    for (auto&& e : inits_) {
+        e->codegen(bb, method, lhs, callStage);
+    }
 }
 
 } // namespace node 
@@ -1531,6 +1620,75 @@ std::shared_ptr<VarDecl> GetVarExpr::var() {
     return var_;
 }
 
+void GetVarExpr::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method, 
+    bool lhs, 
+    int callStage) 
+{
+    // если lhs и !right_ - лоад, иначе стор
+    // если out и param и примитивный тип то - лоад через fromAtomic, стор через setAtomic
+
+    auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(var_->type());
+    const int PRE_CALL = 1;
+    const int POST_CALL = 2; 
+    if (PRE_CALL == callStage && !right_) {
+        var_->createRef(bb, method);
+        return;
+    } else if (POST_CALL == callStage && !right_) {
+        var_->loadFromRef(bb, method);
+        return;
+    }
+
+    if (lhs && !right_) {
+        if (sTy && var_->out() && var_->param()) {
+            // ... rhs, lhs_atomic_ref -> ... lhs_atomic_ref, rhs 
+            var_->createLoad(bb, method); 
+            method->createSwap(bb); 
+            switch (sTy->type()) {
+                case SimpleType::BOOL:
+                    method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicBoolean);
+                    break;
+                case SimpleType::CHAR:
+                    method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicChar);
+                    break;
+                case SimpleType::FLOAT:
+                    method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicFloat);
+                    break;
+                case SimpleType::INTEGER:
+                    method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicInt);
+                    break;
+            }
+        } else {
+            var_->createStore(bb, method);
+        } 
+    } else if (!right_) {
+        if (sTy && var_->out() && var_->param()) {
+            var_->createLoad(bb, method); 
+            switch (sTy->type()) {
+                case SimpleType::BOOL:
+                    method->createInvokestatic(bb, codegen::AdaUtilityFromAtomicBoolean);
+                    break;
+                case SimpleType::CHAR:
+                    method->createInvokestatic(bb, codegen::AdaUtilityFromAtomicChar);
+                    break;
+                case SimpleType::FLOAT:
+                    method->createInvokestatic(bb, codegen::AdaUtilityFromAtomicFloat);
+                    break;
+                case SimpleType::INTEGER:
+                    method->createInvokestatic(bb, codegen::AdaUtilityFromAtomicInt);
+                    break;
+            }
+        } else {
+            var_->createStore(bb, method);
+        } 
+    } else {
+        var_->createStore(bb, method);
+        right_->codegen(bb, method, lhs, callStage);
+    }
+                             
+} 
+
 // PackNamePart
 PackNamePart::PackNamePart(std::shared_ptr<PackDecl> pack) :
     pack_(pack)
@@ -1572,10 +1730,11 @@ std::shared_ptr<IType> PackNamePart::type() {
 void PackNamePart::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
-    bool lhs)
+    bool lhs,
+    int callStage)
 {
     assert(right_);
-    right_->codegen(bb, method, lhs);
+    right_->codegen(bb, method, lhs, callStage);
 }
 
 // GetArrElementExpr
@@ -1634,9 +1793,11 @@ std::shared_ptr<VarDecl> GetArrElementExpr::arr() {
 void GetArrElementExpr::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
-    bool lhs) 
+    bool lhs,
+    int callStage) 
 {
     if (auto arrTy = std::dynamic_pointer_cast<ArrayType>(arr_->type())) {
+        // проходим по всем измерениям
         arr_->createLoad(bb, method);
         for (int i = 0; i < idxs_.size() - 1; ++i) {
             auto&& idx = idxs_[i];
@@ -1646,7 +1807,11 @@ void GetArrElementExpr::codegen(
             method->createAaload(bb);
         }
         // val, ref, idx -> ref, idx, var
+        // получаем последний индекс
         idxs_.back()->codegen(bb, method);
+        method->createIconst(bb, 1);
+        method->createIsub(bb);
+        // загружаем или выгружаем
         auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(arrTy->type());
         if (lhs && !right_) {
             if (sTy) {
@@ -1704,9 +1869,9 @@ void GetArrElementExpr::codegen(
             method->createInvokestatic(bb, codegen::AdaUtilityCharAt);
         }
     }
-    
+
     if (right_) {
-        right_->codegen(bb, method, lhs);
+        right_->codegen(bb, method, lhs, callStage);
     }
 }
 
@@ -1780,17 +1945,45 @@ std::shared_ptr<IType> CallExpr::type() {
 void CallExpr::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
-    bool lhs)
+    bool lhs, 
+    int callStage)
 {
     assert(!lhs || (lhs && right_));
 
-    for (auto&& p : params_) {
-        p->codegen(bb, method, false);
+    std::vector<std::shared_ptr<node::VarDecl>> params;
+    if (noValue_) {
+        params = proc_->params();
+    } else {
+        params = func_->params();
     }
+
+    if (params_.size() != params.size()) {
+        params.erase(params.begin());
+    }
+    // обертка в атомик
+    for (int i = 0; i < params.size(); ++i) {
+        auto&& p = params_[i];
+        auto&& var = params[i];
+        int callSt = var->out() ? -1 : 1;
+        p->codegen(bb, method, callSt);
+    }
+
     if (noValue_) {
         proc_->createCall(bb, method);
     } else {
         func_->createCall(bb, method);
+    }
+
+    // загрузка из атомика
+    for (int i = 0; i < params.size(); ++i) {
+        auto&& p = params_[i];
+        auto&& var = params[i];
+        int callSt = var->out() ? -1 : 2;
+        p->codegen(bb, method, callSt);
+    }
+
+    if (right_) {
+        right_->codegen(bb, method, lhs, callStage);
     }
 } 
 
@@ -1864,17 +2057,45 @@ std::shared_ptr<IType> CallMethodExpr::type() {
 void CallMethodExpr::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method, 
-    bool lhs)
+    bool lhs, 
+    int callStage)
 {
     assert(!lhs || (lhs && right_));
 
-    for (auto&& p : params_) {
-        p->codegen(bb, method, false);
+    std::vector<std::shared_ptr<node::VarDecl>> params;
+    if (noValue_) {
+        params = proc_->params();
+    } else {
+        params = func_->params();
     }
+
+    if (params_.size() != params.size()) {
+        params.erase(params.begin());
+    }
+    // обертка в атомик
+    for (int i = 0; i < params.size(); ++i) {
+        auto&& p = params_[i];
+        auto&& var = params[i];
+        int callSt = var->out() ? -1 : 1;
+        p->codegen(bb, method, callSt);
+    }
+
     if (noValue_) {
         proc_->createCall(bb, method);
     } else {
         func_->createCall(bb, method);
+    }
+
+    // загрузка из атомика
+    for (int i = 0; i < params.size(); ++i) {
+        auto&& p = params_[i];
+        auto&& var = params[i];
+        int callSt = var->out() ? -1 : 2;
+        p->codegen(bb, method, callSt);
+    }
+    
+    if (right_) {
+        right_->codegen(bb, method, lhs, callStage);
     }
 } 
 
@@ -1906,6 +2127,29 @@ bool ImageCallExpr::compareTypes(
     const std::shared_ptr<IType> rhs) 
 {
     return stringType_->compare(rhs);
+}
+
+void ImageCallExpr::codegen(
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method, 
+    bool lhs,
+    int callStage) 
+{
+    param_->codegen(bb, method);
+    switch (imageType_->type()) {
+        case SimpleType::CHAR:
+            method->createInvokestatic(bb, codegen::AdaUtilityImageFromChar);
+            break;
+        case SimpleType::BOOL:
+            method->createInvokestatic(bb, codegen::AdaUtilityImageFromBool);
+            break;
+        case SimpleType::INTEGER:
+            method->createInvokestatic(bb, codegen::AdaUtilityImageFromInt);
+            break;
+        case SimpleType::FLOAT:
+            method->createInvokestatic(bb, codegen::AdaUtilityImageFromFloat);
+            break;
+    }
 }
 
 // NameExpr
@@ -1945,6 +2189,29 @@ std::shared_ptr<IType> SimpleLiteral::type() {
     return type_;
 }
 
+// codegen
+void SimpleLiteral::codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs,
+        int callStage) 
+{   
+    switch (type_->type()) {
+        case SimpleType::INTEGER: 
+            method->createLdc(bb, get<int>());
+            break;
+        case SimpleType::BOOL: 
+            method->createLdc(bb, get<bool>());
+            break;
+        case SimpleType::CHAR: 
+            method->createLdc(bb, get<char>());
+            break;
+        case SimpleType::FLOAT: 
+            method->createLdc(bb, get<float>());
+            break;
+    }
+}
+
 // StringLiteral
 StringLiteral::StringLiteral(std::shared_ptr<StringType> type, 
                              const std::string& str) :
@@ -1962,6 +2229,15 @@ std::shared_ptr<IType> StringLiteral::type() {
     return type_;
 }
 
+// codegen
+void StringLiteral::codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs,
+        int callStage) 
+{
+    method->createLdc(bb, str_);   
+}
 
 } // namespace node 
 

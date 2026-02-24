@@ -78,9 +78,10 @@ namespace node {
 class IStm : public INode { 
 public: // codegen
     // возвращает следующий после себя bb
-    bb::BasicBlock* codegen(
+    virtual bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
-        class_member::SharedPtrMethod method);
+        class_member::SharedPtrMethod method) 
+    { assert(false); };
 };
 
 class ProcBody;
@@ -166,7 +167,9 @@ public: // codegen
     virtual void codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
-        bool lhs = false) { assert(false); }
+        bool lhs = false,
+        int callStage = -1) 
+    { assert(false); }
 
 private:
     bool inBrackets_ = false;
@@ -198,7 +201,9 @@ public:
     void setParent(INode* parent) override;
 
 public:
-    void codegen(class_member::SharedPtrMethod method);
+    bb::BasicBlock* codegen(
+        class_member::SharedPtrMethod method,
+        bb::BasicBlock* bb);
 
 private:
     std::vector<std::shared_ptr<IStm>> stms_;
@@ -249,6 +254,9 @@ public:
     bool out() const noexcept;
     void setOut(bool out) noexcept;
 
+    void setParam() noexcept { param_ = true; }
+    bool param() const noexcept { return param_; }
+
 public: // codegen
     void pregen(
         jvm_class::SharedPtrJVMClass cls, 
@@ -268,10 +276,11 @@ public: // codegen
     void createStore(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method);
-
+    // stack: ... obj->var
     // лоад создание рефа, загрузка лоада в реф
     void createRef(bb::BasicBlock* bb, 
                    class_member::SharedPtrMethod method);
+    // stack: ... obj->var
     // получение из рефа, стор
     void loadFromRef(bb::BasicBlock* bb,
                      class_member::SharedPtrMethod method);
@@ -308,6 +317,7 @@ private:
     std::shared_ptr<IExpr> rval_;
     bool in_ = true;
     bool out_ = true;
+    bool param_ = false;
 
 private: // codegen
     class_member::SharedPtrField javaField_;   // если поле
@@ -670,7 +680,7 @@ public:
 
 public: // codegen
     descriptor::JVMFieldDescriptor descriptor(
-        bool out = false) override;
+        bool ref = false) override;
 
     // класс для vardecl и proc/func
     // method для vardecl
@@ -690,10 +700,10 @@ public: // codegen
 
 public: // codegen
     void setJavaClassParrent(jvm_class::SharedPtrJVMClass parent);
+    class_member::SharedPtrMethod init();
 
 private:
     void createJavaClass_();
-    class_member::SharedPtrMethod init();
 
 private:
     void reachable_(
@@ -777,7 +787,7 @@ public: // INode interface
 
 public: // codegen
     descriptor::JVMFieldDescriptor descriptor(
-        bool out = false) override;    
+        bool ref = false) override;    
 
 private:
     SimpleType type_;
@@ -821,7 +831,7 @@ public:
 
 public: // codegen
     descriptor::JVMFieldDescriptor descriptor(
-        bool out = false) override;    
+        bool ref = false) override;    
 
 private:
     std::vector<std::pair<int, int>> ranges_; 
@@ -840,7 +850,7 @@ public: // INode interface
                graphviz::VertexType par) const override;
 
     descriptor::JVMFieldDescriptor descriptor(
-        bool out = false) override;    
+        bool ref = false) override;    
 
 public:
     void setInf() noexcept;
@@ -904,6 +914,13 @@ public:
     void setLeft(std::shared_ptr<IExpr> left);
     void setRight(std::shared_ptr<IExpr> right);
 
+public: // codgen
+    void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs = false,
+        int callStage = -1);
+
 private:
     std::shared_ptr<IExpr> lhs_;
     OpType opType_;
@@ -962,6 +979,13 @@ public: // IExpr interface
 public:
     std::shared_ptr<VarDecl> var();
 
+public: // codegen
+    void codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method, 
+        bool lhs = false,
+        int callStage = -1) override;
+
 private:
     std::shared_ptr<VarDecl> var_;
     std::shared_ptr<VarDecl> recordInst_; 
@@ -989,7 +1013,8 @@ public: // codegen
     void codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
-        bool lhs = false) override;
+        bool lhs = false, 
+        int callStage = -1) override;
 
 private:
     std::shared_ptr<PackDecl> pack_;
@@ -1017,7 +1042,8 @@ public: // codegen
     void codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
-        bool lhs = false) override;
+        bool lhs = false,
+        int callStage = -1) override;
 
 private:
     std::shared_ptr<IDecl> owner_; 
@@ -1054,7 +1080,8 @@ public: // codegen
     void codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
-        bool lhs = false) override;
+        bool lhs = false, 
+        int callStage = -1) override;
     
 private:
     std::shared_ptr<IDecl> owner_; 
@@ -1091,7 +1118,8 @@ public: // codegen
     void codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
-        bool lhs = false) override;
+        bool lhs = false,
+        int callStage = -1) override;
 
 private:
     std::shared_ptr<ClassDecl> owner_;
@@ -1126,7 +1154,8 @@ public: // codegen
     void codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method, 
-        bool lhs = false) override;
+        bool lhs = false, 
+        int callStage = -1) override;
 
 private:
     std::shared_ptr<SimpleLiteralType> imageType_;
@@ -1255,7 +1284,13 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
 
-
+public: // codegen
+    void codegen(
+            bb::BasicBlock* bb, 
+            class_member::SharedPtrMethod method, 
+            bool lhs = false,
+            int callStage = -1) override;
+        
 private:
     std::string stringifyValue_() const;
 
@@ -1277,6 +1312,13 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
     
+public: // codegen
+    void codegen(
+            bb::BasicBlock* bb, 
+            class_member::SharedPtrMethod method, 
+            bool lhs = false,
+            int callStage = -1) override;
+        
 private:
     std::string str_; 
     std::shared_ptr<StringType> type_;
@@ -1294,6 +1336,12 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override;
 
+public: // codegen
+    void codegen(
+            bb::BasicBlock* bb, 
+            class_member::SharedPtrMethod method, 
+            bool lhs = false,
+            int callStage = -1) override;
 
 private:
     void printInits_(graphviz::GraphViz& gv, 
@@ -1457,6 +1505,11 @@ public:
     std::shared_ptr<IExpr> rval();
     void setRval(std::shared_ptr<IExpr> rval);
 
+public: // codegen
+bb::BasicBlock* codegen(
+        bb::BasicBlock* bb, 
+        class_member::SharedPtrMethod method);
+
 private:
     std::shared_ptr<IExpr> lval_;
     std::shared_ptr<IExpr> rval_;
@@ -1574,7 +1627,7 @@ public:
 
 public: // codegen
     descriptor::JVMFieldDescriptor descriptor(
-        bool out = false) override;    
+        bool ref = false) override;    
 
 private:
     void reachable_(

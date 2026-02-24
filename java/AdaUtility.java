@@ -6,6 +6,48 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AdaUtility {
+
+    public static void initArrayElements(Object array) {
+        if (array == null)
+            return;
+
+        Class<?> clazz = array.getClass();
+        if (!clazz.isArray())
+            throw new IllegalArgumentException("Not an array");
+
+        initRecursive(array);
+    }
+
+    private static void initRecursive(Object array) {
+        Class<?> componentType = array.getClass().getComponentType();
+        int length = Array.getLength(array);
+
+        // Если это не массив массивов — мы на последнем измерении
+        if (!componentType.isArray()) {
+
+            // Примитивы не трогаем
+            if (componentType.isPrimitive())
+                return;
+
+            for (int i = 0; i < length; i++) {
+                try {
+                    Object instance = componentType.newInstance();
+                    Array.set(array, i, instance);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return;
+        }
+
+        // Иначе идём глубже
+        for (int i = 0; i < length; i++) {
+            Object subArray = Array.get(array, i);
+            if (subArray != null)
+                initRecursive(subArray);
+        }
+    }
+
     // concat
     public static StringBuilder concat(StringBuilder sb1, StringBuilder sb2) {
         if (sb1 == null) sb1 = new StringBuilder();
@@ -36,6 +78,13 @@ public class AdaUtility {
             throw new IndexOutOfBoundsException("Index: " + index);
 
         return sb.charAt(index);
+    }
+
+    public static StringBuilder fromStringLiteral(String value) {
+        if (value == null)
+            return null;
+
+        return new StringBuilder(value);
     }
 
     // image
