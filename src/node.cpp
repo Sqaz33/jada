@@ -1470,6 +1470,153 @@ bool Op::compareTypes(const std::shared_ptr<IType> comp) {
     }
 }
 
+void Op::codegen(
+    bb::BasicBlock* bb,
+    class_member::SharedPtrMethod method,
+    bool lhs,
+    int callStage)
+{
+    if (lhs_) {
+        lhs_->codegen(bb, method, lhs, callStage);
+    }
+
+    rhs_->codegen(bb, method, lhs, callStage);
+
+    assert(opType_ != OpType::DOT);
+
+    static auto BOOL_TY    = std::make_shared<SimpleLiteralType>(SimpleType::BOOL);
+    static auto CHAR_TY    = std::make_shared<SimpleLiteralType>(SimpleType::CHAR);
+    static auto FLOAT_TY   = std::make_shared<SimpleLiteralType>(SimpleType::FLOAT);
+    static auto INTEGER_TY = std::make_shared<SimpleLiteralType>(SimpleType::INTEGER);
+    static auto STRING_TY  = std::make_shared<StringType>(std::make_pair(-1, -1));
+    STRING_TY->setInf();
+
+    auto makeBoolResult = [&](OpType op, bool isFloat)
+    {
+        auto trueBB  = method->createBB();
+        auto falseBB = method->createBB();
+        auto endBB   = method->createBB();
+
+        if (isFloat) {
+            method->createFcmpl(bb);
+            switch (op) {
+                case OpType::EQ:  method->createIfeq(bb, trueBB); break;
+                case OpType::NEQ: method->createIfne(bb, trueBB); break;
+                case OpType::MORE:method->createIfgt(bb, trueBB); break;
+                case OpType::LESS:method->createIflt(bb, trueBB); break;
+                case OpType::GTE: method->createIfge(bb, trueBB); break;
+                case OpType::LTE: method->createIfle(bb, trueBB); break;
+                default: break;
+            }
+        } else {
+            switch (op) {
+                case OpType::EQ:  method->createIficmpeq(bb, trueBB); break;
+                case OpType::NEQ: method->createIficmpne(bb, trueBB); break;
+                case OpType::MORE:method->createIficmpgt(bb, trueBB); break;
+                case OpType::LESS:method->createIficmplt(bb, trueBB); break;
+                case OpType::GTE: method->createIficmpge(bb, trueBB); break;
+                case OpType::LTE: method->createIficmple(bb, trueBB); break;
+                default: break;
+            }
+        }
+
+        method->createGoto(bb, falseBB); // mb err
+
+        method->createLdc(trueBB, 1);
+        method->createGoto(trueBB, endBB);
+
+        method->createLdc(falseBB, 0);
+        method->createGoto(falseBB, endBB);
+    };
+
+    switch (opType_)
+    {
+        // ===== арифметика =====
+
+        case OpType::PLUS:
+            if (INTEGER_TY->compare(type()) || CHAR_TY->compare(type()))
+                method->createIadd(bb);
+            else if (FLOAT_TY->compare(type()))
+                method->createFadd(bb);
+            break;
+
+        case OpType::MINUS:
+            if (INTEGER_TY->compare(type()) || CHAR_TY->compare(type()))
+                method->createIsub(bb);
+            else if (FLOAT_TY->compare(type()))
+                method->createFsub(bb);
+            break;
+
+        case OpType::MUL:
+            if (INTEGER_TY->compare(type()) || CHAR_TY->compare(type()))
+                method->createImul(bb);
+            else if (FLOAT_TY->compare(type()))
+                method->createFmul(bb);
+            break;
+
+        case OpType::DIV:
+            if (INTEGER_TY->compare(type()) || CHAR_TY->compare(type()))
+                method->createIdiv(bb);
+            else if (FLOAT_TY->compare(type()))
+                method->createFdiv(bb);
+            break;
+
+        case OpType::MOD:
+            if (INTEGER_TY->compare(type()) || CHAR_TY->compare(type()))
+                method->createIrem(bb);
+            else if (FLOAT_TY->compare(type()))
+                method->createFrem(bb);
+            break;
+
+        case OpType::UMINUS:
+            if (INTEGER_TY->compare(type()) || CHAR_TY->compare(type()))
+                method->createIneg(bb);
+            else if (FLOAT_TY->compare(type()))
+                method->createFneg(bb);
+            break;
+
+        // ===== логика =====
+
+        case OpType::AND:
+            method->createIand(bb);
+            break;
+
+        case OpType::OR:
+            method->createIor(bb);
+            break;
+
+        case OpType::XOR:
+            method->createIxor(bb);
+            break;
+
+        case OpType::NOT:
+            //  x -> x ^ 1
+            method->createLdc(bb, 1);
+            method->createIxor(bb);
+            break;
+
+        // ===== сравнения =====
+
+        case OpType::EQ:
+        case OpType::NEQ:
+        case OpType::MORE:
+        case OpType::LESS:
+        case OpType::GTE:
+        case OpType::LTE:
+        {
+            bool isFloat = FLOAT_TY->compare(lhs_->type());
+            makeBoolResult(opType_, isFloat);
+            break;
+        }
+        case OpType::AMPER:
+            assert(STRING_TY->compare(type()));
+            method->createInvokestatic(bb, codegen::AdaUtilityConcat);
+
+        default:
+            assert(false && "Unsupported OpType");
+    }
+}
+
 // >,<,=,!= только с float, bool, integer, char
 // not and or xor только с bool 
 std::shared_ptr<IType> Op::type() { 
