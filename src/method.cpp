@@ -23,7 +23,6 @@ JVMClassMethod::JVMClassMethod(
     , name__(name)
     , type__(type)
 {   
-
     auto cp = cls.lock()->cp();
     code_.reset(
         new jvm_attribute::CodeAttr(cp));

@@ -23,15 +23,15 @@ void CodeAttr::createLocal(
 {
     std::uint16_t preIdx = 0;
     std::uint16_t preSz = 0;
+
     if (!locals_.empty()) {
-        preIdx =
-            locals_.rbegin()->second.first;
-        preSz = 
-            locals_.rbegin()->second.second;
+        preIdx = localsIdxSz_.back().first;
+        preSz = localsIdxSz_.back().second;
     }
 
-    locals_[name] 
-        = std::make_pair(preIdx + preSz, size);
+    auto idxSz = std::make_pair(preIdx + preSz, size);
+    localsIdxSz_.push_back(idxSz);
+    locals_[name] = idxSz;
     calcSelfLen_();
 }
 

@@ -1,7 +1,7 @@
 procedure Main is
-   type arr is array(1..3) of Integer;
+   --  type arr is array(1..3) of Integer;
 
-   a: arr := (1, 2, 3);
+   --  a: arr := (1, 2, 3);
 
    --  str: String(1..2) := "12";
 
@@ -27,7 +27,7 @@ procedure Main is
    --     return "123";
    --  end foo;
 
-   var1: Integer := 1;
+   var1: Integer;
    --  var2: Integer := 1;
 
    --  str2: String(1..4) := "he" & "t" & "t";
@@ -37,7 +37,10 @@ procedure Main is
    --  arrarr1: array(1..2, 1..2) of Integer;
 
 begin
-   var1 := 1;
+   for i in 1..10 loop
+      var1 := i;
+   end loop;
+
    --  a(0) := 1;
    --  a := (4, 5, 6);
 
