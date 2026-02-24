@@ -161,9 +161,29 @@ void addAdaStdLib(
     std::vector<std::shared_ptr<mdl::Module>>& prog) 
 {     
     auto strTy = std::make_shared<node::StringType>();
+    auto intTy = std::make_shared<node::SimpleLiteralType>(node::SimpleType::INTEGER);
+    auto boolTy = std::make_shared<node::SimpleLiteralType>(node::SimpleType::BOOL);
+    auto floatTy = std::make_shared<node::SimpleLiteralType>(node::SimpleType::FLOAT);
+    auto charTy = std::make_shared<node::SimpleLiteralType>(node::SimpleType::CHAR);
+
     strTy->setInf();
-    std::vector v({std::make_shared<node::VarDecl>("str", strTy)});
-    auto PutLine = std::make_shared<node::ProcDecl>("put_line", v);
+    std::vector putLineVars({std::make_shared<node::VarDecl>("str", strTy)});
+    putLineVars[0]->setIn(true);
+    auto PutLine = std::make_shared<node::ProcDecl>("put_line", putLineVars);
+    ////////////////////////// putline ////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////
+
+
+
+    std::vector getIntVars({std::make_shared<node::VarDecl>("str", strTy)});
+    auto GetInt = std::make_shared<node::ProcDecl>("get", getIntVars);
+
+
+
+
+
+
     auto libAreaTextIO = std::make_shared<node::DeclArea>();
     libAreaTextIO->addDecl(PutLine);
     auto libUnitTextIO = 

@@ -52,6 +52,6 @@ extern class_member::SharedPtrMethod AdaUtilityImageFromBool;
 extern class_member::SharedPtrMethod AdaUtilityImageFromFloat;
 
 // io
-// Get, Put_line
+extern class_member::SharedPtrMethod AdaUtilityPrintStringBuilder;
 
 } // namespace codegen

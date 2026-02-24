@@ -7,6 +7,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class AdaUtility {
 
+    public static void printStringBuilder(StringBuilder sb) {
+       if (sb == null) return;
+        System.out.println(sb.toString());
+    }
+
     public static void initArrayElements(Object array) {
         if (array == null)
             return;

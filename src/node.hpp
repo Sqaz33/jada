@@ -369,6 +369,8 @@ public: // codegen
         bb::BasicBlock* bb = nullptr,
         class_member::SharedPtrMethod method = nullptr) override; 
 
+    void setJavaMain() { javaMain = true; }
+
 private:
     void printParam_(const std::shared_ptr<VarDecl> param, 
                      graphviz::GraphViz& gv, 
@@ -388,6 +390,8 @@ protected:
     std::vector<std::shared_ptr<VarDecl>> params_;
     std::shared_ptr<DeclArea> decls_;
     std::shared_ptr<Body> body_;
+
+    bool javaMain = false;
 
     // codegen
     class_member::SharedPtrMethod javaMethod_;
@@ -652,7 +656,9 @@ public: // IType interface
             
 public: 
     void setBase(std::shared_ptr<RecordDecl> base);
-    void setDerive(std::shared_ptr<RecordDecl> derive);
+    void setDerive(std::shared_ptr<RecordDecl> derive) {
+        deriveRecord_ = derive;
+    }
 
     std::weak_ptr<RecordDecl> base();
     
@@ -705,7 +711,7 @@ public: // codegen
 
 public: // codegen
     void setJavaClassParrent(jvm_class::SharedPtrJVMClass parent);
-    class_member::SharedPtrMethod init();
+    class_member::SharedPtrMethod init() { return init_; };
 
 private:
     void createJavaClass_();
