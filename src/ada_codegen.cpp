@@ -50,6 +50,8 @@ jvm_class::SharedPtrJVMClass JavaObject;
 jvm_class::SharedPtrJVMClass JavaString;
 
 class_member::SharedPtrMethod AdaUtilityInitArrayElements;
+class_member::SharedPtrMethod AdaUtilityJavaObjectInit;
+
 
 class_member::SharedPtrMethod AdaUtilityDeepCopy;
 class_member::SharedPtrMethod AdaUtilityDeepCopyArray;
@@ -118,6 +120,9 @@ void initAdaUtilityNames() {
     AdaUtilityInitArrayElements = AdaUtility->addMethod(
         "initArrayElements",
         JVMMethodDescriptor::createVoidRetun({{"src", JVMFieldDescriptor::createObject(JavaObject->name())}}));
+
+    AdaUtilityJavaObjectInit = JavaObject->addMethod(
+        "<init>", JVMMethodDescriptor::createVoidParamsVoidReturn());
 
     AdaUtilityDeepCopy = AdaUtility->addMethod(
         "deepCopy",

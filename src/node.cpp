@@ -288,6 +288,9 @@ void VarDecl::codegen(
     // если есть инициализация
     if (rval_) {
         bb = rval_->codegen(bb, method);
+        if (method->methodName() == "<init>") {
+            method->createAload(bb, "this");
+        }
         nextBB_ = bb;
         if (rec) {
             method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
@@ -333,6 +336,7 @@ void VarDecl::codegen(
     } else {
         if (rec) {
             method->createNew(bb, rec->javaClass());
+            method->createDup(bb);
             method->createInvokespecial(bb, rec->init());
             createStore(bb, method);
         } else if (arr) {
@@ -377,6 +381,7 @@ void VarDecl::createStore(
     if (javaField_ && isStatic_) {
         method->createPutstatic(bb, javaField_);
     } else if (javaField_) {
+        method->createSwap(bb);
         method->createPutfield(bb, javaField_);
     } else {
         auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(type_);
@@ -646,6 +651,13 @@ void ProcBody::codegen(
     auto* _ = body_->codegen(javaMethod_, javaMethod_->createBB());
     javaMethod_->createReturn(javaMethod_->createBB());
 }
+
+void ProcBody::printClass()  {
+    for (auto&& d : *decls_) {
+        d->printClass();
+    }
+}
+
 
 // ProcDecl
 ProcDecl::ProcDecl(const std::string& name, 
@@ -1164,11 +1176,14 @@ void RecordDecl::codegen(
     class_member::SharedPtrMethod method) 
 {
     auto* initBB = init_->createBB();
+    init_->createAload(initBB, "this");
+    init_->createInvokespecial(initBB, codegen::AdaUtilityJavaObjectInit);
     for (auto&& var : *decls_) {
-        var->codegen(initBB);
+        var->codegen(initBB, init_);
         auto v = std::dynamic_pointer_cast<VarDecl>(var);
         initBB = v->nextBB();
     }
+    init_->createReturn(initBB);
 }
 
 void RecordDecl::printClass() {

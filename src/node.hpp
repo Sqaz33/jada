@@ -371,6 +371,8 @@ public: // codegen
         bb::BasicBlock* bb = nullptr,
         class_member::SharedPtrMethod method = nullptr) override; 
 
+    void printClass() override; 
+
     void setJavaMain() { javaMain_ = true; }
 
     void setJavaMethod(auto method) { javaMethod_ = method; }

@@ -7,6 +7,11 @@ procedure TestLoops is
 
    a2: array(1..2, 1..2, 1..2) of Integer;
 
+   procedure printFirst(a: arr) is
+   begin
+      Put_Line(Integer'Image(a(1)));
+   end printFirst;
+
 begin   
    a(1) := 2;
    
@@ -16,4 +21,8 @@ begin
 
    a2(1, 1, 1) := 5;
    Put_Line(Integer'Image(a2(1, 1, 1)));
+
+   a(1) := 12341243;
+   printFirst(a);
+   
 end TestLoops;

@@ -18,6 +18,7 @@ extern jvm_class::SharedPtrJVMClass JavaString;
 
 // init 
 extern class_member::SharedPtrMethod AdaUtilityInitArrayElements;
+extern class_member::SharedPtrMethod AdaUtilityJavaObjectInit;
 
 // copy
 extern class_member::SharedPtrMethod AdaUtilityDeepCopy;
