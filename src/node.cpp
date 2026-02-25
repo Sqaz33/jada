@@ -297,6 +297,7 @@ void VarDecl::codegen(
         }
         if (rec) {
             method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
+            method->createCheckcast(bb, rec->javaClass());
         } else if (arr) {
             if (auto arrTy = std::dynamic_pointer_cast<node::ArrayType>(rval_->type())) {
                 // дублирование массива
@@ -668,7 +669,9 @@ void ProcBody::codegen(
         d->codegen(javaMethod_->createBB(), javaMethod_);
     }
     auto* _ = body_->codegen(javaMethod_, javaMethod_->createBB());
-    javaMethod_->createReturn(javaMethod_->createBB());
+    if (!dynamic_cast<FuncBody*>(this)) {
+        javaMethod_->createReturn(javaMethod_->createBB());
+    }
 }
 
 void ProcBody::printClass()  {
@@ -2938,8 +2941,11 @@ bb::BasicBlock* Return::codegen(
         auto str = std::dynamic_pointer_cast<StringType>(retVal_->type());
         if (rec) {
             method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
+            method->createCheckcast(bb, rec->javaClass());
         } else if (arr) {
             method->createInvokestatic(bb, codegen::AdaUtilityDeepCopyArray);
+            auto desc = arr->descriptor();
+            method->createCheckcast(bb, desc);
         } else if (str) {
             method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
         }
