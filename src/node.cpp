@@ -429,19 +429,19 @@ void VarDecl::createRef(bb::BasicBlock* bb,
     createLoad(bb, method);
     switch (sTy->type()) {
         case SimpleType::BOOL:
-            method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicBoolean);
+            method->createInvokestatic(bb, codegen::AdaUtilityToAtomicBoolean);
             break;
         case SimpleType::CHAR:
-            method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicChar);
+            method->createInvokestatic(bb, codegen::AdaUtilityToAtomicChar);
             break;
         case SimpleType::FLOAT:
-            method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicFloat);
+            method->createInvokestatic(bb, codegen::AdaUtilityToAtomicFloat);
             break;
         case SimpleType::INTEGER:
-            method->createInvokestatic(bb, codegen::AdaUtilitySetAtomicInt);
+            method->createInvokestatic(bb, codegen::AdaUtilityToAtomicInt);
             break;
     }
-
+    method->createDup(bb);
     method->createAstore(bb, ref);
 }
 
@@ -622,10 +622,10 @@ void ProcBody::pregen(
                 codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
             isStatic_ = true;
         }
+    }
 
-        for (auto&& r : atomicRefs) {
-            javaMethod_->createLocalRef(r);
-        }
+    for (auto&& r : atomicRefs) {
+        javaMethod_->createLocalRef(r);
     }
 
     javaMethod_->addFlag(
@@ -1273,13 +1273,13 @@ SimpleLiteralType::descriptor(bool out) {
     } else {
         switch (type_) {
             case SimpleType::BOOL: 
-                return JVMFieldDescriptor::createObject({"java/util/concurrent/atomic/AtomicBoolean"});
+                return JVMFieldDescriptor::createObject({"java", "util", "concurrent", "atomic", "AtomicBoolean"});
             case SimpleType::INTEGER: 
-                return JVMFieldDescriptor::createObject({"java/util/concurrent/atomic/AtomicInteger"});
+                return JVMFieldDescriptor::createObject({"java", "util", "concurrent", "atomic", "AtomicInteger"});
             case SimpleType::FLOAT: 
-                return JVMFieldDescriptor::createObject({"java/util/concurrent/atomic/AtomicReference"}); 
+                return JVMFieldDescriptor::createObject({"java", "util", "concurrent", "atomic", "AtomicReference"}); 
             case SimpleType::CHAR: 
-                return JVMFieldDescriptor::createObject({"java/util/concurrent/atomic/AtomicInteger"}); //TODO: mb err here
+                return JVMFieldDescriptor::createObject({"java", "util", "concurrent", "atomic", "AtomicInteger"}); 
         }
     }
 
@@ -2163,15 +2163,37 @@ bb::BasicBlock* CallExpr::codegen(
         auto&& p = params_[i];
         auto&& var = params[i];
         bool gen = false;
-        if (auto dotOp = std::dynamic_pointer_cast<DotOpExpr>(p)) {
-            if (auto tail = std::dynamic_pointer_cast<GetVarExpr>(dotOp->tail())) {
-                if (std::dynamic_pointer_cast<SimpleLiteralType>(tail->var()->type()) && var->param() && var->out()) {
-                    int callSt = var->out() ? -1 : 1;
-                    bb = p->codegen(bb, method, false, callSt);
-                    gen = true;
-                }
+        auto dotOp = std::dynamic_pointer_cast<DotOpExpr>(p);
+        std::shared_ptr<GetVarExpr> getVar;
+        if (dotOp)  {
+            getVar = std::dynamic_pointer_cast<GetVarExpr>(dotOp->tail());
+        }
+        auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(p->type());
+
+        bool isRef = sTy && var->param() && var->out();
+        if (getVar && isRef) {
+            int callSt = var->out() ? 1 : -1;
+            bb = p->codegen(bb, method, false, callSt);
+            gen = true;
+        } else if (isRef) {
+            bb = p->codegen(bb, method);
+            gen = true;
+            switch (sTy->type()) {
+                case SimpleType::BOOL:
+                    method->createInvokestatic(bb, codegen::AdaUtilityToAtomicBoolean);
+                    break;
+                case SimpleType::CHAR:
+                    method->createInvokestatic(bb, codegen::AdaUtilityToAtomicChar);
+                    break;
+                case SimpleType::FLOAT:
+                    method->createInvokestatic(bb, codegen::AdaUtilityToAtomicFloat);
+                    break;
+                case SimpleType::INTEGER:
+                    method->createInvokestatic(bb, codegen::AdaUtilityToAtomicInt);
+                    break;
             }
         }
+
         if (!gen) bb = p->codegen(bb, method);
     }
 
@@ -2185,13 +2207,16 @@ bb::BasicBlock* CallExpr::codegen(
     for (int i = 0; i < params.size(); ++i) {
         auto&& p = params_[i];
         auto&& var = params[i];
-        if (auto dotOp = std::dynamic_pointer_cast<DotOpExpr>(p)) {
-            if (auto tail = std::dynamic_pointer_cast<GetVarExpr>(dotOp->tail())) {
-                if (std::dynamic_pointer_cast<SimpleLiteralType>(tail->var()->type()) && var->param() && var->out()) {
-                    int callSt = var->out() ? -1 : 2;
-                    bb = p->codegen(bb, method, false, callSt);
-                }
-            }
+        auto dotOp = std::dynamic_pointer_cast<DotOpExpr>(p);
+        std::shared_ptr<GetVarExpr> getVar;
+        if (dotOp)  {
+            getVar = std::dynamic_pointer_cast<GetVarExpr>(dotOp->tail());
+        }
+        auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(p->type());
+        bool isRef = sTy && var->param() && var->out();
+        if (getVar && isRef) {
+            int callSt = var->out() ? 2 : -1;
+            bb = p->codegen(bb, method, false, callSt);
         }
     }
 
@@ -2291,8 +2316,39 @@ bb::BasicBlock* CallMethodExpr::codegen(
     for (int i = 0; i < params.size(); ++i) {
         auto&& p = params_[i];
         auto&& var = params[i];
-        int callSt = var->out() ? -1 : 1;
-        bb = p->codegen(bb, method, callSt);
+        bool gen = false;
+        auto dotOp = std::dynamic_pointer_cast<DotOpExpr>(p);
+        std::shared_ptr<GetVarExpr> getVar;
+        if (dotOp)  {
+            getVar = std::dynamic_pointer_cast<GetVarExpr>(dotOp->tail());
+        }
+        auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(p->type());
+
+        bool isRef = sTy && var->param() && var->out();
+        if (getVar && isRef) {
+            int callSt = var->out() ? 1 : -1;
+            bb = p->codegen(bb, method, false, callSt);
+            gen = true;
+        } else if (isRef) {
+            bb = p->codegen(bb, method);
+            gen = true;
+            switch (sTy->type()) {
+                case SimpleType::BOOL:
+                    method->createInvokestatic(bb, codegen::AdaUtilityToAtomicBoolean);
+                    break;
+                case SimpleType::CHAR:
+                    method->createInvokestatic(bb, codegen::AdaUtilityToAtomicChar);
+                    break;
+                case SimpleType::FLOAT:
+                    method->createInvokestatic(bb, codegen::AdaUtilityToAtomicFloat);
+                    break;
+                case SimpleType::INTEGER:
+                    method->createInvokestatic(bb, codegen::AdaUtilityToAtomicInt);
+                    break;
+            }
+        }
+
+        if (!gen) bb = p->codegen(bb, method);
     }
 
     if (noValue_) {
@@ -2305,11 +2361,16 @@ bb::BasicBlock* CallMethodExpr::codegen(
     for (int i = 0; i < params.size(); ++i) {
         auto&& p = params_[i];
         auto&& var = params[i];
-        if (auto dotOp = std::dynamic_pointer_cast<node::DotOpExpr>(p)) {
-            if (std::dynamic_pointer_cast<node::GetVarExpr>(dotOp->tail())) {
-                int callSt = var->out() ? -1 : 2;
-                bb = p->codegen(bb, method, callSt);
-            }
+        auto dotOp = std::dynamic_pointer_cast<DotOpExpr>(p);
+        std::shared_ptr<GetVarExpr> getVar;
+        if (dotOp)  {
+            getVar = std::dynamic_pointer_cast<GetVarExpr>(dotOp->tail());
+        }
+        auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(p->type());
+        bool isRef = sTy && var->param() && var->out();
+        if (getVar && isRef) {
+            int callSt = var->out() ? 2 : -1;
+            bb = p->codegen(bb, method, false, callSt);
         }
     }
 

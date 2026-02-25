@@ -118,20 +118,20 @@ public class AdaUtility {
 
     // -----------------------------
     // 1) Создать "атомик" из примитива
-    public static Object toAtomic(boolean value) {
+    public static AtomicBoolean toAtomic(boolean value) {
         return new AtomicBoolean(value);
     }
 
-    public static Object toAtomic(int value) {
+    public static AtomicInteger toAtomic(int value) {
         return new AtomicInteger(value);
     }
 
-    public static Object toAtomic(float value) {
+    public static AtomicReference<Float> toAtomic(float value) {
         // нет AtomicFloat в Java5 → используем AtomicReference<Float>
         return new AtomicReference<Float>(Float.valueOf(value));
     }
 
-    public static Object toAtomic(char value) {
+    public static AtomicInteger toAtomic(char value) {
         // нет AtomicChar → используем AtomicInteger с кодом символа
         return new AtomicInteger((int) value);
     }

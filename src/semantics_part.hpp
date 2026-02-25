@@ -198,7 +198,9 @@ private:
 
     std::string analyseOpExprErr_(std::shared_ptr<node::IExpr> expr); // * 1
 
-    std::string analyseArgsExpr_(std::shared_ptr<node::IExpr> expr); // * 2
+    std::string analyseArgsExpr_(
+        const std::vector<std::shared_ptr<node::VarDecl>>& args,
+        std::shared_ptr<node::IExpr> expr); // * 2
 
     std::string analyseInOutRvalLvalNoVal_( // * 4
         const std::vector<std::shared_ptr<node::VarDecl>>& args, 

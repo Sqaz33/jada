@@ -1509,7 +1509,7 @@ std::string LinkExprs::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
                 }
 
                 // линковка аргументов вызовов
-                auto argsErr = analyseArgsExpr_(rhs);
+                auto argsErr = analyseArgsExpr_(args, rhs);
                 if (!argsErr.empty()) {
                     return argsErr;
                 }
@@ -1572,7 +1572,7 @@ std::string LinkExprs::analyseBody_(
         }
 
         // линковка аргументов вызовов
-        err = analyseArgsExpr_(expr);
+        err = analyseArgsExpr_(args, expr);
         if (!err.empty()) {
             return nullptr;
         }
@@ -2140,7 +2140,10 @@ LinkExprs::analyseOpExprErr_(std::shared_ptr<node::IExpr> expr) {
     return analyseOpExprErr_(op->right());
 }
 
-std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
+std::string LinkExprs::analyseArgsExpr_(
+    const std::vector<std::shared_ptr<node::VarDecl>>& argsP,
+    std::shared_ptr<node::IExpr> expr) 
+{
     if (auto callOrIdx = 
             std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) 
     {
@@ -2155,7 +2158,7 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
             }
             attribute::QualifiedName _;
 
-            auto err2 = analyseArgsExpr_(a);
+            auto err2 = analyseArgsExpr_(argsP, a);
             if (!err2.empty()) {
                 return err2;
             }
@@ -2165,7 +2168,7 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
                 return err;
             } 
 
-            auto rhsErr = analyseInOutRvalLvalNoVal_({}, newArg, false, false);
+            auto rhsErr = analyseInOutRvalLvalNoVal_(argsP, newArg, false, false);
             if (!rhsErr.empty()) {
                 return rhsErr;
             }
@@ -2173,11 +2176,11 @@ std::string LinkExprs::analyseArgsExpr_(std::shared_ptr<node::IExpr> expr) {
             a = newArg;
         }
     } else if (auto op = std::dynamic_pointer_cast<node::Op>(expr)) {
-        auto res = analyseArgsExpr_(op->left());
+        auto res = analyseArgsExpr_(argsP, op->left());
         if (!res.empty()) {
             return res;
         }
-        return analyseArgsExpr_(op->right());
+        return analyseArgsExpr_(argsP, op->right());
     }
 
     return "";

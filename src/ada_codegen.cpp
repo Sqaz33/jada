@@ -43,6 +43,8 @@ jvm_class::SharedPtrJVMClass InnerSubprograms;
 jvm_class::SharedPtrJVMClass StringBuiler;
 jvm_class::SharedPtrJVMClass PrintStream; 
 jvm_class::SharedPtrJVMClass AtomicInteger;
+jvm_class::SharedPtrJVMClass AtomicBoolean;
+jvm_class::SharedPtrJVMClass AtomicReference;
 jvm_class::SharedPtrJVMClass AdaUtility; 
 jvm_class::SharedPtrJVMClass JavaObject;
 jvm_class::SharedPtrJVMClass JavaString;
@@ -96,6 +98,12 @@ void initAdaUtilityNames() {
     AtomicInteger = cg.createClass(
         attribute::QualifiedName({"java", "util", "concurrent", "atomic", "AtomicInteger"}));
 
+    AtomicBoolean = cg.createClass(
+        attribute::QualifiedName({"java", "util", "concurrent", "atomic", "AtomicBoolean"}));
+
+    AtomicReference = cg.createClass(
+        attribute::QualifiedName({"java", "util", "concurrent", "atomic", "AtomicReference"}));
+
     AdaUtility = cg.createClass(
         attribute::QualifiedName({"AdaUtility"}));
 
@@ -140,7 +148,7 @@ void initAdaUtilityNames() {
         "toAtomic",
         JVMMethodDescriptor::create(
             {{"value", JVMFieldDescriptor::createFundamental(codegen::FundamentalType::BOOLEAN)}},
-            JVMFieldDescriptor::createObject(AtomicInteger->name())
+            JVMFieldDescriptor::createObject(AtomicBoolean->name())
         )
     );
 
@@ -156,7 +164,7 @@ void initAdaUtilityNames() {
         "toAtomic",
         JVMMethodDescriptor::create(
             {{"value", JVMFieldDescriptor::createFundamental(codegen::FundamentalType::FLOAT)}},
-            JVMFieldDescriptor::createObject(AtomicInteger->name())
+            JVMFieldDescriptor::createObject(AtomicReference->name())
         )
     );
 
