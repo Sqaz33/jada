@@ -13,7 +13,8 @@ JVMClassMethod::JVMClassMethod(
     const std::string& name,
     const descriptor::JVMMethodDescriptor& type,   
     std::weak_ptr<jvm_class::JVMClass> cls,
-    bool isStatic) :
+    bool isStatic,
+    const std::string& thisName) :
     IJVMClassMember(
         cls.lock()->cp()->addUtf8Name(name), 
         cls.lock()->cp()->addMethodDescriptor(std::move(type)),
@@ -28,7 +29,7 @@ JVMClassMethod::JVMClassMethod(
         new jvm_attribute::CodeAttr(cp));
     addAttr(code_);
 
-    if (name != "<clinit>") {
+    if ("<clinit>" != name) {
         auto nameNType = cp->addNameAndType(
             this->name(), this->type());
         methodRef_ = cp->addMehodRef(
@@ -36,8 +37,9 @@ JVMClassMethod::JVMClassMethod(
     }
 
     if (!isStatic) {
-        createLocalRef("this");
+        createLocalRef(thisName);
     }
+
     for (auto [name, sz] : type__.params()) {
         code_->createLocal(name, sz);
     }

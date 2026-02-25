@@ -16,17 +16,17 @@ procedure TestLoops is
    v2: rec1;
 
 begin
-   --  v.X := 5;
-   --  Put_Line(Integer'Image(v.X));
+   v.X := 5;
+   Put_Line(Integer'Image(v.X));
 
-   --  proc(v);
-   --  Put_Line(Integer'Image(v.Y));
+   proc(v);
+   Put_Line(Integer'Image(v.Y));
 
 
-   --  Put_Line(Integer'Image(v2.X));
-   --  Put_Line(Integer'Image(v2.Y));
+   Put_Line(Integer'Image(v2.X));
+   Put_Line(Integer'Image(v2.Y));
    v2 := v;
    Put_Line(Integer'Image(v2.X));
-   --  Put_Line(Integer'Image(v2.Y));
+   Put_Line(Integer'Image(v2.Y));
 
 end TestLoops;

@@ -1317,6 +1317,15 @@ CreateClassDeclaration::analyseContainer_(node::IDecl* decl) {
             }
             if (cls && !cls->containsMethod(name, params, isProc)) {
                 proc->setClass(cls);
+                if (auto procDecl = std::dynamic_pointer_cast<node::ProcDecl>(proc)) {
+                    auto body = procDecl->procBody();
+                    assert(body);
+                    body->setClass(cls);
+                } else if (auto funcDecl = std::dynamic_pointer_cast<node::FuncDecl>(proc)) {
+                    auto body = funcDecl->procBody();
+                    assert(body);
+                    body->setClass(cls);
+                }
                 cls->addMethod(proc);
             } 
         }

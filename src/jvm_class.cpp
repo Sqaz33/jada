@@ -128,12 +128,13 @@ class_member::SharedPtrMethod
 JVMClass::addMethod( 
     const std::string& name,
     descriptor::JVMMethodDescriptor type,
-    bool isStatic)
+    bool isStatic,
+    const std::string& thisName)
 {
     auto method = 
         std::make_shared<
             class_member::JVMClassMethod>(
-                name, std::move(type), slf(), isStatic);
+                name, std::move(type), slf(), isStatic, thisName);
     methods_.push_back(method);
     classNMethods_[this][method.get()] = method->selfClassRef();
     return method;

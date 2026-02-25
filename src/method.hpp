@@ -22,7 +22,8 @@ public:
         const std::string& name,
         const descriptor::JVMMethodDescriptor& type,   
         std::weak_ptr<jvm_class::JVMClass> cls,
-        bool isStatic = false);
+        bool isStatic = false,
+        const std::string& thisName = "this");
 
     JVMClassMethod(const JVMClassMethod&) = delete;
     JVMClassMethod(JVMClassMethod&&) = default;

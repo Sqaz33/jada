@@ -613,6 +613,10 @@ void ProcBody::pregen(
         dynamic_cast<node::FuncDecl*>(this)) 
     { return; }
 
+    if (!cls_.expired() && javaMethod_) {
+        return;
+    }
+
     auto d = desc();
 
     if (javaMain_) {
@@ -622,11 +626,14 @@ void ProcBody::pregen(
         isStatic_ = true;
     } else {
         if (cls) {
-            javaMethod_ = cls->addMethod(name_, d, isStatic);
-            isStatic_ = isStatic;
-            if (isStatic_) {
+            if (isStatic) {
+                javaMethod_ = cls->addMethod(name_, d, isStatic);
+                isStatic_ = isStatic;
                 javaMethod_->addFlag(
                     codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+            } else {
+                javaMethod_ = cls->addMethod(name_, d, isStatic, params_[0]->name());
+                isStatic_ = isStatic;
             }
         } else {
             javaMethod_ = codegen::InnerSubprograms->addMethod(name_, d, true);
@@ -917,6 +924,10 @@ void PackDecl::codegen(
 void PackDecl::printClass() {
     if (dynamic_cast<PackBody*>(this)) return;
     codegen::cg.printClass(javaClass_);
+
+    for (auto&& d : *decls_) {
+        d->printClass();
+    }
 }
 
 // PackBody
@@ -1167,11 +1178,19 @@ void RecordDecl::pregen(
 
     if (auto cls = class_.lock()) {
         for (auto&& p : cls->procs()) {
-            p.lock()->pregen(javaClass_);
+            auto plock = std::dynamic_pointer_cast<ProcDecl>(p.lock());
+            assert(plock);
+            auto pbody = plock->procBody();
+            assert(pbody);
+            pbody->pregen(javaClass_);
         }
 
         for (auto&& f : cls->funcs()) {
-            f.lock()->pregen(javaClass_);
+            auto flock = std::dynamic_pointer_cast<FuncDecl>(f.lock());
+            assert(flock);
+            auto fbody = flock->procBody();
+            assert(fbody);
+            fbody->pregen(javaClass_);
         }
     }
 
@@ -1973,9 +1992,15 @@ GetArrElementExpr::GetArrElementExpr(
     , rhs_(arr->in())
 {
     auto arrTy = std::dynamic_pointer_cast<ArrayType>(arr_->type());
-    assert(arrTy);
-    container_ = std::dynamic_pointer_cast<RecordDecl>(arrTy->type()) || 
-                 std::dynamic_pointer_cast<PackDecl>(arrTy->type());
+    auto strTy = std::dynamic_pointer_cast<StringType>(arr_->type());
+    assert(arrTy || strTy);
+    if (arrTy) {
+        container_ = std::dynamic_pointer_cast<RecordDecl>(arrTy->type()) || 
+                    std::dynamic_pointer_cast<PackDecl>(arrTy->type());
+    } else {
+        container_ = false;
+    }
+
 }
 
 bool GetArrElementExpr::lhs() {
@@ -2333,17 +2358,20 @@ bb::BasicBlock* CallMethodExpr::codegen(
     assert(!lhs || (lhs && right_));
 
     std::vector<std::shared_ptr<node::VarDecl>> params;
+    int i = 0;
     if (noValue_) {
         params = proc_->params();
+        i = proc_->cls() ? 1 : 0;
     } else {
         params = func_->params();
+        i = func_->cls() ? 1 : 0;
     }
 
     if (params_.size() != params.size()) {
         params.erase(params.begin());
     }
     // обертка в атомик
-    for (int i = 0; i < params.size(); ++i) {
+    for (; i < params.size(); ++i) {
         auto&& p = params_[i];
         auto&& var = params[i];
         bool gen = false;

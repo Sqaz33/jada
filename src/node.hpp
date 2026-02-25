@@ -417,6 +417,7 @@ public: // codegen
 
 public:
     void setBody(std::shared_ptr<ProcBody> body);
+    auto procBody() { return body_.lock(); };
 
 private:
     std::weak_ptr<ProcBody> body_;
@@ -462,6 +463,7 @@ public: // codegen
 
 public:
     void setBody(std::shared_ptr<ProcBody> body);
+    auto procBody() { return body_.lock(); };
     
 private:
     std::weak_ptr<ProcBody> body_;

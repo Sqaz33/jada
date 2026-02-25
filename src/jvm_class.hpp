@@ -39,7 +39,8 @@ public:
     class_member::SharedPtrMethod addMethod( 
         const std::string& name,
         descriptor::JVMMethodDescriptor type,
-        bool isStatic = false);
+        bool isStatic = false,
+        const std::string& thisName = "this");
 
 public:
     std::uint16_t methodRef(class_member::SharedPtrMethod method);
