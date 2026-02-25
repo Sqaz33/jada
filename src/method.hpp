@@ -241,6 +241,10 @@ public:
         bb::BasicBlock*bb, 
         descriptor::JVMFieldDescriptor desc);
 
+    void createCheckcast(
+        bb::BasicBlock*bb, 
+        jvm_class::SharedPtrJVMClass cls);
+
 private:
     std::shared_ptr<jvm_attribute::CodeAttr> code_;
     std::weak_ptr<jvm_class::JVMClass> selfClass_;

@@ -1956,12 +1956,14 @@ GetArrElementExpr::GetArrElementExpr(
     owner_(owner)
     , arr_(arr)
     , idxs_(idxs)
-    , container_(
-        std::dynamic_pointer_cast<RecordDecl>(arr_->type()) || 
-        std::dynamic_pointer_cast<PackDecl>(arr_->type()))
     , lhs_(arr->out())
     , rhs_(arr->in())
-{}
+{
+    auto arrTy = std::dynamic_pointer_cast<ArrayType>(arr_->type());
+    assert(arrTy);
+    container_ = std::dynamic_pointer_cast<RecordDecl>(arrTy->type()) || 
+                 std::dynamic_pointer_cast<PackDecl>(arrTy->type());
+}
 
 bool GetArrElementExpr::lhs() {
     if (left_.expired() && right_) {  
@@ -2825,8 +2827,11 @@ bb::BasicBlock* Assign::codegen(
     rval_->codegen(bb, method);
     if (rec) {
         method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
+        method->createCheckcast(bb, rec->javaClass());
     } else if (arr) {
         method->createInvokestatic(bb, codegen::AdaUtilityDeepCopyArray);
+        auto desc = arr->descriptor();
+        method->createCheckcast(bb, desc);
     } else if (str) {
         method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
     }

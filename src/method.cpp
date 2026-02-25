@@ -938,4 +938,15 @@ void JVMClassMethod::createCheckcast(
     code_->insertInstr(bb, std::move(ins));
 }
 
+void JVMClassMethod::createCheckcast(
+    bb::BasicBlock*bb, 
+    jvm_class::SharedPtrJVMClass cls)
+{
+    instr::Instr ins(OpCode::checkcast);
+    auto cp = selfClass_.lock()->cp();
+    auto type = cp->addClass(cls->name());
+    ins.pushTwoBytes(type);
+    code_->insertInstr(bb, std::move(ins));
+}
+
 } // namespace class_membe
