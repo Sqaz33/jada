@@ -3,5 +3,5 @@ package pack is
       X: Integer;
    end record;
 
-   procedure proc(self: out ty);
+   procedure proc(self: in out ty);
 end pack;

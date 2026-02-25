@@ -1766,6 +1766,7 @@ LinkExprs::analyseOp_(std::shared_ptr<node::Op> op) {
             if (op->op() == node::OpType::DOT && tail->container() && 
                 !std::dynamic_pointer_cast<node::PackNamePart>(tail)) 
             {
+                name.clear();
                 auto res = analyseRecord_(leftDotOps, op->right());
                 if (!res.empty()) {
                     return {res, nullptr};
@@ -1897,7 +1898,7 @@ LinkExprs::analyseExpr_(
     if (auto nameExpr = std::dynamic_pointer_cast<node::NameExpr>(expr)) {
         base.push(nameExpr->name());
         par = dynamic_cast<node::IDecl*>(nameExpr->parent());
-        requester = nameExpr->varDecl();
+        requester = dynamic_cast<node::IDecl*>(nameExpr->varDecl());
     } else if (auto callExpr = std::dynamic_pointer_cast<node::CallOrIdxExpr>(expr)) {
         // работа с image attr
         if (auto attr = std::dynamic_pointer_cast<node::AttributeExpr>(callExpr->name())) {
@@ -1999,7 +2000,7 @@ LinkExprs::analyseExpr_(
                                nullptr};
                     }
                 }
-
+                base.clear();
                 return {"", std::make_shared<node::GetArrElementExpr>(nullptr, var, args)};
             }
             if (!args.empty()) {
@@ -2081,6 +2082,7 @@ LinkExprs::analyseExpr_(
             ss << base.toString('.');
             return {ss.str(), nullptr};
         }
+        base.clear();
         if ((proc && proc->cls()) && (func && func->cls())) { // TODO: ????
             return {"Ambiguous subprogram call: proc and func", nullptr};
         }

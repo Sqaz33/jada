@@ -1,6 +1,6 @@
 --  with pack; use pack;
 
-with ada.text_io;
+--  with ada.text_io;
 
 procedure main is 
    function Func(X: Integer; Y: Integer) return Integer is
@@ -15,8 +15,9 @@ procedure main is
 
 begin
 
-   ada.text_io.put_line(Integer'Image(Func(1)));
-   ada.text_io.put_line(Integer'Image(Func(1, 2)));
+   --  put_line(Integer'Image(Func(1)));
+   --  put_line(Integer'Image(Func(1, 2)));
+   Func (1);
 
 end main;
 

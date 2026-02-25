@@ -175,7 +175,7 @@ public: // codegen
 
 private:
     bool inBrackets_ = false;
-    VarDecl* varDecl_;
+    VarDecl* varDecl_ = nullptr;
     bool noAnalyse_ = false;
 };
 

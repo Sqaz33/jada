@@ -1206,8 +1206,6 @@ void RecordDecl::pregen(
     for (auto&& var : *decls_) {
         var->pregen(javaClass_);
     }
-
-
 }
 
 void RecordDecl::codegen(
