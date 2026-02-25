@@ -2,6 +2,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TestLoops is
    i: Integer := 1;
+   x: Integer := 1;
 begin
    for i in 1..67 loop
       Put_Line (Integer'Image(i));
@@ -17,5 +18,10 @@ begin
    end loop;
 
    Put_Line(Integer'Image(i + 100000));
+
+   Get(x);
+   for i in 100..x loop
+      Put_Line (Integer'Image(i));
+   end loop;
 
 end TestLoops;
