@@ -87,27 +87,29 @@ procedure Main is
 
    --  str: String(1..10);
 
-   type IntArray is array(1 .. 100) of Integer;
+   --  type IntArray is array(1 .. 100) of Integer;
    
-   procedure Sort(arr: IntArray; len: Integer) is 
-      min: Integer;
-      buf: Integer;
-      begin
-         for i in 1..len loop 
-            --  min := i;
-            for j in i..len loop
-               if arr(j) < min then
-                  min := j;
-               end if;
-            end loop;
-            --  buf := arr(i);
-            --  arr(i) := arr(min);
-            --  arr(min) := buf;
-         end loop;
-   end Sort;
+   --  procedure Sort(arr: IntArray; len: Integer) is 
+   --     min: Integer;
+   --     buf: Integer;
+   --     begin
+   --        for i in 1..len loop 
+   --           --  min := i;
+   --           for j in i..len loop
+   --              if arr(j) < min then
+   --                 min := j;
+   --              end if;
+   --           end loop;
+   --           --  buf := arr(i);
+   --           --  arr(i) := arr(min);
+   --           --  arr(min) := buf;
+   --        end loop;
+   --  end Sort;
 
-   x: Integer := 1;
+   --  x: Integer := 1;
+   --  type arr is array(1..10) of Integer;
 
+   --  a: arr := (1, 5, 7, 19, 10, 1, 2, 3, 4 ,5);
 begin 
    --  X := Integer'Image(1);
    -- 1;
@@ -129,5 +131,6 @@ begin
 
    --  func.X := 1;
    --  X := 1;
-   x := 1;
+   --  x := 1;
+      Put_Line(Integer'Image(1) & "text12");
 end Main;

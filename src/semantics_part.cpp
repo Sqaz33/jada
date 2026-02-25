@@ -2112,7 +2112,9 @@ static std::string analyseDotOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
 
 static std::string analyseOpExpr(std::shared_ptr<node::IExpr> leftOrRight) {
     if (auto call = std::dynamic_pointer_cast<node::CallOrIdxExpr>(leftOrRight)) {
-        if (!std::dynamic_pointer_cast<node::NameExpr>(call->name())) {
+        if (!std::dynamic_pointer_cast<node::NameExpr>(call->name()) && 
+            !std::dynamic_pointer_cast<node::AttributeExpr>(call->name())) 
+        {
             return "Using a subprogram call without" 
                    " a qualifying name is" 
                    " not supported in this implementation";

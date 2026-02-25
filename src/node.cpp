@@ -1699,7 +1699,7 @@ bb::BasicBlock* Op::codegen(
         }
         case OpType::AMPER:
             assert(STRING_TY->compare(type()));
-            method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
+            method->createInvokestatic(bb, codegen::AdaUtilityConcat);
             break;
 
         default:
