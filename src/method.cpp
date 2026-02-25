@@ -27,10 +27,13 @@ JVMClassMethod::JVMClassMethod(
     code_.reset(
         new jvm_attribute::CodeAttr(cp));
     addAttr(code_);
-    auto nameNType = cp->addNameAndType(
-        this->name(), this->type());
-    methodRef_ = cp->addMehodRef(
-        cls.lock()->nameIdx(), nameNType);
+
+    if (name != "<clinit>") {
+        auto nameNType = cp->addNameAndType(
+            this->name(), this->type());
+        methodRef_ = cp->addMehodRef(
+            cls.lock()->nameIdx(), nameNType);
+    }
 
     if (!isStatic) {
         createLocalRef("this");

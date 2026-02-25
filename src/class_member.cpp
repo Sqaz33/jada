@@ -78,6 +78,11 @@ void IJVMClassMember::addFlag(codegen::AccessFlag flag) {
     accf_ |= intFlag;
 }
 
+void IJVMClassMember::removeFlag(codegen::AccessFlag flag) {    
+    auto intFlag = static_cast<std::uint16_t>(flag);
+    accf_ &= ~intFlag;
+}
+
 void IJVMClassMember::addAttr(
     IJVMClassMember::SharedPtrAttr attr) 
 {   

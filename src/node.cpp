@@ -237,6 +237,8 @@ void VarDecl::pregen(
             javaField_->addFlag(
                 codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
         }
+        javaField_->addFlag(
+            codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
     } else {
         if (std::dynamic_pointer_cast<RecordDecl>(type_) || 
             std::dynamic_pointer_cast<StringType>(type_) || 
@@ -282,16 +284,17 @@ void VarDecl::codegen(
         bb::BasicBlock* bb,
         class_member::SharedPtrMethod method)  
  {
+    nextBB_ = bb;
     auto rec = std::dynamic_pointer_cast<node::RecordDecl>(type_);
     auto arr = std::dynamic_pointer_cast<node::ArrayType>(type_);
     auto str = std::dynamic_pointer_cast<node::StringType>(type_);
     // если есть инициализация
     if (rval_) {
         bb = rval_->codegen(bb, method);
+        nextBB_ = bb;
         if (method->methodName() == "<init>") {
             method->createAload(bb, "this");
         }
-        nextBB_ = bb;
         if (rec) {
             method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
         } else if (arr) {
@@ -619,8 +622,12 @@ void ProcBody::pregen(
         isStatic_ = true;
     } else {
         if (cls) {
-            javaMethod_ = cls->addMethod(name_, d);
-            isStatic_ = false;
+            javaMethod_ = cls->addMethod(name_, d, isStatic);
+            isStatic_ = isStatic;
+            if (isStatic_) {
+                javaMethod_->addFlag(
+                    codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+            }
         } else {
             javaMethod_ = codegen::InnerSubprograms->addMethod(name_, d, true);
             javaMethod_->addFlag(
@@ -645,6 +652,9 @@ void ProcBody::codegen(
     bb::BasicBlock* bb,
     class_member::SharedPtrMethod method)  
 {   
+    if (dynamic_cast<node::ProcDecl*>(this) || 
+        dynamic_cast<node::FuncDecl*>(this)) 
+    { return; }
     for (auto&& d : *decls_) {
         d->codegen(javaMethod_->createBB(), javaMethod_);
     }
@@ -874,7 +884,9 @@ void PackDecl::pregen(
 
     auto initDesc = 
         descriptor::JVMMethodDescriptor::createVoidParamsVoidReturn();
-    clinit_ = javaClass_->addMethod("<clinit>", initDesc);
+    clinit_ = javaClass_->addMethod("<clinit>", initDesc, true);
+    clinit_->removeFlag(codegen::AccessFlag::ACC_PUBLIC);
+    clinit_->addFlag(codegen::AccessFlag::ACC_STATIC);
 }
 
 void PackDecl::codegen(
@@ -885,7 +897,7 @@ void PackDecl::codegen(
 
     auto* clinitBB = clinit_->createBB();
     for (auto&& d : *decls_) {
-        d->codegen(clinitBB);
+        d->codegen(clinitBB, clinit_);
         if (auto var = std::dynamic_pointer_cast<VarDecl>(d)) {
             clinitBB = var->nextBB();
         }
@@ -893,12 +905,13 @@ void PackDecl::codegen(
 
     if (auto body = packBody_.lock()) {
         for (auto&& d : *(body->decls())) {
-            d->codegen(clinitBB);
+            d->codegen(clinitBB, clinit_);
             if (auto var = std::dynamic_pointer_cast<VarDecl>(d)) {
                 clinitBB = var->nextBB();
             }
         }
     }
+    clinit_->createReturn(clinitBB);
 }
 
 void PackDecl::printClass() {
@@ -932,8 +945,8 @@ void PackBody::reachable_(
     std::vector<std::string>::const_iterator end,
     IDecl* requester) 
 {
-    if (requester->parent() != this) {
-        return;
+    if (!requester || requester->parent() != this) {
+         return;
     } 
     bool insert = false;
     for (auto decl : *decls_) {
@@ -1967,7 +1980,7 @@ GetArrElementExpr::GetArrElementExpr(
 
 bool GetArrElementExpr::lhs() {
     if (left_.expired() && right_) {  
-        return tail()->lhs();
+        return tail()->lhs();   
     }
     return lhs_;
 }

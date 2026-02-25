@@ -29,6 +29,7 @@ public:
 
 public:
     using IJVMClassMember::addFlag;
+    using IJVMClassMember::removeFlag;
     using IJVMClassMember::addAttr;
     using IJVMClassMember::isStatic;
     using IJVMClassMember::printBytes;

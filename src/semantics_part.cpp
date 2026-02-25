@@ -1161,7 +1161,7 @@ std::string SubprogBodyNDeclLinking::analyseContainer_(
             auto packDeclProc = std::dynamic_pointer_cast<node::ProcDecl>(d);
             auto packDeclIsFunc = std::dynamic_pointer_cast<node::FuncDecl>(d);
 
-            if (packDeclProc) {
+            if (packDeclProc || packDeclIsFunc) {
                 bool isLinking = false;
 
                 if (it != map.end()) {
@@ -1170,7 +1170,12 @@ std::string SubprogBodyNDeclLinking::analyseContainer_(
                             auto packBodyIsFunc = std::dynamic_pointer_cast<node::FuncBody>(bodyD);
 
                             if (!((packBodyIsFunc && 1) ^ (packDeclIsFunc && 1))) {
-                                auto&& params1 = packDeclProc->params();
+                                std::vector<std::shared_ptr<node::VarDecl>> params1;
+                                if (packDeclProc) {
+                                    params1 = packDeclProc->params();
+                                } else {
+                                    params1 = packDeclIsFunc->params();
+                                }
                                 auto&& params2 = packBodyProc->params();
 
                                 if (params1.size() == params2.size()) {
@@ -1930,6 +1935,7 @@ LinkExprs::analyseExpr_(
         base.push(name->name());
         par = dynamic_cast<node::IDecl*>(callExpr->parent());
         args = callExpr->args();
+        requester = dynamic_cast<node::IDecl*>(callExpr->varDecl());
     } else {
         return {"", expr};
     }

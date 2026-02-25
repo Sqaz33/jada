@@ -19,6 +19,7 @@ public:
 
 public: 
     void addFlag(codegen::AccessFlag flag);
+    void removeFlag(codegen::AccessFlag flag);
     void addAttr(SharedPtrAttr attr);
     bool isStatic() const noexcept;
 
