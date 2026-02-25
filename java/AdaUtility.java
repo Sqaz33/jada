@@ -338,4 +338,6 @@ public class AdaUtility {
             return newArray;
         }
     }
+
+    // javac -source 1.5 -target 1.5 AdaUtility.java 
 }
