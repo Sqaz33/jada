@@ -336,11 +336,11 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // path = strdup("/mnt/d/jada/test_data/codegen/out.adb");
-        path = strdup("/mnt/d/jada/test_data/codegen/in.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/in.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/string.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/array.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/pack.adb");
-        // path = strdup("/mnt/d/jada/test_data/codegen/oop.adb");
+        path = strdup("/mnt/d/jada/test_data/codegen/oop.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/record.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/call.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/ref.adb");

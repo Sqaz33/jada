@@ -1174,8 +1174,12 @@ void RecordDecl::pregen(
     bool isStatic) 
 {
     createJavaClass_();
+    auto initDesc = 
+        descriptor::JVMMethodDescriptor::createVoidParamsVoidReturn();
+    init_ = javaClass_->addMethod("<init>", initDesc);
     if (deriveRecord_) {
         deriveRecord_->setJavaClassParrent(javaClass_);
+        deriveRecord_->setParentInit(init_);
     }
 
     if (auto cls = class_.lock()) {
@@ -1200,9 +1204,7 @@ void RecordDecl::pregen(
         var->pregen(javaClass_);
     }
 
-    auto initDesc = 
-        descriptor::JVMMethodDescriptor::createVoidParamsVoidReturn();
-    init_ = javaClass_->addMethod("<init>", initDesc);
+
 }
 
 void RecordDecl::codegen(
@@ -1211,7 +1213,11 @@ void RecordDecl::codegen(
 {
     auto* initBB = init_->createBB();
     init_->createAload(initBB, "this");
-    init_->createInvokespecial(initBB, codegen::AdaUtilityJavaObjectInit);
+    if (baseInit_) {
+        init_->createInvokespecial(initBB, baseInit_);
+    } else {
+        init_->createInvokespecial(initBB, codegen::AdaUtilityJavaObjectInit);
+    }
     for (auto&& var : *decls_) {
         var->codegen(initBB, init_);
         auto v = std::dynamic_pointer_cast<VarDecl>(var);

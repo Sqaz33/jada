@@ -720,6 +720,9 @@ public: // codegen
 
 public: // codegen
     void setJavaClassParrent(jvm_class::SharedPtrJVMClass parent);
+    void setParentInit(class_member::SharedPtrMethod init) {
+        baseInit_ = init;
+    }
     class_member::SharedPtrMethod init() { return init_; };
 
 private:
@@ -747,6 +750,7 @@ private:
     //codegen
     jvm_class::SharedPtrJVMClass javaClass_;
     class_member::SharedPtrMethod init_;
+    class_member::SharedPtrMethod baseInit_;
 };
 
 class TypeAliasDecl : 
