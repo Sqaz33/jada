@@ -186,18 +186,103 @@ void addAdaStdLib(
     PutLine->setStatic();
     ///////////////////////////////////////////////////////////////////////////
 
-    // std::vector getIntVars({std::make_shared<node::VarDecl>("str", strTy)});
-    // auto GetInt = std::make_shared<node::ProcDecl>("get", getIntVars);
-    ////////////////////////// GetInt ////////////////////////////////////////
 
+    auto getDecls1 = std::make_shared<node::DeclArea>();
+    auto getBody1 = std::make_shared<node::Body>();
+    auto inOutInt = std::make_shared<node::VarDecl>("x", intTy);
+    inOutInt->setIn(true); 
+    inOutInt->setOut(true);
+    inOutInt->setParam();
+    std::vector getIntVars({inOutInt});
+    auto GetInt = std::make_shared<node::ProcBody>("get", getIntVars, getDecls1, getBody1);
+    ////////////////////////// GetInt ////////////////////////////////////////
+    auto giDesc = GetInt->desc();
+    auto gif = codegen::InnerSubprograms->addMethod(GetInt->name(), giDesc, true);
+    auto* gifBB = gif->createBB();
+    gif->createAload(gifBB, "x");
+    gif->createInvokestatic(gifBB, codegen::AdaUtilityReadInt);
+    gif->createReturn(gifBB);
+
+    gif->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+    gif->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+    GetInt->setJavaMethod(gif);
+    GetInt->setStatic();
     ///////////////////////////////////////////////////////////////////////////
 
 
+    auto getDecls2 = std::make_shared<node::DeclArea>();
+    auto getBody2 = std::make_shared<node::Body>();
+    auto inOutBool = std::make_shared<node::VarDecl>("x", boolTy);
+    inOutBool->setIn(true); 
+    inOutBool->setOut(true);
+    inOutBool->setParam();
+    std::vector getBoolVars({inOutBool});
+    auto GetBool = std::make_shared<node::ProcBody>("get", getBoolVars, getDecls2, getBody2);
+    ////////////////////////// GetBool ////////////////////////////////////////
+    auto gbDesc = GetBool->desc();
+    auto gbf = codegen::InnerSubprograms->addMethod(GetBool->name(), gbDesc, true);
+    auto* gbfBB = gbf->createBB();
+    gbf->createAload(gbfBB, "x");
+    gbf->createInvokestatic(gbfBB, codegen::AdaUtilityReadBool);
+    gbf->createReturn(gbfBB);
 
+    gbf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+    gbf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+    GetBool->setJavaMethod(gbf);
+    GetBool->setStatic();
+    ///////////////////////////////////////////////////////////////////////////
+
+    auto getDecls3 = std::make_shared<node::DeclArea>();
+    auto getBody3 = std::make_shared<node::Body>();
+    auto inOutFloat = std::make_shared<node::VarDecl>("x", floatTy);
+    inOutFloat->setIn(true); 
+    inOutFloat->setOut(true);
+    inOutFloat->setParam();
+    std::vector getFloatVars({inOutFloat});
+    auto GetFloat = std::make_shared<node::ProcBody>("get", getFloatVars, getDecls3, getBody3);
+    ////////////////////////// GetFloat ////////////////////////////////////////
+    auto gfDesc = GetFloat->desc();
+    auto gff = codegen::InnerSubprograms->addMethod(GetFloat->name(), gfDesc, true);
+    auto* gffBB = gff->createBB();
+    gff->createAload(gffBB, "x");
+    gff->createInvokestatic(gffBB, codegen::AdaUtilityReadFloat);
+    gff->createReturn(gffBB);
+
+    gff->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+    gff->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+    GetFloat->setJavaMethod(gff);
+    GetFloat->setStatic();
+    ///////////////////////////////////////////////////////////////////////////
+
+    auto getDecls4 = std::make_shared<node::DeclArea>();
+    auto getBody4 = std::make_shared<node::Body>();
+    auto inOutString = std::make_shared<node::VarDecl>("x", strTy);
+    inOutString->setIn(true); 
+    inOutString->setOut(true);
+    inOutString->setParam();
+    std::vector getStrVars({inOutString});
+    auto GetStr = std::make_shared<node::ProcBody>("get", getStrVars, getDecls4, getBody4);
+    ////////////////////////// GetStr ////////////////////////////////////////
+    auto gsDesc = GetStr->desc();
+    auto gsf = codegen::InnerSubprograms->addMethod(GetStr->name(), gsDesc, true);
+    auto* gsfBB = gsf->createBB();
+    gsf->createAload(gsfBB, "x");
+    gsf->createInvokestatic(gsfBB, codegen::AdaUtilityReadString);
+    gsf->createReturn(gsfBB);
+
+    gsf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+    gsf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+    GetStr->setJavaMethod(gsf);
+    GetStr->setStatic();
+    ///////////////////////////////////////////////////////////////////////////
 
 
     auto libAreaTextIO = std::make_shared<node::DeclArea>();
     libAreaTextIO->addDecl(PutLine);
+    libAreaTextIO->addDecl(GetInt);
+    libAreaTextIO->addDecl(GetBool);
+    libAreaTextIO->addDecl(GetFloat);
+    libAreaTextIO->addDecl(GetStr);
     auto libUnitTextIO = 
         std::make_shared<node::PackDecl>("text_io", libAreaTextIO);
 
@@ -251,7 +336,8 @@ int main(int argc, char** argv) { // try {
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // path = strdup("/mnt/d/jada/test_data/codegen/out.adb");
-        path = strdup("/mnt/d/jada/test_data/codegen/string.adb");
+        path = strdup("/mnt/d/jada/test_data/codegen/in.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/string.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/array.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/pack.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/oop.adb");
@@ -303,7 +389,7 @@ int main(int argc, char** argv) { // try {
 
     if (!helper::rightEnding) {
         std::cerr << "The declaration has" 
-                     " different names and endings\n";
+                     " gsfferent names and endings\n";
         return 1;
     }
 

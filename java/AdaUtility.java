@@ -3,9 +3,46 @@ import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReference; 
+import java.util.Scanner;
+
 
 public class AdaUtility {
+    private static final Scanner SCANNER = new Scanner(System.in);
+
+    public static void readBool(AtomicBoolean target) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextBoolean()) {
+            throw new IllegalArgumentException("Expected boolean value");
+        }
+        boolean value = sc.nextBoolean();
+        target.set(value);
+    }
+
+    public static void readInt(AtomicInteger target) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextInt()) {
+            throw new IllegalArgumentException("Expected integer value");
+        }
+        int value = sc.nextInt();
+        target.set(value);
+    }
+
+    public static void readFloat(AtomicReference<Float> target) {
+        Scanner sc = new Scanner(System.in);
+        if (!sc.hasNextFloat()) {
+            throw new IllegalArgumentException("Expected float value");
+        }
+        float value = sc.nextFloat();
+        target.set(value);
+    }
+
+    public static void readString(StringBuilder target) {
+        String line = SCANNER.nextLine();
+        target.setLength(0);
+        target.append(line);
+    }
+
     public static void printStringBuilder(StringBuilder sb) {
        if (sb == null) return;
         System.out.println(sb.toString());

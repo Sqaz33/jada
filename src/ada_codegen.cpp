@@ -51,7 +51,7 @@ jvm_class::SharedPtrJVMClass JavaString;
 
 class_member::SharedPtrMethod AdaUtilityInitArrayElements;
 class_member::SharedPtrMethod AdaUtilityJavaObjectInit;
-
+class_member::SharedPtrMethod AdaUtilityStringBuilderInit;
 
 class_member::SharedPtrMethod AdaUtilityDeepCopy;
 class_member::SharedPtrMethod AdaUtilityDeepCopyArray;
@@ -83,6 +83,11 @@ class_member::SharedPtrMethod AdaUtilityImageFromBool;
 class_member::SharedPtrMethod AdaUtilityImageFromFloat;
 
 class_member::SharedPtrMethod AdaUtilityPrintStringBuilder;
+
+class_member::SharedPtrMethod AdaUtilityReadBool;
+class_member::SharedPtrMethod AdaUtilityReadInt;
+class_member::SharedPtrMethod AdaUtilityReadFloat;
+class_member::SharedPtrMethod AdaUtilityReadString;
 
 void initAdaUtilityNames() {
     using namespace descriptor;
@@ -122,6 +127,10 @@ void initAdaUtilityNames() {
         JVMMethodDescriptor::createVoidRetun({{"src", JVMFieldDescriptor::createObject(JavaObject->name())}}));
 
     AdaUtilityJavaObjectInit = JavaObject->addMethod(
+        "<init>", JVMMethodDescriptor::createVoidParamsVoidReturn());
+
+        
+    AdaUtilityStringBuilderInit = StringBuiler->addMethod(
         "<init>", JVMMethodDescriptor::createVoidParamsVoidReturn());
 
     AdaUtilityDeepCopy = AdaUtility->addMethod(
@@ -321,6 +330,34 @@ void initAdaUtilityNames() {
         descriptor::JVMMethodDescriptor::createVoidRetun(
             {{"sb", descriptor::JVMFieldDescriptor::createObject(StringBuiler->name())}}
         )
+    );
+
+    AdaUtilityReadBool = AdaUtility->addMethod(
+        "readBool",
+        JVMMethodDescriptor::createVoidRetun({
+            {"atomic", JVMFieldDescriptor::createObject(AtomicBoolean->name())},
+        })
+    );
+
+    AdaUtilityReadInt = AdaUtility->addMethod(
+        "readInt",
+        JVMMethodDescriptor::createVoidRetun({
+            {"atomic", JVMFieldDescriptor::createObject(AtomicInteger->name())},
+        })
+    );
+
+    AdaUtilityReadFloat = AdaUtility->addMethod(
+        "readFloat",
+        JVMMethodDescriptor::createVoidRetun({
+            {"atomic", JVMFieldDescriptor::createObject(AtomicReference->name())},
+        })
+    );
+
+    AdaUtilityReadString = AdaUtility->addMethod(
+        "readString",
+        JVMMethodDescriptor::createVoidRetun({
+            {"atomic", JVMFieldDescriptor::createObject(StringBuiler->name())},
+        })
     );
 }
 

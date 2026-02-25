@@ -19,6 +19,7 @@ extern jvm_class::SharedPtrJVMClass JavaString;
 // init 
 extern class_member::SharedPtrMethod AdaUtilityInitArrayElements;
 extern class_member::SharedPtrMethod AdaUtilityJavaObjectInit;
+extern class_member::SharedPtrMethod AdaUtilityStringBuilderInit;
 
 // copy
 extern class_member::SharedPtrMethod AdaUtilityDeepCopy;
@@ -55,6 +56,11 @@ extern class_member::SharedPtrMethod AdaUtilityImageFromFloat;
 
 // io
 extern class_member::SharedPtrMethod AdaUtilityPrintStringBuilder;
+
+extern class_member::SharedPtrMethod AdaUtilityReadBool;
+extern class_member::SharedPtrMethod AdaUtilityReadInt;
+extern class_member::SharedPtrMethod AdaUtilityReadFloat;
+extern class_member::SharedPtrMethod AdaUtilityReadString;
 
 void initAdaUtilityNames();
 

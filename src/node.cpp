@@ -347,6 +347,8 @@ void VarDecl::codegen(
             createStore(bb, method);
         } else if (str) {
             method->createNew(bb, codegen::StringBuiler);
+            method->createDup(bb);
+            method->createInvokespecial(bb, codegen::AdaUtilityStringBuilderInit);
             createStore(bb, method);
         }
     }
@@ -2000,7 +2002,6 @@ GetArrElementExpr::GetArrElementExpr(
     } else {
         container_ = false;
     }
-
 }
 
 bool GetArrElementExpr::lhs() {
