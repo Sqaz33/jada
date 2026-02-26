@@ -945,10 +945,23 @@ public: // codgen
         bool lhs = false,
         int callStage = -1);
 
+    void setBodyBB(bb::BasicBlock* bb) { bodyBB_ = bb; }
+    void setNextBB(bb::BasicBlock* bb, class_member::SharedPtrMethod method) { 
+        if (auto op = std::dynamic_pointer_cast<Op>(lhs_)) {
+            op->setNextBB(bb, method);
+        }
+        if (preBB_) {
+            method->createGoto(preBB_, bb);
+        }
+    }
+
 private:
     std::shared_ptr<IExpr> lhs_;
     OpType opType_;
     std::shared_ptr<IExpr> rhs_;
+
+    bb::BasicBlock* bodyBB_ = nullptr;
+    bb::BasicBlock* preBB_ = nullptr;
 };
 /////////////////////////////////////////////////////////////////////////////
 class DotOpExpr : public IExpr {

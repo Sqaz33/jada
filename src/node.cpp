@@ -1556,6 +1556,13 @@ bool Op::compareTypes(const std::shared_ptr<IType> comp) {
         return false;
     }
 }
+// (x || y) && z => x || y && z 
+
+// если текущий op != or -> не передаем дальше bodybb, nextbb
+// если нижние op != and || op != or -> не передаем   
+
+// or: если первый true (dup, ifne) -> идем в preBodyBB (pop, goto BodyBB)
+// and: если первый false (dup, ifeq) -> идем в preNextBB (pop, goto nextBB)
 
 bb::BasicBlock* Op::codegen(
     bb::BasicBlock* bb,
@@ -1564,7 +1571,38 @@ bb::BasicBlock* Op::codegen(
     int callStage)
 {
     if (lhs_) {
+        auto op = std::dynamic_pointer_cast<Op>(lhs_);
+        if (op && opType_ == OpType::OR && 
+            (op->op() == OpType::OR || op->op() == OpType::AND)) 
+        {
+            op->setBodyBB(bodyBB_);
+        }
         bb = lhs_->codegen(bb, method, lhs, callStage);
+
+        if (bodyBB_ &&
+             (opType_ == OpType::OR || opType_ == OpType::AND)) 
+        {
+            auto* condBB = method->createBB();
+            method->createDup(condBB);
+
+            preBB_ = method->createBB();
+            method->createPop(preBB_);
+
+            auto* postBB = method->createBB();
+
+            if (opType_ == OpType::OR) {
+                method->createIfne(condBB, preBB_);
+                method->createGoto(condBB, postBB);
+
+                method->createGoto(preBB_, bodyBB_);
+                preBB_ = nullptr;
+            } else {
+                method->createIfeq(condBB, preBB_);
+                method->createGoto(condBB, postBB);
+            }
+
+            bb = postBB;
+        }
     }
 
     bb = rhs_->codegen(bb, method, lhs, callStage);
@@ -2637,28 +2675,51 @@ bb::BasicBlock* If::codegen(
 {
     std::vector<bb::BasicBlock*> nextBodyBBs;
 
-    auto* nextCondBB = cond_->codegen(bb, method);
-    
-    auto* bodyBB = method->createBB();
-    nextBodyBBs.push_back(body_->codegen(method, bodyBB));
+    auto* gotoCondBB = method->createBB();
 
-    auto* nextBB = method->createBB();
-    // условие ветвления
+    auto* bodyBB = method->createBB();
+    nextBodyBBs.push_back(body_->codegen(method, bodyBB)); 
+
+    auto* condBB = method->createBB();
+    method->createGoto(gotoCondBB, condBB);
+
+    if (auto op = std::dynamic_pointer_cast<Op>(cond_)) {
+        op->setBodyBB(bodyBB);
+    }
+
+    auto* nextCondBB = cond_->codegen(condBB, method);
+    auto op = std::dynamic_pointer_cast<Op>(cond_);
     method->createIfne(nextCondBB, bodyBB);
-    method->createGoto(nextCondBB, nextBB);
+    auto* nextNextCondBB = method->createBB();
+    if (auto op = std::dynamic_pointer_cast<Op>(cond_)) {
+        op->setNextBB(nextNextCondBB, method);
+    }
 
     for (auto&& [c, b] : elsifs_) {
-        nextCondBB = c->codegen(nextBB, method);
-        bodyBB = method->createBB();
-        nextBB = method->createBB();
-        nextBodyBBs.push_back(b->codegen(method, bodyBB));
-        // условие ветвления
+        auto* gotoCondBB = method->createBB();
+
+        auto* bodyBB = method->createBB();
+        nextBodyBBs.push_back(b->codegen(method, bodyBB)); 
+
+        auto condBB = method->createBB();
+        method->createGoto(gotoCondBB, condBB);
+
+        if (auto op = std::dynamic_pointer_cast<Op>(c)) {
+            op->setBodyBB(bodyBB);
+        }
+
+        auto* nextCondBB = c->codegen(condBB, method);
+        auto op = std::dynamic_pointer_cast<Op>(c);
         method->createIfne(nextCondBB, bodyBB);
-        method->createGoto(nextCondBB, nextBB);
+        
+        nextNextCondBB = method->createBB();
+        if (auto op = std::dynamic_pointer_cast<Op>(c)) {
+            op->setNextBB(nextNextCondBB, method);
+        }
     }
 
     if (els_) {
-        auto* _ = els_->codegen(method, nextBB);
+        auto* _ = els_->codegen(method, nextNextCondBB);
     } 
 
     auto* endBB = method->createBB();
@@ -2745,20 +2806,42 @@ bb::BasicBlock* While::codegen(
     bb::BasicBlock* bb, 
     class_member::SharedPtrMethod method)
 {
-    auto* condBB = method->createBB();
-    auto* nextCondBB = cond_->codegen(condBB, method); 
-    
+    auto* gotoCondBB = method->createBB();
+
     auto* bodyBB = method->createBB();
-    auto* bodyNextBB = body_->codegen(method, bodyBB);
+    auto* nextBodyBB = body_->codegen(method, bodyBB);
 
-    auto* nextBB = method->createBB();
-    // заполняется cond
+    auto* condBB = method->createBB();
+    method->createGoto(gotoCondBB, condBB);
+    method->createGoto(nextBodyBB, condBB);
+
+    if (auto op = std::dynamic_pointer_cast<Op>(cond_)) {
+        op->setBodyBB(bodyBB);
+    }
+
+    auto* nextCondBB = cond_->codegen(condBB, method);
+    auto op = std::dynamic_pointer_cast<Op>(cond_);
     method->createIfne(nextCondBB, bodyBB);
-    method->createGoto(nextCondBB, nextBB);
+    auto* nextNextCondBB = method->createBB();
+    if (auto op = std::dynamic_pointer_cast<Op>(cond_)) {
+        op->setNextBB(nextNextCondBB, method);
+    }
 
-    method->createGoto(bodyNextBB, condBB);
 
-    return nextBB;
+    // auto* condBB = method->createBB();
+    // auto* nextCondBB = cond_->codegen(condBB, method); 
+    
+    // auto* bodyBB = method->createBB();
+    // auto* bodyNextBB = body_->codegen(method, bodyBB);
+
+    // auto* nextBB = method->createBB();
+    // // заполняется cond
+    // method->createIfne(nextCondBB, bodyBB);
+    // method->createGoto(nextCondBB, nextBB);
+
+    // method->createGoto(bodyNextBB, condBB);
+
+    return nextNextCondBB;
 }
 
 } // namespace node 
