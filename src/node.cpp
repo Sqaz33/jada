@@ -1422,8 +1422,7 @@ StringType::StringType(std::pair<int, int> range) :
 bool StringType::compare(const std::shared_ptr<IType> rhs) const {
     auto orig = getOrigin(rhs);
     if (auto str = std::dynamic_pointer_cast<StringType>(orig)) {
-        // return range_ == str->range_ || inf_;
-        return true;
+        return range_ == str->range_ || inf_;
     }
     return false;
 }

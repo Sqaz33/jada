@@ -5,7 +5,7 @@ procedure TestLoops is
     type Matrix is array(1..8, 1..8) of Integer;
 
     procedure printMatrix(m: Matrix) is
-        line: String(1..16);
+        line: String;
     begin
         for i in 1..8 loop
             for j in 1..8 loop
@@ -17,9 +17,7 @@ procedure TestLoops is
     end printMatrix;
 
     m: Matrix;
-
     x: Integer := 1;
-
     i: Integer;
 
 begin
@@ -27,31 +25,29 @@ begin
 
     while x <= 4 loop
 
-        for i in x..8-x loop
-            m(x, i) := 1;
-        end loop; 
+         for i in x..8-x loop
+             m(x, i) := 1;
+         end loop; 
 
-        for i in x..8-x loop
-            m(i, x) := 1;
-        end loop; 
+         for i in x..8-x+1 loop
+             m(i, 8-x+1) := 1;
+         end loop; 
 
-        i := 8 - x;
-        while i >= x loop
-            m(x, i) := 1;
-            i := i - 1;
-        end loop;
+         i := 8 - x + 1;
+         while i >= x loop
+             m(8-x+1, i) := 1;
+             i := i - 1;
+         end loop;
 
-        i := 8 - x;
-        while i >= x loop
-            m(i, x) := 1;
-            i := i - 1;
-        end loop;
+         i := 8 - x + 1;
+         while i >= x loop
+             m(i, x) := 1;
+             i := i - 1;
+         end loop;
 
-        x := x + 2;
+         x := x + 2;
     end loop;
 
     Put_Line("==================");
     printMatrix(m);
-
-    
 end TestLoops;
