@@ -106,22 +106,22 @@ begin
     end loop;
     
     -- Вложенные циклы
-   --   for i in 1..4 loop
-   --       for j in 1..4 loop
-   --           if i = j then
-   --               arr(i) := arr(i) + j;
-   --              --   Put_Line(Integer'Image(i * 8 / 2 + j * 10));
-   --           end if;
-   --       end loop;
-   --   end loop;
+      for i in 1..4 loop
+          for j in 1..4 loop
+              if i = j then
+                  arr(i) := arr(i) + j;
+                 Put_Line(Integer'Image(i * 8 / 2 + j * 10));
+              end if;
+          end loop;
+      end loop;
 
    I := 1 + 2 + 3 + 4 + 5;
 
    --  ty12f.x := 2; -- err pure rval assign
    objty12.x := 2;
 
-   Sort(arr1234, 10);
-   --  Insertion(arr1234, 10);
+   -- Sort(arr1234, 10);
+   Insertion(arr1234, 10);
 
    for i in 1..10 loop
       Put_Line(Integer'Image(arr1234(i)));
