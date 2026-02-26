@@ -22,7 +22,7 @@ begin
    proc(v);
    Put_Line(Integer'Image(v.Y));
 
-
+   Put_Line("====================");
    Put_Line(Integer'Image(v2.X));
    Put_Line(Integer'Image(v2.Y));
    v2 := v;

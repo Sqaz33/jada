@@ -44,7 +44,7 @@ std::uint16_t opStackSize(instr::OpCode op) {
         case O::dup:
             return 1;
 
-        case O::dup2:
+        case O::dup2: case O::dup2_x1:
             return 2;
 
         case O::invokevirtual:

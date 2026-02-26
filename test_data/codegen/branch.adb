@@ -2,6 +2,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TestLoops is
    x: Integer := 100;
+   flag: array(1..2) of Boolean := (True, True);
 begin
    if X < 10 then
       Put_Line("< 10");
@@ -27,5 +28,9 @@ begin
 
    if (X > 10 and x /= 101) then 
       Put_Line("X > 10 and x /= 101");
+   end if;
+
+   if flag(1) then
+      Put_Line(Boolean'Image(flag(1)));
    end if;
 end TestLoops;

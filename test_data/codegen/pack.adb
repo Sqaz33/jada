@@ -11,12 +11,12 @@ procedure TestLoops is
    package body pack1 is
       procedure foo(x: Integer) is
       begin
-         Put_Line(Integer'Image(x));
+         Put_Line(Integer'Image(foo(x)));
       end foo;
 
       function foo(X: Integer) return Integer is
       begin
-         return x;
+         return x + 10;
       end foo;
 
       l: Integer := foo(1);

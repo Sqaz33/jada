@@ -33,7 +33,7 @@ procedure main is
    
 begin
 
-   ada.text_io.put_line(Integer'Image(pack.Func(1)));
+   --  ada.text_io.put_line(Integer'Image(pack.Func(1)));
    ada.text_io.put_line(Integer'Image(pack.Func(1, 2)));
 
 

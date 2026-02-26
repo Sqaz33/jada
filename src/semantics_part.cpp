@@ -2060,15 +2060,17 @@ LinkExprs::analyseExpr_(
                 if (auto f = std::dynamic_pointer_cast<node::FuncBody>(d)) {
                     if (!func && eqArgs(f, args)) { 
                         func = f;
-                    } else if (eqArgs(f, args)) {
-                        return {"An ambiguous call " + func->name() , nullptr};
-                    }
+                    } 
+                    // else if (eqArgs(f, args)) {
+                    //     return {"An ambiguous call " + func->name() , nullptr};
+                    // }
                 } else if (auto p = std::dynamic_pointer_cast<node::ProcBody>(d)) {
                     if (!proc && eqArgs(p, args)) {
                         proc = p;
-                    } else if (eqArgs(p, args)) {
-                        return {"An ambiguous call: " + proc->name(), nullptr};
-                    }
+                    } 
+                    // else if (eqArgs(p, args)) {
+                    //     return {"An ambiguous call: " + proc->name(), nullptr};
+                    // }
                 }
             }
             if (proc && func) {
