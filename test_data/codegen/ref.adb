@@ -16,6 +16,14 @@ procedure TestLoops is
    end foo2;
 
    v: Integer := 3;
+
+   procedure foo3(x: in Integer) is
+      v: Integer := x;
+   begin
+      v := v + 1;
+   end foo3;
+
+   l: Integer := 1114;
 begin
    Put_Line(Integer'Image(v));
    foo(v);
@@ -23,5 +31,11 @@ begin
 
    foo(11234);
    foo2(1234234);
+
+   Put_Line("==========");
+   Put_Line(Integer'Image(l));
+   foo3(l);
+   Put_Line(Integer'Image(l));
+   Put_Line("==========");
 
 end TestLoops;

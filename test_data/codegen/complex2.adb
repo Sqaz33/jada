@@ -75,8 +75,8 @@ procedure TestLoops is
       end loop;
    end Insertion;
 
-   arr1234: IntArray := -- (5, 1, 1, 7, 9, 3, 4, 0, 10, 16);
-   (10, 9, 8, 6, 5, 4, 3, 2, 1, 0);
+   arr1234: IntArray :=  (5, 1, 1, 7, 9, 3, 4, 0, 10, 16);
+   --  (10, 9, 8, 6, 5, 4, 3, 2, 1, 0);
 begin
    if 1 > 0 then
       if 2 > 0 then 
