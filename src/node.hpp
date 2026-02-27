@@ -82,7 +82,7 @@ public: // codegen
     virtual bb::BasicBlock* codegen(
         bb::BasicBlock* bb, 
         class_member::SharedPtrMethod method) 
-    { assert(false); };
+    { assert(false); return nullptr; };
 };
 
 class ProcBody;
@@ -171,7 +171,7 @@ public: // codegen
         class_member::SharedPtrMethod method, 
         bool lhs = false,
         int callStage = -1) 
-    { assert(false); }
+    { assert(false); return nullptr; }
 
 private:
     bool inBrackets_ = false;

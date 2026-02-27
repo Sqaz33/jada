@@ -18,4 +18,18 @@ begin
    --     Put_Line ("Ok");
    --     i := i - 1;
    --  end loop;
+
+   if ((10 > 1 and false) and flag(3)) then
+      Put_Line ("Ok");
+   else 
+      Put_Line ("Ok too");
+   end if;
+
+   if ((10 > 1 or false) or flag(3)) then
+      Put_Line ("Ok");
+   else 
+      Put_Line ("Ok too");
+   end if;
+
+   
 end TestLoops;

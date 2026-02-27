@@ -1,5 +1,7 @@
 #include "constant.hpp"
 
+#include <cassert>
+
 #include "bits_utility.hpp"
 
 namespace constant {
@@ -160,13 +162,14 @@ Descriptor::Descriptor(std::unique_ptr<
 
 void Descriptor::printBytes(std::ostream& out) const {
     IConstant::printBytes(out);
-    const std::string* type;
+    const std::string* type = nullptr;
     if (fieldType_) {
         type = &fieldType_->toString();
     }
     if (methodType_) {
         type = &methodType_->toString();
     }
+    assert(type);
     utility::printBytes(out, utility::reverse(
         static_cast<std::uint16_t>(type->length())));
     out << *type;
