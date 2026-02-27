@@ -15,6 +15,16 @@ procedure TestLoops is
    
    v2: rec1;
 
+   function RecConstructor(X: Integer; Y: Integer) return rec1 is
+      obj: rec1;
+   begin
+      obj.X := x;
+      obj.Y := y;
+      return obj;
+   end RecConstructor;
+
+   v3: rec1 := RecConstructor(100, 200);
+
 begin
    v.X := 5;
    Put_Line(Integer'Image(v.X));
@@ -29,4 +39,6 @@ begin
    Put_Line(Integer'Image(v2.X));
    Put_Line(Integer'Image(v2.Y));
 
+   Put_Line(Integer'Image(v3.X));
+   Put_Line(Integer'Image(v3.Y));
 end TestLoops;
