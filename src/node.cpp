@@ -298,6 +298,7 @@ void VarDecl::codegen(
         if (rec) {
             method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
             method->createCheckcast(bb, rec->javaClass());
+            createStore(bb, method);
         } else if (arr) {
             if (auto arrTy = std::dynamic_pointer_cast<node::ArrayType>(rval_->type())) {
                 // дублирование массива
