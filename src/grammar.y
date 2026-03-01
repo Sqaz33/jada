@@ -129,6 +129,7 @@
 %nterm<std::shared_ptr<node::ILiteral>> aggregate
 %nterm<std::shared_ptr<node::IStm>> if_stm
 %nterm<std::shared_ptr<node::IExpr>> if_head
+%nterm<std::shared_ptr<node::IExpr>> callOrDotOp
 %nterm<std::vector<std::pair<std::shared_ptr<node::IExpr>, std::shared_ptr<node::Body>>>> elsifs
 %nterm<std::pair<std::shared_ptr<node::IExpr>, std::shared_ptr<node::Body>>> elsif
 %nterm<std::shared_ptr<node::Body>> else
@@ -404,14 +405,16 @@ expr:             expr EQ expr                                          { $$.res
                 | expr MOD expr                                         { $$.reset(new node::Op($1, node::OpType::MOD, $3));         }
                 | LPAR expr RPAR                                        { $$ = $2; $$->setInBrackets();                              }
                 | MINUS expr %prec UMINUS                               { $$.reset(new node::Op(nullptr, node::OpType::UMINUS, $2)); }
-                | expr LPAR args RPAR                                   { $$.reset(new node::CallOrIdxExpr($1, $3));                 }
-                | expr DOT expr                                         { $$.reset(new node::Op($1, node::OpType::DOT, $3));         }
+                | callOrDotOp
                 | LPAR expr AND expr RPAR                               { $$.reset(new node::Op($2, node::OpType::AND, $4));         }
                 | LPAR expr OR expr RPAR                                { $$.reset(new node::Op($2, node::OpType::OR, $4));          }
                 | LPAR expr XOR expr RPAR                               { $$.reset(new node::Op($2, node::OpType::XOR, $4));         }
                 | LPAR NOT expr RPAR                                    { $$.reset(new node::Op(nullptr, node::OpType::NOT, $3));    }
                 | literal                                               { $$ = $1;                                                   }
-                | NAME                                                  { $$.reset(new node::NameExpr($1));                          }
+
+callOrDotOp:      NAME                                                  { $$.reset(new node::NameExpr($1));                          }
+                | callOrDotOp DOT callOrDotOp                           { $$.reset(new node::Op($1, node::OpType::DOT, $3));         }
+                | callOrDotOp LPAR args RPAR                            { $$.reset(new node::CallOrIdxExpr($1, $3));                 }
                 | GETTING_ATTRIBUTE                                     { 
                                                                           attribute::Attribute attr($1.first, $1.second);
                                                                           $$.reset(new node::AttributeExpr(attr));                     

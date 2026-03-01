@@ -9,7 +9,7 @@ begin
       i := i - 1;
    end loop;
 
-   if (10 > 1 or flag(3)) then
+   if (10 > 1 or flag(3)) then   
       Put_Line ("Ok");
    end if;
 
