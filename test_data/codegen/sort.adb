@@ -1,9 +1,9 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TestLoops is
-   type arr is array(1..10) of Integer;
+   type arr is array(1..15) of Integer;
 
-   a: arr := (1, 5, 7, 19, 10, 1, 2, 3, 4 ,5);
+   a: arr := (1, 5, 7, 19, 10, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0);
    x: Integer := 0;
 
    procedure Bubble_Sort(a: in out arr; N: Integer) is
@@ -34,14 +34,17 @@ procedure TestLoops is
 
    end Bubble_Sort;
 
-begin   
+   sz: Integer := 1;
 
-   for i in 1..10 loop 
-      -- Put_Line("Pls Input: " & Integer'Image(i));
+begin   
+   Put_Line("sz: ");
+   Get(sz);
+
+   for i in 1..sz loop 
       Get(x);
       a(i) := x;
    end loop;
 
-   Bubble_Sort(a, 10);
+   Bubble_Sort(a, sz);
 
 end TestLoops;
