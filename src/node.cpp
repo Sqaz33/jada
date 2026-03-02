@@ -323,7 +323,11 @@ void createLoadAggr(
     // загрузить агрегат в массив
     } else {
         for (int i = 0; i < lim; ++i) {
-            method->createAload(bb, lvls[lvl - 1]);
+            if (0 == lvl) {
+                 arr->createLoad(bb, method);
+            } else {
+                method->createAload(bb, lvls[lvl - 1]);
+            }
             method->createLdc(bb, i);
             method->createDup2X1(bb);
             method->createPop(bb);
@@ -2871,7 +2875,7 @@ bb::BasicBlock* For::codegen(
     bb = range_.first->codegen(bb, method);
     iter_->createStore(bb, method);
 
-    std::string right = init_ + "_right12345";
+    std::string right = iter_->name() + "_right12345";
     method->createLocalInt(right);
     bb = range_.second->codegen(bb, method);
     method->createIstore(bb, right);

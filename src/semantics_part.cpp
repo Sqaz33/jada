@@ -724,8 +724,6 @@ TypeNameToRealType::analyseDecl_(
             ss << "It is forbidden to" 
                   " use superclass reference" 
                   " for aliases, vars, arrays and return type: ";
-            ss << alias->name();
-            ss << " : ";
             ss << typeName->attribute().toString();
             return ss.str();
         }
