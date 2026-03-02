@@ -1,17 +1,34 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TestLoops is
-   --  flag: Boolean := (True or False);
-   flag: Boolean := ((1 > 0 and False) or 1 < 2);
-   flag2: Boolean := ((1 > 0 and False) or 1 > 2);
-   flag3: Boolean := (False xor True);
-   flag4: Boolean := (True xor True);
-   flag5: Boolean := (not True);
+   x: Boolean := false;
+   y: Boolean := false;
+   
+
+   function foo return Boolean is
+      ret: Boolean := false;
+   begin
+      get(ret);
+      return ret;
+   end foo;
+
 begin
-   --  Put_Line(Boolean'Image(1 = 1));
-   Put_Line(Boolean'Image(flag));
-   Put_Line(Boolean'Image(flag2));
-   Put_Line(Boolean'Image(flag3));
-   Put_Line(Boolean'Image(flag4));
-   Put_Line(Boolean'Image(flag5));
+
+   Get(x);
+   if x then 
+      Put_Line("x true");
+   else 
+      Put_Line("x false");
+   end if;
+
+   Get(x);
+   Get(y);
+   if ((x or y) or foo) then
+      Put_Line("x or y or foo - true");
+   end if;
+
+   Get(x);
+   if (x and foo) then
+      Put_Line("x and foo - true");
+   end if;
 end TestLoops;
