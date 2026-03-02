@@ -596,13 +596,12 @@ TypeNameToRealType::analyseContainer_(
             std::dynamic_pointer_cast<node::ProcBody>(decl)) 
     {
         for (auto&& par : proc->params()) {
-            auto res = analyseParam_(par);
-            if (!res.empty()) {
-                std::stringstream ss;
-                ss << decl->name() << ':';
-                ss << res;
-                return ss.str();
-            }
+            if (std::dynamic_pointer_cast<node::ArrayType>(par->type()) && 
+                !par->aliasType()) 
+            {
+                return"Anonymous array definition not allowed";
+            }   
+            decls.push_back(par);
         }
         decls.insert(decls.end(), proc->decls()->begin(), proc->decls()->end());
     } 
@@ -720,60 +719,68 @@ TypeNameToRealType::analyseDecl_(
 
     if (typeName) {
         if (!typeName->hasName()) {
-            std::stringstream ss;
-            ss << "It is forbidden to" 
-                  " use superclass reference" 
-                  " for aliases, vars, arrays and return type: ";
-            ss << typeName->attribute().toString();
-            return ss.str();
-        }
-        auto parent = dynamic_cast<node::IDecl*>(decl->parent());
-        auto declsInSpaces = 
-            parent->reachable(typeName->name(), decl.get());
-        bool isTypeSet = false;
-        if (!declsInSpaces.empty()) {
-            auto&& decls = declsInSpaces.front();
-            auto record = 
-                std::dynamic_pointer_cast<node::RecordDecl>(decls[0]);
-            auto als = 
-                std::dynamic_pointer_cast<node::TypeAliasDecl>(decls[0]);
+            auto [err, refTy] = analyseAttrType_(typeName);
+            if (!err.empty()) {
+                return err;
+            }
             if (alias) {
-                if (als == alias) {
-                    std::stringstream ss;
-                    ss << "It is forbidden to use the" 
-                          " same alias as the" 
-                          " type for aliases, types";
-                    ss << alias->name();
-                    ss << " : ";
-                    ss << typeName->attribute().toString();
-                    return ss.str();
-                }
-                if (record) alias->resetOrigin(record);
-                else if (als) alias->resetOrigin(als);
+                alias->resetOrigin(refTy);
             } else if (var) {
-                if (record.get() == var->parent()) {
-                    return "A record-type variable is" 
-                           " nested within its own record-type: " 
-                            + typeName->name().toString('.');
-                }
-
-                if (record) var->resetType(record);
-                else if (als) var->resetType(als);
+                var->resetType(refTy);
             } else if (func) {
-                // разрешение возвр. значение для ф-ции
-                if (record) func->resetRetType(record);
-                else if (als) func->resetRetType(als);
+                return "Function cannot return a" 
+                       " superclass reference";
             }
-            if (record || als) {
-                isTypeSet = true;
+        } else {
+            auto parent = dynamic_cast<node::IDecl*>(decl->parent());
+            auto declsInSpaces = 
+                parent->reachable(typeName->name(), decl.get());
+            bool isTypeSet = false;
+            if (!declsInSpaces.empty()) {
+                auto&& decls = declsInSpaces.front();
+                auto record = 
+                    std::dynamic_pointer_cast<node::RecordDecl>(decls[0]);
+                auto als = 
+                    std::dynamic_pointer_cast<node::TypeAliasDecl>(decls[0]);
+                if (alias) {
+                    if (als == alias) {
+                        std::stringstream ss;
+                        ss << "It is forbidden to use the" 
+                            " same alias as the" 
+                            " type for aliases, types";
+                        ss << alias->name();
+                        ss << " : ";
+                        ss << typeName->attribute().toString();
+                        return ss.str();
+                    }
+                    if (record) alias->resetOrigin(record);
+                    else if (als) alias->resetOrigin(als);
+                } else if (var) {
+                    if (record.get() == var->parent()) {
+                        return "A record-type variable is" 
+                            " nested within its own record-type: " 
+                                + typeName->name().toString('.');
+                    }
+
+                    if (record) var->resetType(record);
+                    else if (als) var->resetType(als);
+                } else if (func) {
+                    // разрешение возвр. значение для ф-ции
+                    if (record) func->resetRetType(record);
+                    else if (als) func->resetRetType(als);
+                }
+                if (record || als) {
+                    isTypeSet = true;
+                }
+            }
+            if (!isTypeSet) {
+                std::stringstream ss;
+                ss << "An unresolved type name:";
+                ss << typeName->name().toString('.');
+                return ss.str();
             }
         }
-        if (!isTypeSet) {
-            std::stringstream ss;
-            ss << "An unresolved type name:";
-            ss << typeName->name().toString('.');
-            return ss.str();
-        }
+
     } 
 
     return "";
@@ -790,44 +797,38 @@ TypeNameToRealType::analyseArrayType_(
             std::dynamic_pointer_cast<node::TypeName>(type)) 
     {
         if (!typeName->hasName()) {
-            std::stringstream ss;
-            ss << "It is forbidden to" 
-                    " use superclass reference" 
-                    " for aliases, vars, arrays: ";
-            ss << " : ";
-            ss << typeName->attribute().toString();
-            return ss.str();
-        }
-        bool isTypeSet = false;
-        auto declsInSpaces = 
-            space->reachable(typeName->name(), parent.get());
-        if (!declsInSpaces.empty()) {
-            auto&& decls = declsInSpaces.front();
-            auto record = 
-                std::dynamic_pointer_cast<node::RecordDecl>(decls[0]);
-            auto als = 
-                std::dynamic_pointer_cast<node::TypeAliasDecl>(decls[0]);
+            auto [err, refTy] = analyseAttrType_(typeName);
+            if (!err.empty()) {
+                return err;
+            }
+            atype->resetType(refTy);
+        } else {
+            bool isTypeSet = false;
+            auto declsInSpaces = 
+                space->reachable(typeName->name(), parent.get());
+            if (!declsInSpaces.empty()) {
+                auto&& decls = declsInSpaces.front();
+                auto record = 
+                    std::dynamic_pointer_cast<node::RecordDecl>(decls[0]);
+                auto als = 
+                    std::dynamic_pointer_cast<node::TypeAliasDecl>(decls[0]);
 
-            if (record) atype->resetType(record);
-            else if (als) atype->resetType(als);
+                if (record) atype->resetType(record);
+                else if (als) atype->resetType(als);
 
-            if (record || als) {
-                isTypeSet = true;
+                if (record || als) {
+                    isTypeSet = true;
+                }
+            }
+            if (!isTypeSet) {
+                std::stringstream ss;
+                ss << "An unresolved type name:";
+                ss << typeName->name().toString('.');
+                return ss.str();
             }
         }
-        if (!isTypeSet) {
-            std::stringstream ss;
-            ss << "An unresolved type name:";
-            ss << typeName->name().toString('.');
-            return ss.str();
-        }
+       
     } 
-    else if (auto arrayType = 
-                std::dynamic_pointer_cast<node::TypeName>(type))
-    {
-        return "it is forbidden to" 
-               " use an array for an array type";
-    }
     return "";
 }
 
@@ -892,33 +893,30 @@ TypeNameToRealType::analyseRecord_(
     return "";
 }
 
-std::string 
-TypeNameToRealType::analyseParam_(
-    std::shared_ptr<node::VarDecl> decl) 
+std::pair<std::string, std::shared_ptr<node::IType>> 
+TypeNameToRealType::analyseAttrType_(
+    std::shared_ptr<node::IType> type) 
 {   
-    auto type = decl->type();
     if (auto typeName = 
             std::dynamic_pointer_cast<node::TypeName>(type)) 
     {
         if (typeName->hasName()) {
-            return analyseDecl_(decl);
-        } 
+            return {"", nullptr};
+        }
 
         auto&& attr = typeName->attribute();
         if (attr.right() != "class") {
-            return "An attribute as a type is" 
+            return {"An attribute as a type is" 
                    " allowed only as a superclass" 
-                   " reference: [NAME]'class";
+                   " reference: [NAME]'class", nullptr};
         }
         auto classRef = 
             std::make_shared<node::SuperclassReference>(attr);
         
-        decl->resetType(classRef);
-    } else if (std::dynamic_pointer_cast<node::ArrayType>(type)) {
-        return "Anonymous array definition not allowed";
-    }
+        return {"", classRef};
+    } 
 
-    return "";
+    return {"", nullptr};
 }
 
 // InheritsVarNameConlflicCheck
@@ -1373,6 +1371,8 @@ OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) 
         if (auto priv = pack->privateDecls()) {
             decls.insert(decls.end(), priv->begin(), priv->end());
         }
+    } else if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(decl)) {
+        decls.insert(decls.end(), rec->decls()->begin(), rec->decls()->end());
     } else {
         return "";
     }
@@ -1426,6 +1426,67 @@ OneClassInSubprogramCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) 
                         ss << proc->name();
                         return ss.str();
                     }
+                } else if (auto arrTy = std::dynamic_pointer_cast<node::ArrayType>(type)) {
+                    if (auto ref = std::dynamic_pointer_cast<node::SuperclassReference>(arrTy->type())) {
+                        auto&& attr = ref->ref();
+                        auto&& name = attr.left(); 
+                        auto declsNSpaces = proc->reachable(name);
+                        bool isClassSet = false;
+                        if (!declsNSpaces.empty()) {
+                            auto&& decls = declsNSpaces.front();
+                            if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(decls[0])) {
+                                auto cls = rec->cls().lock();
+                                if (cls) {
+                                    ref->setClass(cls);
+                                    isClassSet = true;
+                                }
+                            }
+                        }
+                        if (!isClassSet) {
+                            std::stringstream ss;
+                            ss << "Unresolved class name" 
+                                  " in a superclass reference.";
+                            ss << " Class name: ";
+                            ss << name.toString('.');
+                            ss << " Subprogram: ";
+                            ss << proc->name();
+                            return ss.str();
+                        }
+                    }
+                }
+            }
+        } else if (auto var = std::dynamic_pointer_cast<node::VarDecl>(d)) {
+            auto type = var->type();
+            if (auto arrTy = std::dynamic_pointer_cast<node::ArrayType>(type)) {
+                type = arrTy->type();
+            }
+            if (auto ref = std::dynamic_pointer_cast<node::SuperclassReference>(type)) {
+                // добавление в надклассовую ссылку указателя на класс
+                auto&& attr = ref->ref();
+                auto&& name = attr.left(); 
+                auto idecl = dynamic_cast<node::IDecl*>(var->parent());
+                assert(idecl);
+                auto declsNSpaces = idecl->reachable(name);
+                bool isClassSet = false;
+                if (!declsNSpaces.empty()) {
+                    auto&& decls = declsNSpaces.front();
+                    if (auto rec = std::dynamic_pointer_cast<node::RecordDecl>(decls[0])) {
+                        auto cls = rec->cls().lock();
+                        if (cls) {
+                            ref->setClass(cls);
+                            isClassSet = true;
+                        }
+                    }
+                }
+                if (!isClassSet) {
+                    std::stringstream ss;
+                    ss << "Unresolved class name" 
+                            " in a superclass reference.";
+                    ss << " Class name: ";
+                    ss << name.toString('.');
+                    ss << " Subprogram: ";
+                    ss << var->name();
+                    return ss.str();
                 }
             }
         }

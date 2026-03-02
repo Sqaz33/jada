@@ -259,6 +259,7 @@ public:
 
     void setParam() noexcept { param_ = true; }
     bool param() const noexcept { return param_; }
+    bool aliasType() const noexcept { return aliasType_; }
 
 public: // codegen
     void pregen(
@@ -324,6 +325,7 @@ private:
     bool in_ = true;
     bool out_ = true;
     bool param_ = false;
+    bool aliasType_ = false;
 
 private: // codegen
     class_member::SharedPtrField javaField_;   // если поле
@@ -666,7 +668,7 @@ public: // IType interface
 public: 
     void setBase(std::shared_ptr<RecordDecl> base);
     void setDerive(std::shared_ptr<RecordDecl> derive) {
-        deriveRecord_ = derive;
+        deriveRecords_.push_back(derive);
     }
 
     std::weak_ptr<RecordDecl> base();
@@ -746,7 +748,7 @@ private:
 
 private:
     std::weak_ptr<RecordDecl> baseRecord_;
-    std::shared_ptr<RecordDecl> deriveRecord_;
+    std::vector<std::shared_ptr<RecordDecl>> deriveRecords_;
 
     std::string name_;
     std::shared_ptr<DeclArea> decls_;

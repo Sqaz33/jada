@@ -106,7 +106,8 @@ private:
     std::string analyseRecord_(
         std::shared_ptr<node::RecordDecl> decl, 
         std::shared_ptr<node::RecordDecl> derivee = nullptr);
-    std::string analyseParam_(std::shared_ptr<node::VarDecl> decl);  
+    std::pair<std::string, std::shared_ptr<node::IType>> 
+    analyseAttrType_(std::shared_ptr<node::IType> type);  
 };
 
 class InheritsVarNameConlflicCheck : public ISemanticsPart {

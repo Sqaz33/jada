@@ -43,7 +43,7 @@ std::uint16_t CodeAttr::localIdx(const std::string& name) {
     auto it = locals_.find(name);
     if (it == locals_.end()) {
         throw std::logic_error(
-            "There is no local variable" + name);
+            "There is no local variable " + name);
     }
     return (it->second).first;
 }
@@ -81,7 +81,7 @@ void CodeAttr::instertInstrWithLocal(
     auto it = locals_.find(name);
     if (it == locals_.end()) {
         throw std::logic_error(
-            "There is no local variable" + name);
+            "There is no local variable " + name);
     }
     auto [idx, _] = it->second;
     std::unique_ptr<instr::Instr> ins;

@@ -186,6 +186,7 @@ VarDecl::VarDecl(const std::string& name,
     name_(name)
     , type_(type)
     , rval_(rval)
+    , aliasType_(std::dynamic_pointer_cast<TypeAliasDecl>(type))
 {
     type_->setParent(this);
     if (rval_) {
@@ -211,6 +212,7 @@ std::shared_ptr<IType> VarDecl::type() {
 }
 
 void VarDecl::resetType(std::shared_ptr<IType> type) {
+    aliasType_ = static_cast<bool>(std::dynamic_pointer_cast<TypeAliasDecl>(type));
     type_ = getOrigin(type);
 }
 
@@ -273,7 +275,8 @@ void VarDecl::pregen(
         } 
         else 
         {
-            assert(false);
+            // assert(false);
+            method->createLocalRef(name_);
         }
     }
 }
@@ -1240,9 +1243,9 @@ void RecordDecl::pregen(
     auto initDesc = 
         descriptor::JVMMethodDescriptor::createVoidParamsVoidReturn();
     init_ = javaClass_->addMethod("<init>", initDesc);
-    if (deriveRecord_) {
-        deriveRecord_->setJavaClassParrent(javaClass_);
-        deriveRecord_->setParentInit(init_);
+    for (auto&& d : deriveRecords_) {
+        d->setJavaClassParrent(javaClass_);
+        d->setParentInit(init_);
     }
 
     if (auto cls = class_.lock()) {
@@ -1512,6 +1515,11 @@ std::shared_ptr<IType> ArrayType::type() {
 
 void ArrayType::resetType(std::shared_ptr<IType> newType) {
     type_ = getOrigin(newType);
+    if (std::dynamic_pointer_cast<ArrayType>(type_)) {
+        throw std::runtime_error(
+            "In this realization it is forbidden to" 
+            " use an array for an array type");
+    }
 }
 
 descriptor::JVMFieldDescriptor 
@@ -2157,7 +2165,8 @@ GetArrElementExpr::GetArrElementExpr(
     assert(arrTy || strTy);
     if (arrTy) {
         container_ = std::dynamic_pointer_cast<RecordDecl>(arrTy->type()) || 
-                    std::dynamic_pointer_cast<PackDecl>(arrTy->type());
+                    std::dynamic_pointer_cast<PackDecl>(arrTy->type()) || 
+                    std::dynamic_pointer_cast<SuperclassReference>(arrTy->type());
     } else {
         container_ = false;
     }
@@ -2244,6 +2253,9 @@ bb::BasicBlock* GetArrElementExpr::codegen(
                         break;
                 } 
             } else {
+                method->createDup2X1(bb);
+                method->createPop(bb);
+                method->createPop(bb);
                 method->createAastore(bb);
             }
         } else {
@@ -3057,7 +3069,7 @@ bb::BasicBlock* Assign::codegen(
     auto agr = std::dynamic_pointer_cast<AggregateType>(rval_->type());
 
     rval_->codegen(bb, method);
-    if (rec) {
+    if (rec && !std::dynamic_pointer_cast<SuperclassReference>(lval_->type())) {
         method->createInvokestatic(bb, codegen::AdaUtilityDeepCopy);
         method->createCheckcast(bb, rec->javaClass());
     } else if (arr) {
@@ -3257,13 +3269,19 @@ void SuperclassReference::setClass(
         cur = cur->base().lock();
     }
     class_ = cur;
-}
+} 
 
 bool SuperclassReference::compare(
     const std::shared_ptr<IType> rhs) const 
 {
     if (auto r = std::dynamic_pointer_cast<SuperclassReference>(rhs)) {
         return class_ && r->class_ && class_ == r->class_;
+    } else if (auto rec = std::dynamic_pointer_cast<RecordDecl>(rhs)) {
+        if (auto c = rec->cls().lock()) {
+            return c->isDerivedOf(class_);
+        }
+
+        return false;
     }
     return false;
 }
