@@ -827,7 +827,7 @@ private:
 
 class AggregateType : public IType {
 public:
-    AggregateType(std::vector<SimpleType> type);
+    AggregateType(std::vector<std::shared_ptr<IType>> type);
 
 public: // IType interface
     bool compare(const std::shared_ptr<IType> rhs) const override;
@@ -836,11 +836,12 @@ public: // INode interface
     void print(graphviz::GraphViz& gv, 
                graphviz::VertexType par) const override {}
     
-    auto type() { return type_[0]; }
-    auto size() { return type_.size(); }
+    auto&& type() const { return type_; }
+    auto size() const { return type_.size(); }
 
 private:
-    std::vector<SimpleType> type_;
+    std::vector<std::shared_ptr<IType>> type_;
+    const std::shared_ptr<AggregateType> s_;
 };
 
 class ArrayType : public IType {

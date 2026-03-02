@@ -326,7 +326,7 @@ void addAdaStdLib(
 
 int yyFlexLexer::yywrap() { return 1; }
 
-int main(int argc, char** argv) try {
+int main(int argc, char** argv) /*try*/ {
     namespace fs = std::filesystem;
 
     if (argc == 2 && std::string("-h") == argv[1]) {
@@ -360,7 +360,7 @@ int main(int argc, char** argv) try {
         // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
         // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
         // path = strdup("/mnt/d/jada/test_data/codegen/out.adb");
-        path = strdup("../test_data/test2.adb");
+        path = strdup("../test_data/final/multidim.adb");
         // path = strdup("/mnt/d/jada/test_data/overload.adb");
         // path = strdup("/mnt/d/jada/test_data/complex.adb");
         // path = strdup("/mnt/d/jada/test_data/codegen/array.adb");
@@ -416,7 +416,7 @@ int main(int argc, char** argv) try {
 
     if (!helper::rightEnding) {
         std::cerr << "The declaration has" 
-                     " gsfferent names and endings\n";
+                     " different names and endings\n";
         return 1;
     }
 
@@ -431,13 +431,14 @@ int main(int argc, char** argv) try {
     codegen::gen(helper::modules);
 
     return 0;
-} catch (const std::exception& e) { // TODO 
-    std::cerr << e.what() << '\n';
-    printErrors();
-    return 1;
-
-} catch (...) {
-    std::cerr << "Unknown error\n";
-    printErrors();
-    return 1;
 }
+// } catch (const std::exception& e) { // TODO 
+//     std::cerr << e.what() << '\n';
+//     printErrors();
+//     return 1;
+// }
+// } catch (...) {
+//     std::cerr << "Unknown error\n";
+//     printErrors();
+//     return 1;
+// }

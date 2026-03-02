@@ -2147,10 +2147,9 @@ LinkExprs::analyseOpExprErr_(std::shared_ptr<node::IExpr> expr) {
     if (!res1.empty() || !res2.empty()) {
         return res1.empty() ? res2 : res1;
     }
-
-    if (op->op() == node::OpType::DOT &&
-        (op->left() && op->left()->inBrackets()) || 
-        (op->right() && op->right()->inBrackets())) 
+    if (op->op() == node::OpType::DOT && 
+        ((op->left() && op->left()->inBrackets()) || 
+         (op->right() && op->right()->inBrackets()))) 
     {
         return "One of the operands of Dot Op in parentheses";
     }

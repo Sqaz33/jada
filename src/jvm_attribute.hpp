@@ -85,6 +85,7 @@ private:
 
     // class internal
     std::map<std::string, 
+    //                 idx             sz
         std::pair<std::uint16_t, std::uint16_t>> locals_;
 
     std::vector<std::pair<std::uint16_t, std::uint16_t>> localsIdxSz_;

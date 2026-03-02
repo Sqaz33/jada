@@ -151,7 +151,7 @@ void ArrayType::print(graphviz::GraphViz& gv,
 {   
     std::stringstream ss;    
     ss << "Ranges: (";
-    for (auto&& [l, r] : ranges_) {
+    for (auto [l, r] : ranges_) {
         ss << '(' << l << ", " << r << ")";
     }
     ss << ")";

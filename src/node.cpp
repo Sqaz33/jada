@@ -48,6 +48,20 @@ VarDecl* IExpr::varDecl() noexcept {
 // Stms
 namespace node {
 
+const std::vector<std::string> lvls({
+    "asdfLvl1",
+    "asdfLvl2",
+    "asdfLvl3",
+    "asdfLvl4",
+    "asdfLvl5",
+    "asdfLvl6",
+    "asdfLvl7",
+    "asdfLvl8",
+    "asdfLvl9",
+    "asdfLvl10",
+});
+
+
 Body::Body(const std::vector<std::shared_ptr<IStm>>& stms) :
     stms_(stms)
 {}
@@ -280,6 +294,60 @@ static void cgCreateArray(
     method->createInvokestatic(bb, codegen::AdaUtilityInitArrayElements);
 }
 
+void createLoadAggr(
+    std::shared_ptr<VarDecl> arr, 
+    bb::BasicBlock* bb, 
+    class_member::SharedPtrMethod method,
+    int lvl = 0) 
+{
+    auto arrTy = std::dynamic_pointer_cast<ArrayType>(arr->type());
+    assert(arrTy);
+
+    // получить конкретный массив
+    auto [l, r] = arrTy->ranges()[lvl];
+    int lim = r - l + 1;
+    if (lvl < arrTy->ranges().size() - 1) {
+        for (int i = 0; i < lim; ++i) {
+            if (0 == lvl) {
+                 arr->createLoad(bb, method);
+            } else {
+                method->createAload(bb, lvls[lvl - 1]);
+            }
+            
+            method->createLdc(bb, i);
+            method->createAaload(bb);
+
+            method->createAstore(bb, lvls[lvl]);
+            createLoadAggr(arr, bb, method, lvl + 1);
+        }
+    // загрузить агрегат в массив
+    } else {
+        for (int i = 0; i < lim; ++i) {
+            method->createAload(bb, lvls[lvl - 1]);
+            method->createLdc(bb, i);
+            method->createDup2X1(bb);
+            method->createPop(bb);
+            method->createPop(bb);
+            auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(arrTy->type());
+            assert(sTy);
+            switch (sTy->type()) {
+                case SimpleType::BOOL:
+                    method->createBastore(bb);
+                    break;
+                case SimpleType::CHAR:
+                    method->createCastore(bb);
+                    break;
+                case SimpleType::FLOAT:
+                    method->createFastore(bb);
+                    break;
+                case SimpleType::INTEGER:
+                    method->createIastore(bb);
+                    break;
+            } 
+        }
+    }
+}
+
 void VarDecl::codegen(
         bb::BasicBlock* bb,
         class_member::SharedPtrMethod method)  
@@ -308,28 +376,7 @@ void VarDecl::codegen(
                 // работа с агрегатом
                 cgCreateArray(bb, method, arr);
                 createStore(bb, method);
-
-                for (int i = aggrTy->size() - 1; i >= 0; --i) {
-                    createLoad(bb, method);
-                    method->createLdc(bb, i);
-                    method->createDup2X1(bb);
-                    method->createPop(bb);
-                    method->createPop(bb);
-                    switch (aggrTy->type()) {
-                        case SimpleType::BOOL:
-                            method->createBastore(bb);
-                            break;
-                        case SimpleType::CHAR:
-                            method->createCastore(bb);
-                            break;
-                        case SimpleType::FLOAT:
-                            method->createFastore(bb);
-                            break;
-                        case SimpleType::INTEGER:
-                            method->createIastore(bb);
-                            break;
-                    } 
-                } 
+                createLoadAggr(std::dynamic_pointer_cast<VarDecl>(self()), bb, method);
             } 
         } else if (str) {
             method->createInvokestatic(bb, codegen::AdaUtilityCopyStringBuilder);
@@ -650,6 +697,10 @@ void ProcBody::pregen(
 
     for (auto&& r : atomicRefs) {
         javaMethod_->createLocalRef(r);
+    }
+
+    for (auto&& l : lvls) {
+        javaMethod_->createLocalRef(l);
     }
 
     javaMethod_->addFlag(
@@ -1347,39 +1398,88 @@ SimpleLiteralType::descriptor(bool out) {
     assert(false);
 }
 
+static bool eqAgrElTypes(std::vector<std::shared_ptr<IType>> type) {
+    for (int i = 0; i < int(type.size()) - 1; ++i) {
+        if (type[i]->compare(type[i + 1])) return false;
+    }
+
+    return true;
+}
+
 // AggregateType
-AggregateType::AggregateType(std::vector<SimpleType> type) :
+AggregateType::AggregateType(std::vector<std::shared_ptr<IType>> type) :
     type_(std::move(type))
-{}
+{
+    if (eqAgrElTypes(type_)) {
+        throw std::runtime_error(
+            "In this implementation, aggregates" 
+            " of the same nesting level and" 
+            " with the same element types are allowed");
+    }
+}
+
+static bool eqAgrLvls(
+    const AggregateType* lhs, 
+    const std::shared_ptr<AggregateType> rhs)
+{
+    auto&& t1 = lhs->type();
+    auto&& t2 = rhs->type();
+
+    if (t1.size() != t2.size()) {
+        return false;
+    }
+
+    for (int i = 0; i < t1.size(); ++i) {
+        auto&& a = t1[i];
+        auto&& b = t2[i];
+        
+        auto agr1 = std::dynamic_pointer_cast<AggregateType>(a);
+        auto agr2 = std::dynamic_pointer_cast<AggregateType>(b);
+        if (agr1 && agr2 && !eqAgrLvls(agr1.get(), agr2)) {
+            return false;
+        } else if (agr1 || agr2) {
+            return false;
+        } else if (!a->compare(b)) {
+            return false;
+        }
+    } 
+
+    return true;
+}
 
 bool AggregateType::compare(const std::shared_ptr<IType> rhs) const {
     auto orig = getOrigin(rhs);
     if (auto aggr = std::dynamic_pointer_cast<AggregateType>(orig)) {
-        auto rtype = aggr->type_;
-        if (type_.size() == rtype.size()) {
-            for (std::size_t i = 0; i < type_.size(); ++i) {
-                if (type_[i] != rtype[i]) {
-                    return false;
-                }
-            }
-            return true;
-        }
+        return eqAgrLvls(this, aggr);
     } else if (auto arrTy = std::dynamic_pointer_cast<ArrayType>(orig)) {
-        auto&& range = arrTy->ranges();
-        if (range.size() == 1) {
-            auto&& r = range[0];
-            if (r.second - r.first + 1 == type_.size()) {
-                auto elTy = getOrigin(arrTy->type());
-                for (auto&& s : type_) {
-                    auto agrElType = std::make_shared<node::SimpleLiteralType>(s);
-                    if (!agrElType->compare(elTy)) {
-                        return false;
-                    }
-                }
-                return true;
-            }
+        std::shared_ptr<IType> t = type_[0];
+        auto cur = type_;
+        while (auto agr = std::dynamic_pointer_cast<AggregateType>(cur[0])) {
+            cur = agr->type();
+            t = cur[0];
         }
+        if (!arrTy->type()->compare(t)) {
+            return false;
+        }
+
+        auto&& ranges = arrTy->ranges();
+        cur = type_;
+        for (int i = 0; i < ranges.size(); ++i) { 
+            auto [l, r] = ranges[i];
+            if (cur.size() != r - l + 1) {
+                return false;
+            }
+
+            if (auto agr = std::dynamic_pointer_cast<AggregateType>(cur[0])) {
+                cur = agr->type();
+            } else if (i < ranges.size() - 1) {
+                return false;
+            }
+        } 
+
+        return true;
     }
+
     return false;
 }
 
@@ -1455,18 +1555,10 @@ descriptor::JVMFieldDescriptor StringType::descriptor(bool out) {
 Aggregate::Aggregate(const std::vector<std::shared_ptr<ILiteral>>& inits) :
     inits_(inits)
 {   
-    std::vector<SimpleType> types;
+    std::vector<std::shared_ptr<IType>> types;
     for (auto i : inits_) {
-        if (auto litTy = std::dynamic_pointer_cast<SimpleLiteral>(i)) {
-            types.push_back(std::dynamic_pointer_cast<SimpleLiteralType>(litTy->type())->type());
-        } else {
-            throw std::logic_error(
-                    "In this implementation, aggregate" 
-                    " initialization by an aggregate" 
-                    " consisting only of primitive" 
-                    " type literals is available.");        
-        }
         i->setParent(this);
+        types.push_back(i->type());
     }
     type_ = std::make_shared<AggregateType>(std::move(types));
 }
@@ -1486,8 +1578,9 @@ bb::BasicBlock* Aggregate::codegen(
         bool lhs,
         int callStage) 
 {
-    for (auto&& e : inits_) {
-        bb = e->codegen(bb, method, lhs, callStage);
+    for (auto it = inits_.rbegin(); it != inits_.rend(); ++it) {
+        auto&& i = *it;
+        bb = i->codegen(bb, method, lhs, callStage);
     }
     return bb;
 }
@@ -2778,7 +2871,7 @@ bb::BasicBlock* For::codegen(
     bb = range_.first->codegen(bb, method);
     iter_->createStore(bb, method);
 
-    std::string right = "right12345";
+    std::string right = init_ + "_right12345";
     method->createLocalInt(right);
     bb = range_.second->codegen(bb, method);
     method->createIstore(bb, right);
@@ -2843,20 +2936,6 @@ bb::BasicBlock* While::codegen(
     if (auto op = std::dynamic_pointer_cast<Op>(cond_)) {
         op->setNextBB(nextNextCondBB, method);
     }
-
-
-    // auto* condBB = method->createBB();
-    // auto* nextCondBB = cond_->codegen(condBB, method); 
-    
-    // auto* bodyBB = method->createBB();
-    // auto* bodyNextBB = body_->codegen(method, bodyBB);
-
-    // auto* nextBB = method->createBB();
-    // // заполняется cond
-    // method->createIfne(nextCondBB, bodyBB);
-    // method->createGoto(nextCondBB, nextBB);
-
-    // method->createGoto(bodyNextBB, condBB);
 
     return nextNextCondBB;
 }
@@ -2989,28 +3068,9 @@ bb::BasicBlock* Assign::codegen(
         lval_->codegen(bb, method, true);
     } else {
          // работа с агрегатом
-        lval_->codegen(bb, method, false);
-        for (int i = agr->size() - 1; i >= 0; --i) {
-            lval_->codegen(bb, method, false);
-            method->createLdc(bb, i);
-            method->createDup2X1(bb);
-            method->createPop(bb);
-            method->createPop(bb);
-            switch (agr->type()) {
-                case SimpleType::BOOL:
-                    method->createBastore(bb);
-                    break;
-                case SimpleType::CHAR:
-                    method->createCastore(bb);
-                    break;
-                case SimpleType::FLOAT:
-                    method->createFastore(bb);
-                    break;
-                case SimpleType::INTEGER:
-                    method->createIastore(bb);
-                    break;
-            } 
-        } 
+        auto dotop = std::dynamic_pointer_cast<DotOpExpr>(lval_);
+        auto arr = std::dynamic_pointer_cast<VarDecl>(dotop->tail());
+        createLoadAggr(arr, bb, method);
     }
 
     return bb;
