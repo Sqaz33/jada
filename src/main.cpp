@@ -277,12 +277,35 @@ void addAdaStdLib(
     ///////////////////////////////////////////////////////////////////////////
 
 
+    auto getDecls5 = std::make_shared<node::DeclArea>();
+    auto getBody5 = std::make_shared<node::Body>();
+    auto inOutChar = std::make_shared<node::VarDecl>("x", charTy);
+    inOutChar->setIn(true); 
+    inOutChar->setOut(true);
+    inOutChar->setParam();
+    std::vector getCharVars({inOutChar});
+    auto GetChar = std::make_shared<node::ProcBody>("get", getCharVars, getDecls5, getBody5);
+    ////////////////////////// GetChar ////////////////////////////////////////
+    // auto gcDesc = GetChar->desc();
+    // auto gcf = codegen::InnerSubprograms->addMethod(GetChar->name(), gcDesc, true);
+    // auto* gcfBB = gcf->createBB();
+    // gcf->createAload(gcfBB, "x");
+    // gcf->createInvokestatic(gcfBB, codegen::AdaUtilityReadInt);
+    // gcf->createReturn(gcfBB);
+
+    // gcf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+    // gcf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+    GetChar->setJavaMethod(gif);
+    GetChar->setStatic();
+    ///////////////////////////////////////////////////////////////////////////
+
     auto libAreaTextIO = std::make_shared<node::DeclArea>();
     libAreaTextIO->addDecl(PutLine);
     libAreaTextIO->addDecl(GetInt);
     libAreaTextIO->addDecl(GetBool);
     libAreaTextIO->addDecl(GetFloat);
     libAreaTextIO->addDecl(GetStr);
+    libAreaTextIO->addDecl(GetChar);
     auto libUnitTextIO = 
         std::make_shared<node::PackDecl>("text_io", libAreaTextIO);
 

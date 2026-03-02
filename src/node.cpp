@@ -1766,6 +1766,11 @@ std::shared_ptr<IType> Op::type() {
         if (str1 && str2 && opType_ == OpType::AMPER) {
             auto [d1, lim1] = str1->range();
             auto [d2, lim2] = str2->range(); 
+            if (str1->inf() || str2->inf()) {
+                auto strTy =  std::make_shared<StringType>(std::make_pair(-1, -1));
+                strTy->setInf();
+                return strTy;
+            }
             return std::make_shared<StringType>(std::make_pair(1, lim1 + lim2));
         } else if (str1 && str2) {
             return nullptr;

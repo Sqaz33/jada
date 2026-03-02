@@ -886,6 +886,7 @@ public: // INode interface
 
 public:
     void setInf() noexcept;
+    bool inf() const noexcept { return inf_; }
 
     std::pair<int, int> range() const;
 
