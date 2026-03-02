@@ -505,7 +505,8 @@ ProcBody::ProcBody(const std::string& name,
 }
 
 const std::string& ProcBody::name() const noexcept {
-    return name_;
+    static const std::string get = "get";
+    return name_ == "getc" ? get : name_;
 }
 
 std::shared_ptr<DeclArea> ProcBody::decls() {

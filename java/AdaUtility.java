@@ -28,6 +28,15 @@ public class AdaUtility {
         target.set(value);
     }
 
+    public static void readChar(AtomicInteger target) {
+        Scanner sc = new Scanner(System.in);
+        String input = sc.nextLine();
+        if (input.length() > 0) {
+            char value = input.charAt(0);  // берем первый символ
+            target.set((int) value);        // преобразуем char в int (ASCII код)
+        }
+    }
+
     public static void readFloat(AtomicReference<Float> target) {
         Scanner sc = new Scanner(System.in);
         if (!sc.hasNextFloat()) {

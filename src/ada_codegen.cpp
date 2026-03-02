@@ -86,6 +86,7 @@ class_member::SharedPtrMethod AdaUtilityPrintStringBuilder;
 
 class_member::SharedPtrMethod AdaUtilityReadBool;
 class_member::SharedPtrMethod AdaUtilityReadInt;
+class_member::SharedPtrMethod AdaUtilityReadChar;
 class_member::SharedPtrMethod AdaUtilityReadFloat;
 class_member::SharedPtrMethod AdaUtilityReadString;
 
@@ -341,6 +342,13 @@ void initAdaUtilityNames() {
 
     AdaUtilityReadInt = AdaUtility->addMethod(
         "readInt",
+        JVMMethodDescriptor::createVoidRetun({
+            {"atomic", JVMFieldDescriptor::createObject(AtomicInteger->name())},
+        })
+    );
+
+    AdaUtilityReadChar = AdaUtility->addMethod(
+        "readChar",
         JVMMethodDescriptor::createVoidRetun({
             {"atomic", JVMFieldDescriptor::createObject(AtomicInteger->name())},
         })

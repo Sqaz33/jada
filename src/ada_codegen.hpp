@@ -59,6 +59,7 @@ extern class_member::SharedPtrMethod AdaUtilityPrintStringBuilder;
 
 extern class_member::SharedPtrMethod AdaUtilityReadBool;
 extern class_member::SharedPtrMethod AdaUtilityReadInt;
+extern class_member::SharedPtrMethod AdaUtilityReadChar;
 extern class_member::SharedPtrMethod AdaUtilityReadFloat;
 extern class_member::SharedPtrMethod AdaUtilityReadString;
 

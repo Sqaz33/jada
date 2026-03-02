@@ -284,18 +284,18 @@ void addAdaStdLib(
     inOutChar->setOut(true);
     inOutChar->setParam();
     std::vector getCharVars({inOutChar});
-    auto GetChar = std::make_shared<node::ProcBody>("get", getCharVars, getDecls5, getBody5);
+    auto GetChar = std::make_shared<node::ProcBody>("getc", getCharVars, getDecls5, getBody5);
     ////////////////////////// GetChar ////////////////////////////////////////
-    // auto gcDesc = GetChar->desc();
-    // auto gcf = codegen::InnerSubprograms->addMethod(GetChar->name(), gcDesc, true);
-    // auto* gcfBB = gcf->createBB();
-    // gcf->createAload(gcfBB, "x");
-    // gcf->createInvokestatic(gcfBB, codegen::AdaUtilityReadInt);
-    // gcf->createReturn(gcfBB);
+    auto gcDesc = GetChar->desc();
+    auto gcf = codegen::InnerSubprograms->addMethod("getc", gcDesc, true);
+    auto* gcfBB = gcf->createBB();
+    gcf->createAload(gcfBB, "x");
+    gcf->createInvokestatic(gcfBB, codegen::AdaUtilityReadChar);
+    gcf->createReturn(gcfBB);
 
-    // gcf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
-    // gcf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
-    GetChar->setJavaMethod(gif);
+    gcf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_PUBLIC);
+    gcf->addFlag(codegen::java_bytecode_codegen::AccessFlag::ACC_STATIC);
+    GetChar->setJavaMethod(gcf);
     GetChar->setStatic();
     ///////////////////////////////////////////////////////////////////////////
 
@@ -338,50 +338,50 @@ int main(int argc, char** argv) try {
         return 0;
     }
 
-    // if (argc < 2) { // TODO: delete
-    //     argc = 2;
-    //     static std::unique_ptr<char*> argvOwner(new char*[2]);
-    //     argv = argvOwner.get();
-    //     static std::unique_ptr<char> pathOwner;
-    //     char* path = nullptr;
-    //     // argv[1] = "../test_data/complex.adb"; 
-    //     // argv[1] = "../test_data/modules/main.adb"; 
-    //     // argv[1] = "../test_data/semantics/type_replace_check.adb";
-    //     // argv[1] = "../test_data/semantics/proc_func_overload.adb";
-    //     // argv[1] = "../test_data/semantics/record_inherits.adb";
-    //     // argv[1] = "../test_data/semantics/circular/main.adb";
-    //     // argv[1] = "/mnt/d/jada/test_data/semantics/oop1.adb";
-    //     // argv[1] = "../test_data/semantics/return_type.adb";
-    //     // argv[1] = "../test_data/semantics/bool.adb";
-    //     // argv[1] = "../test_data/semantics/inner_package_body_decl.adb";
-    //     // argv[1] = "../test_data/semantics/simple_pack.adb";
-    //     // argv[1] = "../test_data/semantics/pack_private.adb";
-    //     // argv[1] = "../test_data/semantics/pack_linking/main.adb";
-    //     // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
-    //     // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/out.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/in.adb");
-    //     path = strdup("/mnt/d/jada/test_data/codegen/branch2.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/overload.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/complex.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/array.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/pack.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/oop.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/sort.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/test.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/record.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/call.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/ref.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/bool.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/loop.adb");
-    //     // path = strdup("/mnt/d/jada/test_data/codegen/branch.adb");
-    //     // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
-    //     // argv[1] = "/mnt/d/jada/test_data/semantics/bool.adb";
-    //     // argv[1] = "/mnt/d/jada/test_data/semantics/for_linking.adb";
-    //     // argv[1] = "/mnt/d/jada/test_data/test.adb";
-    //     pathOwner.reset(path);
-    //     argv[1] = pathOwner.get();
-    // }
+    if (argc < 2) { // TODO: delete
+        argc = 2;
+        static std::unique_ptr<char*> argvOwner(new char*[2]);
+        argv = argvOwner.get();
+        static std::unique_ptr<char> pathOwner;
+        char* path = nullptr;
+        // argv[1] = "../test_data/complex.adb"; 
+        // argv[1] = "../test_data/modules/main.adb"; 
+        // argv[1] = "../test_data/semantics/type_replace_check.adb";
+        argv[1] = "../test_data/semantics/in.adb";
+        // argv[1] = "../test_data/semantics/record_inherits.adb";
+        // argv[1] = "../test_data/semantics/circular/main.adb";
+        // argv[1] = "/mnt/d/jada/test_data/semantics/oop1.adb";
+        // argv[1] = "../test_data/semantics/return_type.adb";
+        // argv[1] = "../test_data/semantics/bool.adb";
+        // argv[1] = "../test_data/semantics/inner_package_body_decl.adb";
+        // argv[1] = "../test_data/semantics/simple_pack.adb";
+        // argv[1] = "../test_data/semantics/pack_private.adb";
+        // argv[1] = "../test_data/semantics/pack_linking/main.adb";
+        // argv[1] = "/mnt/d/jada/test_data/nesting.adb";
+        // argv[1] = "/mnt/d/jada/test_data/semantics/typecheck.adb";
+        // path = strdup("/mnt/d/jada/test_data/codegen/out.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/in.adb");
+        path = strdup("/mnt/c/t/jada/test_data/codegen/in.adb");
+        // path = strdup("/mnt/d/jada/test_data/overload.adb");
+        // path = strdup("/mnt/d/jada/test_data/complex.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/array.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/pack.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/oop.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/sort.adb");
+        // path = strdup("/mnt/d/jada/test_data/test.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/record.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/call.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/ref.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/bool.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/loop.adb");
+        // path = strdup("/mnt/d/jada/test_data/codegen/branch.adb");
+        // argv[1] = "/mnt/d/jada/test_data/semantics/pack_linking/main.adb";
+        // argv[1] = "/mnt/d/jada/test_data/semantics/bool.adb";
+        // argv[1] = "/mnt/d/jada/test_data/semantics/for_linking.adb";
+        // argv[1] = "/mnt/d/jada/test_data/test.adb";
+        pathOwner.reset(path);
+        argv[1] = pathOwner.get();
+    }
     
     if (argc < 2) {
         std::cout << "usage ./jada file.adb" << std::endl;

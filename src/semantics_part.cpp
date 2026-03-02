@@ -2390,7 +2390,8 @@ TypeCheck::analyseContainer_(std::shared_ptr<node::IDecl> decl) {
             auto rhs = var->rval();
             if (rhs) {
                 auto varType = var->type();
-                if (!rhs->compareTypes(varType)) {
+                auto rhsTy = rhs->type();
+                if (!rhs->compareTypes(varType) && !varType->compare(rhsTy)) {
                     return "Assignment of different types in var decl: "
                            + var->name();
                 }
