@@ -12,9 +12,15 @@ procedure TestLoops is
       return x;
    end foo;
 
+   function foo(X: Integer. Y: Integer) return Integer is
+   begin
+      return 1234;
+   end foo;
+
    x: Integer := foo(2);
 
 begin
    foo(1);
    Put_Line(Integer'Image(x));
+   Put_Line(Integer'Image(foo(1, 1)));
 end TestLoops;

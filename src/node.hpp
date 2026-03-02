@@ -687,6 +687,14 @@ public:
     getVarDecl(const std::string& name) {
         auto it = std::find_if(decls_->begin(), decls_->end(), 
             [&name](auto&& v) { return v->name() == name; } );
+
+        // auto it = decls_->begin();
+        // for (; it != decls_->end(); ++it) {
+        //     auto&& v = *it;
+        //     if (v->name() == name) {
+        //         break;
+        //     }
+        // }
         if (it == decls_->end()) {
             if (auto base = baseRecord_.lock()) {
                 return base->getVarDecl(name);

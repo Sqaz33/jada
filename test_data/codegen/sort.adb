@@ -18,7 +18,6 @@ procedure TestLoops is
    begin
       Put_Line("in arr:");
       Print_Array(A, N);
-
       for I in 1 .. N - 1 loop
          for J in 1 .. N - I loop
             if A(J) > A(J + 1) then
