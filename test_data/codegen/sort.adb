@@ -4,6 +4,7 @@ procedure TestLoops is
    type arr is array(1..10) of Integer;
 
    a: arr := (1, 5, 7, 19, 10, 1, 2, 3, 4 ,5);
+   x: Integer := 0;
 
    procedure Bubble_Sort(a: in out arr; N: Integer) is
       procedure Print_Array(a : arr; N: Integer) is
@@ -34,6 +35,13 @@ procedure TestLoops is
    end Bubble_Sort;
 
 begin   
+
+   for i in 1..10 loop 
+      -- Put_Line("Pls Input: " & Integer'Image(i));
+      Get(x);
+      a(i) := x;
+   end loop;
+
    Bubble_Sort(a, 10);
 
 end TestLoops;

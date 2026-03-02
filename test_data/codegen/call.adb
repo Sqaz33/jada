@@ -12,7 +12,7 @@ procedure TestLoops is
       return x;
    end foo;
 
-   function foo(X: Integer. Y: Integer) return Integer is
+   function foo(X: Integer; Y: Integer) return Integer is
    begin
       return 1234;
    end foo;
