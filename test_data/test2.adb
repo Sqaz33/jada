@@ -1,18 +1,11 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TestLoops is
-   type Ty12 is record 
-      X: Integer;
-   end record;
-
-   function ty12f return Ty12 is
-      obj: Ty12;
+   procedure f(x: in out Integer) is
    begin
-      return obj;
-   end ty12f;
-
-   objty12: Ty12;
+      f(x);
+   end f;
 
 begin
-   objty12 := ty12f;
+   f(1);
 end TestLoops;

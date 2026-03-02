@@ -1931,11 +1931,18 @@ bb::BasicBlock* GetVarExpr::codegen(
     auto sTy = std::dynamic_pointer_cast<SimpleLiteralType>(var_->type());
     const int PRE_CALL = 1;
     const int POST_CALL = 2; 
-    if (PRE_CALL == callStage && !right_) {
+    if (PRE_CALL == callStage && !right_ && !(var_->out() && var_->param())) {
         var_->createRef(bb, method);
         return bb;
-    } else if (POST_CALL == callStage && !right_) {
+    } else if (PRE_CALL == callStage && !right_) {
+        var_->createLoad(bb, method);
+        return bb;
+    }
+    
+    if (POST_CALL == callStage && !right_ && !(var_->out() && var_->param())) {
         var_->loadFromRef(bb, method);
+        return bb;
+    } else if (POST_CALL == callStage && !right_) {
         return bb;
     }
 
