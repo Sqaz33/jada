@@ -195,7 +195,7 @@ void initAdaUtilityNames() {
     AdaUtilityFromAtomicBoolean = AdaUtility->addMethod(
         "fromAtomic",
         JVMMethodDescriptor::create(
-            {{"atomic", JVMFieldDescriptor::createObject(AtomicInteger->name())}},
+            {{"atomic", JVMFieldDescriptor::createObject(AtomicBoolean->name())}},
             JVMFieldDescriptor::createFundamental(codegen::FundamentalType::BOOLEAN)
         )
     );
@@ -211,7 +211,7 @@ void initAdaUtilityNames() {
     AdaUtilityFromAtomicFloat = AdaUtility->addMethod(
         "fromAtomic",
         JVMMethodDescriptor::create(
-            {{"atomic", JVMFieldDescriptor::createObject(AtomicInteger->name())}},
+            {{"atomic", JVMFieldDescriptor::createObject(AtomicReference->name())}},
             JVMFieldDescriptor::createFundamental(codegen::FundamentalType::FLOAT)
         )
     );
