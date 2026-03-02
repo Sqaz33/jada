@@ -39,6 +39,9 @@ procedure TestLoops is
    obj1: pack1.cls1;
    obj2: pack1.cls2;
 begin
+
+   -- массив надкласоовый
+   -- parent call
    --  obj1.foo;
 
    proc(obj1);

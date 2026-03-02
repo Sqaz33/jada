@@ -1,36 +1,36 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TestLoops is
+   type arr is array(1.2) of Integer; 
+
    procedure foo(x: in out Integer) is
       x2: Integer;
    begin
-      Put_Line(Integer'Image(x));
       x := 2;
-      Put_Line(Integer'Image(x));
    end foo;
 
-   procedure foo2(x: in out Integer) is 
-      v: Integer := x;
+   procedure foo(x: in out arr) is
    begin
-      Put_Line(Integer'Image(v));
-   end foo2;
+      x(1) := 1;
+   end foo;
 
-   v: Integer := 3;
+   procedure foo(x: String) is
+   begin 
+      x(1) := 'c'
+   end foo;
 
-   procedure foo3(x: in Integer) is
-      v: Integer := x;
-   begin
-      v := v + 1;
-   end foo3;
+   type rec tagged record is
+      x: Integer := 1;
+   end record;
 
    l: Integer := 1114;
+   a: arr := (1, 2);
+   s: String;;
 begin
    Put_Line(Integer'Image(v));
    foo(v);
    Put_Line(Integer'Image(v));
 
-   foo(11234);
-   foo2(1234234);
 
    Put_Line("==========");
    Put_Line(Integer'Image(l));
@@ -39,3 +39,11 @@ begin
    Put_Line("==========");
 
 end TestLoops;
+
+
+-- флоат: все операции 
+
+-- многомерные массивы: агрегатная и заливка по контору
+
+
+

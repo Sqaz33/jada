@@ -1,43 +1,40 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TestLoops is
-   type arr is array(1..15) of Integer;
+   type arr1 is array(1..10) of Integer;
 
-   a: arr := (1, 5, 7, 19, 10, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0);
+   a: arr1 := (1, 5, 7, 19, 10, 1, 2, 3, 4, 5);
    x: Integer := 0;
 
-   procedure Bubble_Sort(a: in out arr; N: Integer) is
-      procedure Print_Array(a : arr; N: Integer) is
-      begin
-         for I in 1..N loop
-            Put_Line(Integer'Image(a(I)) & " - ");
-         end loop;
-      end Print_Array;
-
-      Temp : Integer := 0;
-
+   procedure Print_Array(a : arr1; N: Integer) is
    begin
-      Put_Line("in arr:");
-      Print_Array(A, N);
-      for I in 1 .. N - 1 loop
-         for J in 1 .. N - I loop
-            if A(J) > A(J + 1) then
-               Temp := A(J);
-               A(J) := A(J + 1);
-               A(J + 1) := Temp;
-            end if;
-         end loop;
+      for I in 1..N loop
+         Put_Line(Integer'Image(a(I)));
       end loop;
+   end Print_Array;
 
-      Put_Line("out arr:");
-      Print_Array(A, N);
-
-   end Bubble_Sort;
+   procedure Insertion(arr: in out arr1; len: Integer) is
+      j: Integer;
+      buf: Integer;
+   begin
+      for i in 1..len-1 loop
+         j := i+1;
+         --  Put_Line(Integer'Image(i));
+         while (j >= 2 and arr(j) < arr(j-1)) loop
+            buf := arr(j);
+            arr(j) := arr(j-1);
+            arr(j-1) := buf;
+            j := j - 1;
+            --  Put_Line(Integer'Image(j));
+            --  Put_Line(Integer'Image(i));
+         end loop; 
+      end loop;
+   end Insertion;
 
    sz: Integer := 1;
 
 begin   
-   Put_Line("sz: ");
+   Put_Line("array size: ");
    Get(sz);
 
    for i in 1..sz loop 
@@ -45,6 +42,11 @@ begin
       a(i) := x;
    end loop;
 
-   Bubble_Sort(a, sz);
+   Put_Line("==========");
+   Print_Array(a, sz);
+   Put_Line("==========");
+   Insertion(a, sz);
+   Print_Array(a, sz);
+
 
 end TestLoops;

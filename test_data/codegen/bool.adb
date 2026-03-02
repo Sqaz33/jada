@@ -5,9 +5,10 @@ procedure TestLoops is
    y: Boolean := false;
    
 
-   function foo return Boolean is
+   function foo(bool) return Boolean is
       ret: Boolean := false;
    begin
+   putline(vizov);
       get(ret);
       return ret;
    end foo;
@@ -23,7 +24,7 @@ begin
 
    Get(x);
    Get(y);
-   if ((x or y) or foo) then
+   if ((x or y) or foo) then -- сравнение ввода с константной и вызов и else 
       Put_Line("x or y or foo - true");
    end if;
 
