@@ -16,7 +16,16 @@ procedure TestLoops is
    as: String := "Hello";
    bs: String := "World!";
 
+   x: Float;
+   y: Integer;
+
 begin
+
+   -- x := ai / af; --CE
+   -- y := ai + af; --CE
+   -- y := ai - af; --CE
+   -- x := ai * af; --CE
+
    Put_Line("Integer");
    Put_Line(Integer'Image(ai + bi));
    Put_Line(Integer'Image(ai - bi));

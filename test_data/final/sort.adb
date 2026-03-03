@@ -28,6 +28,7 @@ procedure TestLoops is
    end Insertion;
 
    sz: Integer := 1;
+   x: Integer := 1;
 
 begin   
    Put_Line("array size: ");
