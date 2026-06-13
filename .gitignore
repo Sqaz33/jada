@@ -5,3 +5,4 @@ main
 .vscode/
 *.class
 !java/AdaUtility*.class
+build_pgo/

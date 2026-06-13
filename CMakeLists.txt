@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 project(jada)
 
+# Настройки для PGO (Profile-Guided Optimization)
+option(USE_PGO "Enable Profile-Guided Optimization" OFF)
+
 find_package(PkgConfig REQUIRED)
 
 find_package(FLEX REQUIRED)
@@ -13,6 +16,7 @@ find_package(BISON REQUIRED)
 pkg_check_modules(GVC REQUIRED libgvc)
 pkg_check_modules(LIBCGRAPH REQUIRED libcgraph)
 
+# Генерация файлов парсера
 flex_target(
     scanner 
     src/lexer.l 
@@ -31,9 +35,17 @@ add_executable(${PROJECT_NAME}
                ${SRC}
                ${BISON_parser_OUTPUTS}
                ${FLEX_scanner_OUTPUTS})
-               
+
+# Настройка флагов компиляции
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
+    
+    if (USE_PGO)
+        # Этап 1: генерация профиля
+        message(STATUS "PGO: Этап генерации профиля (Profile Generation)")
+        target_compile_options(${PROJECT_NAME} PRIVATE "-fprofile-generate")
+        target_link_options(${PROJECT_NAME} PRIVATE "-fprofile-generate")
+    endif()
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wno-all)
 endif()
